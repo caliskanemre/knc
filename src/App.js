@@ -1,25 +1,31 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {useEffect, useState} from 'react';
+import Main from "./Main";
+import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import EventList from "./event/EventList";
+import ActivityList from "./activity/ActivityList";
+import Map from "./header/Map";
+import EventDetails from "./event/EventDetails";
+import ActivityDetails from "./activity/ActivityDetails";
+import SearchPage from "./search/SearchPage";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+
+    return (
+        <Router>
+            <div className="App">
+                <Routes>
+                    <Route path="/" element={<Main/>}/>
+                    <Route path="/events" element={<EventList/>}/>
+                    <Route path="/activities" element={<ActivityList/>}/>
+                    <Route path="/activities/:type" element={<ActivityList/>}/>
+                    <Route path="/main" element={<Main/>}/>
+                    <Route path="/map" element={<Map/>}/>
+                    <Route path="/events/:eventId" element={<EventDetails/>} />
+                    <Route path="/activities/detail/:id" element={<ActivityDetails/>} />
+                    <Route path="/search/" element={<SearchPage/>} />
+                </Routes>
+            </div>
+        </Router>);
 }
 
 export default App;

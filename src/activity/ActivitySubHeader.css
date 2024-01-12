@@ -1,0 +1,34 @@
+/* AppBar Background */
+.app-bar {
+    background-color: #f7f7f7;
+}
+
+/* NavLink General Styling */
+.nav-link {
+    text-decoration: none;
+    color: #333333; /* Darker grey for inactive links */
+    margin-left: 40px;
+    font-size: 1.3rem;
+    transition: color 0.3s; /* Smooth transition for color changes */
+}
+
+/* NavLink Hover State */
+.nav-link:hover {
+    color: #f77f50; /* Lighter shade of orange for hover */
+    cursor: pointer;
+}
+
+/* NavLink Active State */
+.nav-link.active {
+    color: #f15a24; /* Vibrant orange for the active link */
+    border-bottom: 2px solid #f15a24; /* Border to indicate active link */
+}
+
+/* Additional states for focus and visited if needed */
+.nav-link:focus {
+    outline: none; /* Removes the default focus outline */
+}
+
+.nav-link:visited {
+    color: #333333; /* Optional: Changes color for visited links */
+}

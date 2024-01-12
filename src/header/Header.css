@@ -1,0 +1,31 @@
+/* Header.css */
+
+.navbar-link {
+    text-decoration: none;
+    color: darkred;
+    margin-left: 10px;
+    font-weight: lighter;
+    font-size: 3rem;
+    transition: color 0.3s ease;
+}
+
+.navbar-link:hover, .navbar-link.active {
+    color: #000;
+    font-weight: bold;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.navbar-icons {
+    color: black;
+}
+
+.navbar-icons:hover {
+    background-color: #eee;
+    border-radius: 50%;
+}
+
+/* .active class styling removed here */
