@@ -9,7 +9,7 @@ const Map = () => {
     const [selectedEvent, setSelectedEvent] = useState([]);
 
     useEffect(() => {
-        Axios.get('http://localhost:8080/events/all')
+        Axios.get('https://activenty-bb26d9089082.herokuapp.com/events/all')
             .then((response) => {
                 setData(response.data);
             })

@@ -11,7 +11,7 @@ const EventDetails = () => {
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`http://localhost:8080/events/eventId?eventId=${eventId}`)
+        Axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/eventId?eventId=${eventId}`)
             .then((response) => {
                 setEvent(response.data);
             })

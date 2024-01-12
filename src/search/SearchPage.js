@@ -26,7 +26,7 @@ const SearchPage = () => {
         // const sort = 'activity_name,desc';
 
         try {
-            const eventResponse = await axios.get(`http://localhost:8080/events/search`, {
+            const eventResponse = await axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/search`, {
                 params: {
                     query: searchQuery,
                     location: location,
@@ -42,7 +42,7 @@ const SearchPage = () => {
         }
 
         try {
-            const activityResponse = await axios.get(`http://localhost:8080/activities/search`, {
+            const activityResponse = await axios.get(`https://activenty-bb26d9089082.herokuapp.com/activities/search`, {
                 params: {
                     query: searchQuery,
                     location: location,

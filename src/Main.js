@@ -67,7 +67,7 @@ export default function Main () {
         const sort = 'interested,desc'; // This sorts the events by 'interest' in descending order
 
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`http://localhost:8080/events/all`, {
+        Axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/all`, {
             params: {
                 page: page,
                 size: size,

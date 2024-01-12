@@ -36,8 +36,8 @@ const ActivityList = () => {
         const fetchInitialActivities = async () => {
             try {
                 let fetchUrl = type === undefined
-                    ? `http://localhost:8080/activities/all?page=0&size=20`
-                    : `http://localhost:8080/activities/${type}?page=0&size=20`;
+                    ? `https://activenty-bb26d9089082.herokuapp.com/activities/all?page=0&size=20`
+                    : `https://activenty-bb26d9089082.herokuapp.com/activities/${type}?page=0&size=20`;
 
                 const response = await Axios.get(fetchUrl);
                 setActivities(response.data.content);
@@ -54,8 +54,8 @@ const ActivityList = () => {
         try {
             let nextPage = page + 1;
             let fetchUrl = type === undefined
-                ? `http://localhost:8080/activities/all?page=${nextPage}&size=20`
-                : `http://localhost:8080/activities/${type}?page=${nextPage}&size=20`;
+                ? `https://activenty-bb26d9089082.herokuapp.com/all?page=${nextPage}&size=20`
+                : `https://activenty-bb26d9089082.herokuapp.com/activities/${type}?page=${nextPage}&size=20`;
 
             const response = await Axios.get(fetchUrl);
             setActivities(prevActivities => [...prevActivities, ...response.data.content]);
