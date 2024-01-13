@@ -15,8 +15,8 @@
         display: none;
     }
     .nav-link.nav-item {
-        margin-left: 10px; /* Smaller margin for mobile */
-        font-size: 1.2rem; /* Smaller font size for mobile */
+        margin-left: 15px; /* Smaller margin for mobile */
+        font-size: 1rem; /* Smaller font size for mobile */
         margin-top: 7px;
     }
 
@@ -30,15 +30,6 @@
     }
 }
 
-
-{
-    text-decoration: none;
-    color: darkred;
-    margin-left: 10px;
-    font-weight: lighter;
-    font-size: 3rem;
-    transition: color 0.3s ease;
-}
 
 .navbar-link:hover, .navbar-link.active {
     color: #000;

@@ -46,12 +46,10 @@ const EventList = () => {
     return (
         <div className="event-list">
             <Header/>
-            <EventSubHeader/>
+            {/*<EventSubHeader/>*/}
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
                     {events.map((item) => {
-                        const additionalDetails = events[item.id] || null;
-
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
 

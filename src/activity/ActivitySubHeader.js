@@ -12,7 +12,7 @@ function ActivitySubHeader() {
                 <NavLink to="/activities/nature"
                          className="nav-link"
                          activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
+                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '5px' , fontSize: '1.3rem' }}
                 >
                     Nature
                 </NavLink>

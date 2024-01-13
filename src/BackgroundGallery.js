@@ -31,13 +31,14 @@ const BackgroundGallery = ({ images }) => {
 
     return (
         <div {...handlers} style={{
-            position: 'relative',  // Ensure this container is positioned relatively
+            position: 'relative',
             backgroundImage: `url(${images[currentImageIndex]})`,
-            backgroundSize: 'contain',
             backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover', // or 'contain' based on your preference
             width: '100%',
-            height: '40vh' // Adjust size as needed
-
+            height: '40vh',
+            zIndex: 2,
         }}>
             <Button onClick={goToPreviousImage} style={{
                 position: 'absolute',

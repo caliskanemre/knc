@@ -20,8 +20,8 @@ function Header() {
                     <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'darkorange' }}>
                         <span className="desktop-app-title">αctiventy</span>
                     </Typography>
-                    <Typography variant="h1" noWrap style={{ fontWeight: 'bold', fontSize: '2.5rem', color: 'darkorange' }}>
-                        <span className="mobile-app-title">α</span>
+                    <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'darkorange', marginTop:'7px' }}>
+                        <span className="mobile-app-title">αctiventy</span>
                     </Typography>
                 </NavLink>
                 <NavLink to="/search" className="nav-link" activeClassName="active">

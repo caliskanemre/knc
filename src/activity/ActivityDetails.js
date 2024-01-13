@@ -38,9 +38,8 @@ const ActivityDetails = () => {
                             position: 'absolute',
                             top: 0,
                             left: 0,
-                            width: '50%', // Cover 100% on mobile
+                            width: '100%', // Cover 100% on mobile
                             height: '100%',
-                            backgroundColor: 'rgba(0, 0, 0, 0.2)', // Adjust opacity as needed
                             zIndex: 1, // Make sure it's above the images
                         }}
 
@@ -55,14 +54,15 @@ const ActivityDetails = () => {
                 <div style={{flex: 2,  display: 'inline-block', background: 'white', padding: '20px', borderRadius: '10px', marginLeft:'30px', marginRight:'30px',
                     marginTop: '20px', marginBottom: '20px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.8)' }}>
                     <h2>{activity.title}</h2>
-                    <p>{activity.activity_description} </p>
-                    <p>Location: {activity.activity_location}</p>
-                    <p>Type: {activity.activity_type}</p>
-                    <p>Open Time: {activity.activity_open_from}</p>
-                    <p>Phone: {activity.activity_phone}</p>
-                    <p>E-mail: {activity.activity_email}</p>
-                    <p>Website: {activity.activity_website}</p>
-                    <p>Price: {activity.activity_price}</p>
+                    {activity.activity_description && <p>{activity.activity_description}</p>}
+                    {activity.activity_location && <p>Location: {activity.activity_location}</p>}
+                    {activity.activity_type && <p>Type: {activity.activity_type}</p>}
+                    {activity.activity_open_from && <p>Open Time: {activity.activity_open_from}</p>}
+                    {activity.activity_phone && <p>Phone: {activity.activity_phone}</p>}
+                    {activity.activity_email && <p>E-mail: {activity.activity_email}</p>}
+                    {activity.activity_website && <p>Website: {activity.activity_website}</p>}
+                    {activity.activity_price && <p>Price: {activity.activity_price}</p>}
+
                 </div>
                 <div style={{flex: 1,  display: 'inline-block', background: 'white', padding: '20px', borderRadius: '10px', marginLeft:'30px', marginRight:'30px',
                     marginTop: '20px', marginBottom: '20px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.8)' }}>
