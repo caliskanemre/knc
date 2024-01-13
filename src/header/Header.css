@@ -1,6 +1,22 @@
 /* Header.css */
+@media only screen and (max-width: 600px) { /* Adjust 600px as needed for your mobile breakpoint */
+    .desktop-app-title {
+        display: none; /* Hides the full title on small screens */
+    }
+    .search-desktop-image{
+        display: none;
+    }
 
-.navbar-link {
+}
+@media only screen and (min-width: 601px) {
+    .mobile-app-title {
+        display: none; /* Hides the icon on larger screens */
+    }
+    .search-mobile-image{
+        display: none;
+    }
+}
+{
     text-decoration: none;
     color: darkred;
     margin-left: 10px;
