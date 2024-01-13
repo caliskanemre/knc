@@ -8,7 +8,7 @@ function ActivitySubHeader() {
 
     return (
         <AppBar position="relative"  style={{ backgroundColor: '#f5f5f5', height: '40px' }}>
-            <Toolbar style={{ alignItems: 'flex-start', paddingTop: '5px' }}>
+            <Toolbar className="scrollable-toolbar" >
                 <NavLink to="/activities/nature"
                          className="nav-link"
                          activeClassName="active"

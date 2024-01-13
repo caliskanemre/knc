@@ -34,9 +34,6 @@ const ActivityList = () => {
 
         // Define a separate function to fetch activities
         const fetchInitialActivities = async () => {
-
-
-
             try {
                 let fetchUrl = type === undefined
                     ? `${baseURL}/activities/all?page=0&size=20`

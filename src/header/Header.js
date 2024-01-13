@@ -10,7 +10,6 @@ import './Header.css';
 import SearchImage from "../search/search.png"
 import SearchMobileImage from "../search/searchMobile.png"
 
-const isMobile = window.innerWidth <= 600;
 function Header() {
 
     return (
@@ -37,24 +36,14 @@ function Header() {
                         <img
                         src={SearchMobileImage}
                         alt="Search events"
-                        style={{ cursor: 'pointer', width: "100px", marginTop: "15px"}}/>
+                        style={{ cursor: 'pointer', width: "130px", marginTop: "15px"}}/>
                     </span>
                 </NavLink>
 
-                <NavLink
-                    to="/events"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: 'black', marginLeft: '40px', fontSize: '1.6rem'  }}
-                >
+                <NavLink to="/events" className="nav-link nav-item" activeClassName="active">
                     Events
                 </NavLink>
-                <NavLink
-                    to="/activities"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: 'black', marginLeft: '40px' , fontSize: '1.6rem' }}
-                >
+                <NavLink to="/activities" className="nav-link nav-item" activeClassName="active">
                     Activities
                 </NavLink>
                 {/*<NavLink
