@@ -20,13 +20,15 @@ const SearchPage = () => {
     const [activityResult, setActivityResult] = useState([]);
     const [viewType, setViewType] = useState('events');
 
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
     const handleSearch = async () => {
         const page = 0;
         const size = 20;
         // const sort = 'activity_name,desc';
 
         try {
-            const eventResponse = await axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/search`, {
+            const eventResponse = await axios.get(`${baseURL}/events/search`, {
                 params: {
                     query: searchQuery,
                     location: location,
@@ -42,7 +44,7 @@ const SearchPage = () => {
         }
 
         try {
-            const activityResponse = await axios.get(`https://activenty-bb26d9089082.herokuapp.com/activities/search`, {
+            const activityResponse = await axios.get(`${baseURL}/activities/search`, {
                 params: {
                     query: searchQuery,
                     location: location,

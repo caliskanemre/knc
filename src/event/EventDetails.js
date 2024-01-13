@@ -8,10 +8,11 @@ import "./event.css";
 const EventDetails = () => {
     const { eventId } = useParams();
     const [event, setEvent] = useState(null);
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/eventId?eventId=${eventId}`)
+        Axios.get(`${baseURL}/events/eventId?eventId=${eventId}`)
             .then((response) => {
                 setEvent(response.data);
             })

@@ -9,9 +9,11 @@ const ActivityDetails = () => {
     const { id } = useParams();
     const [activity, setActivity] = useState(null);
 
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`https://activenty-bb26d9089082.herokuapp.com/activities/detail/${id}`)
+        Axios.get(`${baseURL}/activities/detail/${id}`)
             .then((response) => {
                 setActivity(response.data);
             })

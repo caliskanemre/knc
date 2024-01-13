@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 
-const MapForactivity = ({ activity }) => {
+const MapForActivity = ({ activity }) => {
     const [map, setMap] = useState(null);
     const [markerPosition, setMarkerPosition] = useState(null);
 
@@ -80,4 +80,4 @@ const MapForactivity = ({ activity }) => {
     );
 };
 
-export default MapForactivity;
+export default MapForActivity;

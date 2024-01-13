@@ -9,7 +9,10 @@ const Map = () => {
     const [selectedEvent, setSelectedEvent] = useState([]);
 
     useEffect(() => {
-        Axios.get('https://activenty-bb26d9089082.herokuapp.com/events/all')
+
+        const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+        Axios.get(`${baseURL}/events/all`)
             .then((response) => {
                 setData(response.data);
             })

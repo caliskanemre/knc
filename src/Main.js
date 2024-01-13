@@ -53,7 +53,7 @@ export default function Main () {
     const [events, setEvents] = useState([]);
     const [expanded, setExpanded] = React.useState(false);
 
-
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const handleExpandClick = () => {
         setExpanded(!expanded);
     };
@@ -67,7 +67,7 @@ export default function Main () {
         const sort = 'interested,desc'; // This sorts the events by 'interest' in descending order
 
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`https://activenty-bb26d9089082.herokuapp.com/events/all`, {
+        Axios.get(`${baseURL}/events/all`, {
             params: {
                 page: page,
                 size: size,

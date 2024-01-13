@@ -24,7 +24,7 @@ const ActivityList = () => {
     const [activities, setActivities] = useState([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
     useEffect(() => {
         // Reset states when type changes
@@ -34,10 +34,13 @@ const ActivityList = () => {
 
         // Define a separate function to fetch activities
         const fetchInitialActivities = async () => {
+
+
+
             try {
                 let fetchUrl = type === undefined
-                    ? `https://activenty-bb26d9089082.herokuapp.com/activities/all?page=0&size=20`
-                    : `https://activenty-bb26d9089082.herokuapp.com/activities/${type}?page=0&size=20`;
+                    ? `${baseURL}/activities/all?page=0&size=20`
+                    : `${baseURL}/activities/${type}?page=0&size=20`;
 
                 const response = await Axios.get(fetchUrl);
                 setActivities(response.data.content);
@@ -54,8 +57,8 @@ const ActivityList = () => {
         try {
             let nextPage = page + 1;
             let fetchUrl = type === undefined
-                ? `https://activenty-bb26d9089082.herokuapp.com/all?page=${nextPage}&size=20`
-                : `https://activenty-bb26d9089082.herokuapp.com/activities/${type}?page=${nextPage}&size=20`;
+                ? `${baseURL}/all?page=${nextPage}&size=20`
+                : `${baseURL}/activities/${type}?page=${nextPage}&size=20`;
 
             const response = await Axios.get(fetchUrl);
             setActivities(prevActivities => [...prevActivities, ...response.data.content]);
