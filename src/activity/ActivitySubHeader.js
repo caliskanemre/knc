@@ -1,79 +1,120 @@
-import React from 'react';
-import Toolbar from '@mui/material/Toolbar';
-import {NavLink} from 'react-router-dom';
-import AppBar from "@mui/material/AppBar";
+import React, {useState} from 'react';
 import "./ActivitySubHeader.css";
+import {ListItemIcon, Menu, MenuItem} from "@mui/material";
+import {NavLink} from "react-router-dom";
+import CampingIcon2 from "./camping2.jpg"
+import wellness from "./wellness.jpg"
+import winter from "./winter.png"
+import swimming from "./swim.png"
+import park from "./park.png"
+import nature from "./nature2.jpg"
+import naturalPark from "./nationalPark3.png"
+import museumIcon from "./img_1.png"
 
 function ActivitySubHeader() {
 
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleMouseEnter = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMouseLeave = () => {
+        setAnchorEl(null);
+    };
+
+
     return (
-        <AppBar position="relative"  style={{ backgroundColor: '#f5f5f5', height: '40px' }}>
-            <Toolbar className="scrollable-toolbar" >
-                <NavLink to="/activities/nature"
-                         className="nav-link"
-                         activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '5px' , fontSize: '1.3rem' }}
+        <div>
+                 <NavLink
+                     to="/activities"
+                     className="nav-link"
+                     activeClassName="active"
+                     onMouseEnter={handleMouseEnter}
+                     style={{ cursor: 'pointer', color: 'black', fontSize: '1.6rem', textDecoration: 'none' }}
                 >
-                    Nature
+                    Activities
                 </NavLink>
-                <NavLink to="/activities/museum"
-                         className="nav-link"
-                         activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
+                <Menu
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={Boolean(anchorEl)}
+                    onClose={handleMouseLeave}
+                    onMouseLeave={handleMouseLeave}
                 >
-                    Museum
-                </NavLink>
+                    <MenuItem onClick={handleMouseLeave} >
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={nature} alt="Nature" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/nature" className="nav-link" activeClassName="active">
+                            Nature
+                        </NavLink>
+                    </MenuItem>
 
-                <NavLink
-                    to="/activities/health"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
-                >
-                    Wellness
-                </NavLink>
-                <NavLink
-                    to="/activities/winter"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
-                >
-                    Winter
-                </NavLink>
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={museumIcon} alt="Museum" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/museum" className="nav-link" activeClassName="active">
+                            Museum
+                        </NavLink>
+                    </MenuItem>
 
-                <NavLink to="/activities/summer"
-                         className="nav-link"
-                         activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
-                >
-                    Summer
-                </NavLink>
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={wellness} alt="Health" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/health" className="nav-link" activeClassName="active">
+                            Health
+                        </NavLink>
+                    </MenuItem>
 
-                <NavLink to="/activities/camping"
-                         className="nav-link"
-                         activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
-                >
-                    Camping
-                </NavLink>
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={winter} alt="Winter" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/winter" className="nav-link" activeClassName="active">
+                            Winter
+                        </NavLink>
+                    </MenuItem>
 
-                <NavLink to="/activities/park"
-                         className="nav-link"
-                         activeClassName="active"
-                         style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px' , fontSize: '1.3rem' }}
-                >
-                    Park
-                </NavLink>
-                <NavLink
-                    to="/activities/national"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: '#333333', marginLeft: '40px', fontSize: '1.3rem'  }}
-                >
-                    National park
-                </NavLink>
-            </Toolbar>
-        </AppBar>
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={swimming} alt="Summer" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/summer" className="nav-link" activeClassName="active">
+                            Summer
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={CampingIcon2} alt="Camping" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/camping" className="nav-link" activeClassName="active">
+                            Camping
+                        </NavLink>
+                    </MenuItem>
+
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={park} alt="Park" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/park" className="nav-link" activeClassName="active">
+                            Park
+                        </NavLink>
+                    </MenuItem>
+
+                    <MenuItem onClick={handleMouseLeave}>
+                        <ListItemIcon style={{ marginRight: '-40px' }}>
+                            <img src={naturalPark} alt="National Park" style={{ width: '24px', height: '24px' }} />
+                        </ListItemIcon>
+                        <NavLink to="/activities/national" className="nav-link" activeClassName="active">
+                            National Park
+                        </NavLink>
+                    </MenuItem>
+
+                </Menu>
+        </div>
     );
 }
 

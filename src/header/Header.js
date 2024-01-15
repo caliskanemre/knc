@@ -9,18 +9,19 @@ import {AccountCircle, PinDropOutlined} from "@mui/icons-material";
 import './Header.css';
 import SearchImage from "../search/search.png"
 import SearchMobileImage from "../search/searchMobile.png"
+import ActivitySubHeader from "../activity/ActivitySubHeader";
 
 function Header() {
 
     return (
-        <AppBar position="relative"  className="app-bar" style={{ backgroundColor: 'white' }}>
+        <AppBar position="relative" style={{ backgroundColor: 'white' }}>
             <Toolbar>
                 {/* Use NavLink for "activenty" to get the active styling */}
                 <NavLink to="/main" className="navbar-link navbar-brand" activeClassName="active">
                     <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'darkorange' }}>
                         <span className="desktop-app-title">αctiventy</span>
                     </Typography>
-                    <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'darkorange', marginTop:'7px' }}>
+                    <Typography style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'darkorange', marginTop:'7px' }}>
                         <span className="mobile-app-title">αctiventy</span>
                     </Typography>
                 </NavLink>
@@ -36,38 +37,16 @@ function Header() {
                         <img
                         src={SearchMobileImage}
                         alt="Search events"
-                        style={{ cursor: 'pointer', width: "130px", marginTop: "15px"}}/>
+                        style={{ cursor: 'pointer', width: "125px", marginTop: "15px"}}/>
                     </span>
                 </NavLink>
 
                 <NavLink to="/events" className="nav-link nav-item" activeClassName="active">
                     Events
                 </NavLink>
-                <NavLink to="/activities" className="nav-link nav-item" activeClassName="active">
-                    Activities
-                </NavLink>
-                {/*<NavLink
-                    to="/"
-                    className="nav-link"
-                    activeClassName="active"
-                    style={{ textDecoration: 'none', color: 'black', marginLeft: '40px' , fontSize: '1.6rem' }}
-                >
-                    Weekend Highlights
-                </NavLink>*/}
-
-                {/*<Box sx={{ flexGrow: 1 }} />*/}
-
-                {/* Map NavLink */}
-                {/*<NavLink to="/map"  className="navbar-link navbar-icons" activeClassName="active">
-                    <IconButton edge="start" aria-label="menu" style={{ color: 'black' }}>
-                        <PinDropOutlined />
-                    </IconButton>
-                </NavLink>*/}
-
-                {/* Account Icon */}
-                {/*<IconButton aria-label="account" style={{ color: 'black' }}>
-                    <AccountCircle />
-                </IconButton>*/}
+                <div>
+                    <ActivitySubHeader/>
+                </div>
             </Toolbar>
         </AppBar>
     );

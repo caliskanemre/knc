@@ -3,7 +3,7 @@ import Axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Avatar, Button, CardHeader} from "@mui/material";
+import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -16,8 +16,24 @@ import winter from "./winter.png"
 import swimming from "./swim.png"
 import park from "./park.png"
 import nature from "./nature2.jpg"
-import naturalPark from "./natural_park.png"
+import naturalPark from "./nationalPark3.png"
 import museumIcon from "./img_1.png"
+import FilterListIcon from '@mui/icons-material/FilterList';
+import {ActivityFilter} from "../filter/ActivityFilter";
+import {MapRounded, Pin} from "@mui/icons-material";
+import {MapFill} from "react-bootstrap-icons";
+import {GoogleMap, Marker} from "@react-google-maps/api";
+
+const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+};
+
+const center = {
+    lat: 59.47, // Example latitude
+    lng: 25.15, // Example longitude
+};
+
 
 const ActivityList = () => {
     const { type } = useParams();
@@ -25,6 +41,9 @@ const ActivityList = () => {
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [openFilterDialog, setOpenFilterDialog] = useState(false);
+    const [mapOpen, setMapOpen] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
 
     useEffect(() => {
         // Reset states when type changes
@@ -32,7 +51,7 @@ const ActivityList = () => {
         setPage(0);
         setHasMore(true);
 
-        // Define a separate function to fetch activities
+
         const fetchInitialActivities = async () => {
             try {
                 let fetchUrl = type === undefined
@@ -50,6 +69,24 @@ const ActivityList = () => {
         // Fetch initial activities for the new type
         fetchInitialActivities();
     }, [type]);
+
+
+    const handleOpenMapDialog = () => {
+        setMapOpen(true);
+        askForUserLocation();
+    };
+
+    const handleCloseMapDialog = () => {
+        setMapOpen(false);
+    };
+
+    const handleOpenFilterDialog = () => {
+        setOpenFilterDialog(true);
+    };
+
+    const handleCloseFilterDialog = () => {
+        setOpenFilterDialog(false);
+    };
     const loadMoreActivities = async () => {
         try {
             let nextPage = page + 1;
@@ -76,10 +113,46 @@ const ActivityList = () => {
         museum: museumIcon
     };
 
+    const askForUserLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    });
+                },
+                () => {
+                    console.error('Error: The Geolocation service failed.');
+                }
+            );
+        } else {
+            console.error('Error: Your browser doesn\'t support geolocation.');
+        }
+    };
+
     return (
         <div className="activity-list">
             <Header/>
-            <ActivitySubHeader/>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                <Button style={{ marginRight: '20px' }}
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<FilterListIcon />}
+                    onClick={handleOpenFilterDialog}
+                >
+                    Filter
+                </Button>
+
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<MapRounded />}
+                    onClick={handleOpenMapDialog}
+                >
+                    Activities Nearby
+                </Button>
+            </div>
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
                     {activities.map((item) => {
@@ -112,9 +185,46 @@ const ActivityList = () => {
                     })}
                 </Grid>
                 {hasMore && (
-                    <Button onClick={loadMoreActivities}>Load More</Button>
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                        <Button
+                            onClick={loadMoreActivities}
+                            variant="contained"
+                            color="primary"
+                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
+                        >
+                            Load More
+                        </Button>
+                    </div>
                 )}
             </Container>
+            <Button onClick={handleOpenFilterDialog}>Open Filter</Button>
+            <ActivityFilter
+                openFilterDialog={openFilterDialog}
+                handleCloseFilterDialog={handleCloseFilterDialog}
+            />
+
+            <Dialog
+                open={mapOpen}
+                onClose={handleCloseMapDialog}
+                aria-labelledby="map-dialog-title"
+                fullWidth
+                maxWidth="lg"
+            >
+                <DialogContent>
+                    <GoogleMap
+                        mapContainerStyle={mapContainerStyle}
+                        zoom={8}
+                        center={userLocation || {center}}
+                    >
+                        {userLocation && (
+                            <Marker
+                                position={userLocation}
+                                // Optionally, you can add an onClick handler for each Marker
+                            />
+                        )}
+                    </GoogleMap>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
