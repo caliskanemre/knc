@@ -3,13 +3,12 @@ import Axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogTitle} from "@mui/material";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import {Link, useParams} from "react-router-dom";
-import ActivitySubHeader from "./ActivitySubHeader";
 import CampingIcon2 from "./camping2.jpg"
 import wellness from "./wellness.jpg"
 import winter from "./winter.png"
@@ -20,9 +19,10 @@ import naturalPark from "./nationalPark3.png"
 import museumIcon from "./img_1.png"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
-import {MapRounded, Pin} from "@mui/icons-material";
-import {MapFill} from "react-bootstrap-icons";
-import {GoogleMap, Marker} from "@react-google-maps/api";
+import {MapRounded} from "@mui/icons-material";
+import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
+import { useNavigate } from 'react-router-dom';
+
 
 const mapContainerStyle = {
     width: '100%',
@@ -44,34 +44,81 @@ const ActivityList = () => {
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
+    const [markers, setMarkers] = useState([]);
+    const [isMapReady, setIsMapReady] = useState(false);
+    const [selectedMarker, setSelectedMarker] = useState(null);
+
+    const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
+
+    const navigate = useNavigate();
+
+    const fetchInitialActivities = async () => {
+        try {
+            let fetchUrl = type === undefined
+                ? `${baseURL}/activities/all?page=0&size=20`
+                : `${baseURL}/activities/${type}?page=0&size=20`;
+
+            const response = await Axios.get(fetchUrl);
+            const fetchedActivities = response.data.content;
+            setActivities(fetchedActivities);
+            setHasMore(response.data.totalPages > 1);
+        } catch (error) {
+            console.error('Error fetching initial activities:', error);
+        }
+    };
 
     useEffect(() => {
-        // Reset states when type changes
         setActivities([]);
         setPage(0);
         setHasMore(true);
-
-
-        const fetchInitialActivities = async () => {
-            try {
-                let fetchUrl = type === undefined
-                    ? `${baseURL}/activities/all?page=0&size=20`
-                    : `${baseURL}/activities/${type}?page=0&size=20`;
-
-                const response = await Axios.get(fetchUrl);
-                setActivities(response.data.content);
-                setHasMore(response.data.totalPages > 1);
-            } catch (error) {
-                console.error('Error fetching initial activities:', error);
-            }
-        };
-
-        // Fetch initial activities for the new type
         fetchInitialActivities();
     }, [type]);
 
+    const fetchPins = async (activityType) => {
+        try {
+            const response = await Axios.get(`${baseURL}/activities/pins/${activityType}`);
+            const pinsData = response.data;
+            prepareMarkers(pinsData);
+        } catch (error) {
+            console.error('Error fetching pins:', error);
+        }
+    };
 
-    const handleOpenMapDialog = () => {
+    const prepareMarkers = (pins) => {
+        if (!isGoogleMapsApiLoaded()) {
+            console.error('Google Maps API is not loaded');
+            return;
+        }
+
+        const tempMarkers = pins.map(pin => ({
+            title: pin.title,
+            id: pin.id,
+            lat: parseFloat(pin.lat),
+            lng: parseFloat(pin.lon)
+        }));
+
+        setMarkers(tempMarkers);
+    };
+
+    const handleMarkerClick = (activity) => {
+        // Assuming each activity has lat and lng properties
+        setSelectedMarker({
+            ...activity,
+            position: {
+                lat: parseFloat(activity.lat),
+                lng: parseFloat(activity.lon)
+            }
+        });
+    };
+
+    const handleInfoWindowClick = (activity) => {
+        if (activity && activity.id) {
+            navigate(`/activities/detail/${activity.id}`);
+        }
+    };
+    const handleOpenMapDialog = async () => {
+        // Fetch pins for the current activity type
+        await fetchPins(type);
         setMapOpen(true);
         askForUserLocation();
     };
@@ -130,6 +177,7 @@ const ActivityList = () => {
             console.error('Error: Your browser doesn\'t support geolocation.');
         }
     };
+
 
     return (
         <div className="activity-list">
@@ -202,7 +250,7 @@ const ActivityList = () => {
                 openFilterDialog={openFilterDialog}
                 handleCloseFilterDialog={handleCloseFilterDialog}
             />
-
+            {isGoogleMapsApiLoaded() ? (
             <Dialog
                 open={mapOpen}
                 onClose={handleCloseMapDialog}
@@ -210,21 +258,64 @@ const ActivityList = () => {
                 fullWidth
                 maxWidth="lg"
             >
+                <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
                 <DialogContent>
-                    <GoogleMap
-                        mapContainerStyle={mapContainerStyle}
-                        zoom={8}
-                        center={userLocation || {center}}
-                    >
-                        {userLocation && (
-                            <Marker
-                                position={userLocation}
-                                // Optionally, you can add an onClick handler for each Marker
-                            />
-                        )}
-                    </GoogleMap>
+
+                        <GoogleMap
+                            mapContainerStyle={mapContainerStyle}
+                            zoom={8}
+                            center={userLocation || center}
+                            onUnmount={() => setIsMapReady(false)}
+                            onLoad={() => {
+                                setTimeout(() => {
+                                    setIsMapReady(true);
+                                }, 2000); // 2 seconds delay
+                            }}
+
+                        >
+                            {userLocation && (
+                                <Marker
+                                    position={userLocation}
+                                    icon={{
+                                        path: "M0-48c-9,0-16,7-16,16s7,16,16,16,16-7,16-16-7-16-16-16z",
+                                        fillColor: '#FF0000',
+                                        fillOpacity: 1.0,
+                                        scale: 0.5,
+                                        strokeColor: '#000000',
+                                        strokeWeight: 2,
+                                    }}
+                                />
+                            )}
+                            {isMapReady && markers.map((marker, index) => {
+                                return (
+                                    <Marker
+                                        key={marker.id} // Assuming each activity has a unique id
+                                        position={marker}
+                                        title={marker.title}
+                                        onClick={() => handleMarkerClick(marker)}
+                                    />
+                                );
+                            })}
+                            {selectedMarker && (
+                                <InfoWindow
+                                    position={selectedMarker.position}
+                                    onCloseClick={() => setSelectedMarker(null)}
+                                >
+                                    <div>
+                                        <h3>{selectedMarker.title}</h3>
+                                        <button onClick={() => handleInfoWindowClick(selectedMarker)}>
+                                            View Details
+                                        </button>
+                                    </div>
+                                </InfoWindow>
+                            )}
+
+                        </GoogleMap>
+
                 </DialogContent>
-            </Dialog>
+            </Dialog> ) : (
+                <div>Loading Maps...</div>
+                )}
         </div>
     );
 };

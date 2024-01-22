@@ -31,7 +31,7 @@ function ActivitySubHeader() {
                      className="nav-link"
                      activeClassName="active"
                      onMouseEnter={handleMouseEnter}
-                     style={{ cursor: 'pointer', color: 'black', fontSize: '1.6rem', textDecoration: 'none' }}
+                     style={{ cursor: 'pointer', color: 'black', fontSize: '1rem', textDecoration: 'none' }}
                 >
                     Activities
                 </NavLink>
