@@ -1,53 +1,104 @@
 /* Header.css */
-
-.nav-link.nav-item {
-    text-decoration: none;
-    color: black;
-    margin-left: 40px;
-    font-size: 1.6rem; /* Original size */
+.large-letter-mobile{
+    font-size: 3rem; /* Set font size */
 }
 
-@media only screen and (max-width: 600px) { /* Adjust 600px as needed for your mobile breakpoint */
-    .desktop-app-title {
-        display: none; /* Hides the full title on small screens */
+/* General Styles */
+.nav-link.nav-item,
+.navbar-link a,
+.nav-link a,
+.navbar-link:hover,
+.navbar-link.active a,
+.nav-link.active a {
+    text-decoration: none !important; /* Removes text decoration */
+    color: black; /* Text color */
+}
+
+/* Hover and active link styles */
+.navbar-link:hover,
+.navbar-link.active {
+    color: #000;
+    font-weight: bold; /* Makes text bold */
+}
+
+/* Brand and icons styles */
+.navbar-brand {
+    font-weight: bold; /* Makes text bold */
+    font-size: 1.5rem; /* Set font size */
+}
+
+.navbar-icons {
+    color: black; /* Icon color */
+}
+
+.navbar-icons:hover {
+    background-color: #eee; /* Background color on hover */
+    border-radius: 50%; /* Rounded shape on hover */
+}
+
+/* Search icon styles */
+.search-mobile-image {
+    display: none; /* Hide by default, will be shown in mobile view */
+}
+
+/* Desktop-specific styles */
+@media only screen and (min-width: 768px) {
+    .mobile-app-title {
+        display: none; /* Hide mobile title on desktop */
     }
-    .search-desktop-image{
-        display: none;
-    }
+
     .nav-link.nav-item {
+        margin-left: 40px; /* Space out nav items */
+        font-size: 1.6rem; /* Original size */
+    }
+}
+
+/* Mobile-specific styles */
+@media only screen and (max-width: 768px) {
+    .desktop-app-title {
+        display: none; /* Hide desktop title on mobile */
+    }
+    .mobile-app-title {
+
+        display: block; /* Show mobile title */
+        font-size: 1.8rem; /* Set font size */
+        margin-left: 165px;
+    }
+
+    .search-desktop-image {
+        display: none; /* Hide desktop search icon on mobile */
+    }
+
+    .toolbar-mobile {
+        display: inline-block;
+
+    }
+
+    .sub-header {
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+        background-color: #f8f8f8; /* Adjust color as needed */
+    }
+
+    .nav-item-mobile-hidden {
+        display: none; /* Hide nav items that should not appear on mobile */
+    }
+
+    .search-mobile-image {
+        display: block; /* Show mobile search icon */
+        cursor: pointer;
+        margin-top: 5px;
+        margin-right: 5px;
+    }
+
+    /* Adjust nav items on mobile */
+    .nav-link.nav-item {
+        text-decoration: none;
         margin-left: 15px; /* Smaller margin for mobile */
         font-size: 1rem; /* Smaller font size for mobile */
         margin-top: 7px;
     }
-
-}
-@media only screen and (min-width: 601px) {
-    .mobile-app-title {
-        display: none; /* Hides the icon on larger screens */
-    }
-    .search-mobile-image{
-        display: none;
-    }
 }
 
-
-.navbar-link:hover, .navbar-link.active {
-    color: #000;
-    font-weight: bold;
-}
-
-.navbar-brand {
-    font-weight: bold;
-    font-size: 1.5rem;
-}
-
-.navbar-icons {
-    color: black;
-}
-
-.navbar-icons:hover {
-    background-color: #eee;
-    border-radius: 50%;
-}
-
-/* .active class styling removed here */
+/* This will center all toolbar items */
