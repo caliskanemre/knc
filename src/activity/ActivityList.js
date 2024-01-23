@@ -4,24 +4,23 @@ import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogTitle} from "@mui/material";
-import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import {Link, useParams} from "react-router-dom";
-import CampingIcon2 from "./camping2.jpg"
+import {Link, useNavigate, useParams} from "react-router-dom";
+import CampingIcon2 from "./camping3.jpg"
 import wellness from "./wellness.jpg"
-import winter from "./winter.png"
-import swimming from "./swim.png"
-import park from "./park.png"
+import winter from "./winter2.jpg"
+import swimming from "./summer2.jpg"
+import park from "./park2.png"
 import nature from "./nature2.jpg"
 import naturalPark from "./nationalPark3.png"
-import museumIcon from "./img_1.png"
+import museumIcon from "./museum2.jpg"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
 import {MapRounded} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
-import { useNavigate } from 'react-router-dom';
+import BackgroundGallery from "../BackgroundGallery";
 
 
 const mapContainerStyle = {
@@ -54,6 +53,7 @@ const ActivityList = () => {
 
     const fetchInitialActivities = async () => {
         try {
+            // Fetching the initial list of activities
             let fetchUrl = type === undefined
                 ? `${baseURL}/activities/all?page=0&size=20`
                 : `${baseURL}/activities/${type}?page=0&size=20`;
@@ -62,8 +62,9 @@ const ActivityList = () => {
             const fetchedActivities = response.data.content;
             setActivities(fetchedActivities);
             setHasMore(response.data.totalPages > 1);
+
         } catch (error) {
-            console.error('Error fetching initial activities:', error);
+            console.error('Error fetching activities with photos:', error);
         }
     };
 
@@ -73,6 +74,7 @@ const ActivityList = () => {
         setHasMore(true);
         fetchInitialActivities();
     }, [type]);
+
 
     const fetchPins = async (activityType) => {
         try {
@@ -216,11 +218,7 @@ const ActivityList = () => {
                                         />
                                     </div>
                                     <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <CardMedia
-                                                component="div"
-                                                sx={{ pt: '56.25%' }}
-                                                image={item.activity_cover_photo}
-                                        />
+                                       <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </Link>
                                     <CardContent sx={{ flexGrow: 1, maxHeight:'100px'}}>
                                         <Typography>

@@ -51,6 +51,9 @@
         margin-left: 40px; /* Space out nav items */
         font-size: 1.6rem; /* Original size */
     }
+    .sub-header {
+        display: none;
+    }
 }
 
 /* Mobile-specific styles */
@@ -62,7 +65,7 @@
 
         display: block; /* Show mobile title */
         font-size: 1.8rem; /* Set font size */
-        margin-left: 165px;
+        margin-left: 150px;
     }
 
     .search-desktop-image {
@@ -100,5 +103,6 @@
         margin-top: 7px;
     }
 }
+
 
 /* This will center all toolbar items */

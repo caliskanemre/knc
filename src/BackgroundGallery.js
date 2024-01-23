@@ -15,7 +15,7 @@ const BackgroundGallery = ({ images }) => {
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-        }, 5000);
+        }, 20000);
 
         return () => clearInterval(interval);
     }, [images.length]);
