@@ -4,10 +4,19 @@ import Axios from "axios";
 import Header from "../header/Header";
 import MapForActivity from "./MapForActivity";
 import BackgroundGallery from "../BackgroundGallery";
+import './ActivityDetails.css';
+import {Button} from "@mui/material";
 
 const ActivityDetails = () => {
     const { id } = useParams();
     const [activity, setActivity] = useState(null);
+    const [isMapOpen, setIsMapOpen] = useState(false);
+
+    const toggleMap = () => {
+        setIsMapOpen(!isMapOpen);
+        console.log("Map Open State:", !isMapOpen); // This should log true/false alternately on each click
+    };
+
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
@@ -50,9 +59,8 @@ const ActivityDetails = () => {
                     <BackgroundGallery images={activity.photos.map((photo) => photo.photo)} />
                 </div>
             )}
-            <div style={{ display: 'flex', margin: '20px 0' }}>
-                <div style={{flex: 2,  display: 'inline-block', background: 'white', padding: '20px', borderRadius: '10px', marginLeft:'30px', marginRight:'30px',
-                    marginTop: '20px', marginBottom: '20px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.8)' }}>
+            <div className="activity-container">
+                <div className="activity">
                     <h2>{activity.title}</h2>
                     {activity.activity_description && <p>{activity.activity_description}</p>}
                     {activity.activity_location && <p>Location: {activity.activity_location}</p>}
@@ -62,12 +70,13 @@ const ActivityDetails = () => {
                     {activity.activity_email && <p>E-mail: {activity.activity_email}</p>}
                     {activity.activity_website && <p>Website: {activity.activity_website}</p>}
                     {activity.activity_price && <p>Price: {activity.activity_price}</p>}
+                    <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
 
                 </div>
-                <div style={{flex: 1,  display: 'inline-block', background: 'white', padding: '20px', borderRadius: '10px', marginLeft:'30px', marginRight:'30px',
-                    marginTop: '20px', marginBottom: '20px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.8)' }}>
+                <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForActivity activity={activity} />
                 </div>
+
             </div>
         </div>
     );

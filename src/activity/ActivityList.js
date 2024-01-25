@@ -3,7 +3,7 @@ import Axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogTitle} from "@mui/material";
+import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogTitle, useMediaQuery, useTheme} from "@mui/material";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
@@ -46,6 +46,8 @@ const ActivityList = () => {
     const [markers, setMarkers] = useState([]);
     const [isMapReady, setIsMapReady] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState(null);
+    const theme = useTheme();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
@@ -249,13 +251,14 @@ const ActivityList = () => {
                 handleCloseFilterDialog={handleCloseFilterDialog}
             />
             {isGoogleMapsApiLoaded() ? (
-            <Dialog
-                open={mapOpen}
-                onClose={handleCloseMapDialog}
-                aria-labelledby="map-dialog-title"
-                fullWidth
-                maxWidth="lg"
-            >
+                <Dialog
+                    open={mapOpen}
+                    onClose={handleCloseMapDialog}
+                    aria-labelledby="map-dialog-title"
+                    fullWidth
+                    fullScreen={fullScreen} // Full-screen on smaller devices
+                    maxWidth="xl" // Extra-large dialog on larger screens
+                >
                 <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
                 <DialogContent>
 

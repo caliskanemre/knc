@@ -38,23 +38,14 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog }) =
                         {location.label}
                     </MenuItem>
                 ))} */}
-                        <MenuItem value="location1">Location 1</MenuItem>
-                        <MenuItem value="location2">Location 2</MenuItem>
+                        <MenuItem value="location1">Tallinn</MenuItem>
+                        <MenuItem value="location2">Tartu</MenuItem>
+                        <MenuItem value="location3">Parnu</MenuItem>
+                        <MenuItem value="location4">Saaremaa</MenuItem>
+                        <MenuItem value="location5">Hijumaa</MenuItem>
                         {/* Add other locations here */}
                     </Select>
                 </FormControl>
-
-                {/* Filter by Nearby */}
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            // checked={isNearby} // state to handle 'nearby' checkbox
-                            // onChange={handleNearbyChange} // function to update 'nearby' checkbox
-                            name="nearby"
-                        />
-                    }
-                    label="Nearby Activities"
-                />
 
                 {/* Additional filter options can be added here */}
 
