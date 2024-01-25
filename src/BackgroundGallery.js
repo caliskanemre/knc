@@ -4,22 +4,39 @@ import {Button} from "@mui/material";
 
 const BackgroundGallery = ({ images }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isFading, setIsFading] = useState(false);
 
     const handlers = useSwipeable({
-        onSwipedLeft: () => setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length),
-        onSwipedRight: () => setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length),
+        onSwipedLeft: () => {
+            setIsFading(true); // Begin fade-out
+            setTimeout(() => {
+                setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
+                setIsFading(false); // Begin fade-in
+            }, 500); // Match this delay with the CSS transition time
+        },
+        onSwipedRight: () => {
+            setIsFading(true); // Begin fade-out
+            setTimeout(() => {
+                setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length);
+                setIsFading(false); // Begin fade-in
+            }, 500); // Match this delay with the CSS transition time
+        },
         preventDefaultTouchmoveEvent: true,
         trackMouse: true
     });
 
+
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-        }, 20000);
+            setIsFading(true); // Begin fade-out
+            setTimeout(() => {
+                setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
+                setIsFading(false); // Begin fade-in
+            }, 500); // Delay for fade-out, should match CSS transition time
+        }, 10000);
 
         return () => clearInterval(interval);
     }, [images.length]);
-
     const goToNextImage = () => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
     };
@@ -32,13 +49,16 @@ const BackgroundGallery = ({ images }) => {
     return (
         <div {...handlers} style={{
             position: 'relative',
+            overflow: 'hidden',
             backgroundImage: `url(${images[currentImageIndex]})`,
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover', // or 'contain' based on your preference
+            backgroundSize: 'cover',
             width: '100%',
             height: '40vh',
             zIndex: 2,
+            opacity: isFading ? 0 : 1, // Control opacity for fade-in/out
+            transition: 'opacity 0.5s ease-in-out', // Smooth transition for fade effect
         }}>
             <Button onClick={goToPreviousImage} style={{
                 position: 'absolute',

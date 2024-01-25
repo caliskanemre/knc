@@ -2,14 +2,14 @@ import React, {useState} from 'react';
 import "./ActivitySubHeader.css";
 import {ListItemIcon, Menu, MenuItem} from "@mui/material";
 import {NavLink} from "react-router-dom";
-import CampingIcon2 from "./camping3.jpg"
-import wellness from "./wellness.jpg"
-import winter from "./winter2.jpg"
-import swimming from "./summer2.jpg"
-import park from "./park2.png"
-import nature from "./national2.png"
-import naturalPark from "./nationalPark3.png"
-import museumIcon from "./museum2.jpg"
+import CampingIcon2 from "../images/camping3.jpg"
+import wellness from "../images/wellness.jpg"
+import winter from "../images/winter2.jpg"
+import swimming from "../images/summer2.jpg"
+import park from "../images/park2.png"
+import nature from "../images/national2.png"
+import naturalPark from "../images/nationalPark3.png"
+import museumIcon from "../images/museum2.jpg"
 
 function ActivitySubHeader() {
 

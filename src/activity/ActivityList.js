@@ -3,22 +3,32 @@ import Axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Avatar, Button, CardHeader, Dialog, DialogContent, DialogTitle, useMediaQuery, useTheme} from "@mui/material";
+import {
+    Avatar,
+    Button,
+    CardHeader,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    SwipeableDrawer,
+    useMediaQuery,
+    useTheme
+} from "@mui/material";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import {Link, useNavigate, useParams} from "react-router-dom";
-import CampingIcon2 from "./camping3.jpg"
-import wellness from "./wellness.jpg"
-import winter from "./winter2.jpg"
-import swimming from "./summer2.jpg"
-import park from "./park2.png"
-import nature from "./nature2.jpg"
-import naturalPark from "./nationalPark3.png"
-import museumIcon from "./museum2.jpg"
+import CampingIcon2 from "../images/camping3.jpg"
+import wellness from "../images/wellness.jpg"
+import winter from "../images/winter2.jpg"
+import swimming from "../images/summer2.jpg"
+import park from "../images/park2.png"
+import nature from "../images/nature2.jpg"
+import naturalPark from "../images/nationalPark3.png"
+import museumIcon from "../images/museum2.jpg"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
-import {MapRounded} from "@mui/icons-material";
+import {MapOutlined, MapRounded} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
 import BackgroundGallery from "../BackgroundGallery";
 
@@ -199,10 +209,10 @@ const ActivityList = () => {
                 <Button
                     variant="outlined"
                     color="secondary"
-                    startIcon={<MapRounded />}
+                    startIcon={<MapOutlined />}
                     onClick={handleOpenMapDialog}
                 >
-                    Activities Nearby
+                    Map
                 </Button>
             </div>
             <Container sx={{ py: 9 }} maxWidth="xl">
@@ -251,13 +261,15 @@ const ActivityList = () => {
                 handleCloseFilterDialog={handleCloseFilterDialog}
             />
             {isGoogleMapsApiLoaded() ? (
-                <Dialog
+                <SwipeableDrawer
+                    anchor="bottom"
                     open={mapOpen}
                     onClose={handleCloseMapDialog}
-                    aria-labelledby="map-dialog-title"
-                    fullWidth
-                    fullScreen={fullScreen} // Full-screen on smaller devices
-                    maxWidth="xl" // Extra-large dialog on larger screens
+                    onOpen={handleOpenMapDialog}
+                    fullScreen={fullScreen}
+                    ModalProps={{
+                        keepMounted: true, // Better performance on mobile
+                    }}
                 >
                 <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
                 <DialogContent>
@@ -314,7 +326,7 @@ const ActivityList = () => {
                         </GoogleMap>
 
                 </DialogContent>
-            </Dialog> ) : (
+                </SwipeableDrawer> ) : (
                 <div>Loading Maps...</div>
                 )}
         </div>
