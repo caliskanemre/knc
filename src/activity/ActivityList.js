@@ -30,7 +30,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
 import {MapOutlined, MapRounded} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
-import BackgroundGallery from "../BackgroundGallery";
+import BackgroundGallery from "../shared/BackgroundGallery";
 
 
 const mapContainerStyle = {
@@ -221,15 +221,16 @@ const ActivityList = () => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
                                 <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
-                                    <div  style={{display: 'flex', flexDirection: 'row'}}>
-                                        <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '5px', marginTop: '10px' }}>
-                                            <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
-                                        </Avatar>
-                                        <CardHeader style={{display:'top', height:'40px'}}
-                                            title={item.title}
+
+                                    <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <div  style={{display: 'flex', flexDirection: 'row'}}>
+                                            <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '5px', marginTop: '10px' }}>
+                                                <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
+                                            </Avatar>
+                                            <CardHeader style={{display:'top', height:'40px'}}
+                                                        title={item.title}
                                         />
                                     </div>
-                                    <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </Link>
                                     <CardContent sx={{ flexGrow: 1, maxHeight:'100px'}}>

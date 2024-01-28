@@ -23,19 +23,6 @@ const MapForActivity = ({ activity }) => {
                     lat: parseFloat(activity.lat),
                     lng: parseFloat(activity.lon)
                 });
-            } else {
-                // Use geocoding to get coordinates
-                const geocoder = new window.google.maps.Geocoder();
-                geocoder.geocode({ address: activity.location }, (results, status) => {
-                    if (status === 'OK') {
-                        setMarkerPosition({
-                            lat: results[0].geometry.location.lat(),
-                            lng: results[0].geometry.location.lng()
-                        });
-                    } else {
-                        console.error('Geocode was not successful for the following reason: ' + status);
-                    }
-                });
             }
         }
     }, [activity]);

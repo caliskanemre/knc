@@ -3,7 +3,7 @@ import {useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForActivity from "./MapForActivity";
-import BackgroundGallery from "../BackgroundGallery";
+import BackgroundGallery from "../shared/BackgroundGallery";
 import './ActivityDetails.css';
 import {Button} from "@mui/material";
 

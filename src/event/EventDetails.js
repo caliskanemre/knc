@@ -3,12 +3,21 @@ import {useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForEvent from "./MapForEvent";
-import "./event.css";
+import "./EventDetails.css";
+import {Button} from "@mui/material";
+import BackgroundGallery from "../shared/BackgroundGallery";
 
 const EventDetails = () => {
     const { eventId } = useParams();
     const [event, setEvent] = useState(null);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [isMapOpen, setIsMapOpen] = useState(false);
+
+    const toggleMap = () => {
+        setIsMapOpen(!isMapOpen);
+        console.log("Map Open State:", !isMapOpen); // This should log true/false alternately on each click
+    };
+
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
@@ -26,28 +35,40 @@ const EventDetails = () => {
     }
 
     return (
-        <div className="event-details" style={{ textAlign: 'left', position: 'relative' }}>
+        <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
             <Header/>
             {event.photo && (
-                <div className="event-photo-container">
-                    <div className="event-photo-overlay"></div>
+                <div style={{ position: 'relative' }}>
+                    {/* Background overlay */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%', // Cover 100% on mobile
+                            height: '100%',
+                            zIndex: 1, // Make sure it's above the images
+                        }}
+
+                    >
+
+                    </div>
+                    {/* Concatenate photo URLs into a single array */}
                     <img src={event.photo} alt="Event" className="event-photo" />
                 </div>
             )}
-            <div className="event-detail-container">
-                <div className="event-info">
+            <div className="event-container">
+                <div className="event">
                     <p>{event.date}</p>
                     <h2>{event.title}</h2>
                     <p>About the event: {event.description}</p>
-                    <p>Location: {event.location}</p>
                     <p>Type: {event.type}</p>
                     <p>Start Date: {event.dateFrom}</p>
                     <p>End Date: {event.dateTo}</p>
                     <p>Place: {event.place}</p>
-                    <p>Going: {event.going}</p>
-                    <p>Interested: {event.interested}</p>
+                    <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
                 </div>
-                <div className="event-map">
+                <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForEvent event={event} />
                 </div>
             </div>

@@ -22,7 +22,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import BackgroundGallery from "./BackgroundGallery";
+import BackgroundGallery from "./shared/BackgroundGallery";
 
 /*function Copyright() {
     return (

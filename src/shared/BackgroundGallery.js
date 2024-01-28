@@ -8,18 +8,14 @@ const BackgroundGallery = ({ images }) => {
 
     const handlers = useSwipeable({
         onSwipedLeft: () => {
-            setIsFading(true); // Begin fade-out
             setTimeout(() => {
                 setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-                setIsFading(false); // Begin fade-in
-            }, 500); // Match this delay with the CSS transition time
+            }); // Match this delay with the CSS transition time
         },
         onSwipedRight: () => {
-            setIsFading(true); // Begin fade-out
             setTimeout(() => {
                 setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length);
-                setIsFading(false); // Begin fade-in
-            }, 500); // Match this delay with the CSS transition time
+            }); // Match this delay with the CSS transition time
         },
         preventDefaultTouchmoveEvent: true,
         trackMouse: true
