@@ -7,32 +7,54 @@ import {
     FormControl,
     FormControlLabel,
     InputLabel, MenuItem,
-    Select
+    Select, TextField
 } from "@mui/material";
 import React, {useState} from "react";
+import { DatePicker } from '@mui/x-date-pickers';
+
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 
 export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredActivities}) => {
 
     const [selectedLocation, setSelectedLocation] = useState('');
+    const [startDate, setStartDate] = useState(null); // State for start date
+    const [endDate, setEndDate] = useState(null); // State for end date
+
 
     // Handle location selection change
     const handleLocationChange = (event) => {
         setSelectedLocation(event.target.value);
     };
 
+    // Handle start date change
+    const handleStartDateChange = (newValue) => {
+        setStartDate(newValue);
+    };
+
+    // Handle end date change
+    const handleEndDateChange = (newValue) => {
+        setEndDate(newValue);
+    };
+
     // Send request to backend with selected location as a filter
     const applyFilters = () => {
         // Assuming you have a function to make the backend call
         // replace `fetchFilteredActivities` with your actual function
-        fetchFilteredActivities(selectedLocation);
+        fetchFilteredActivities(selectedLocation, startDate, endDate);
         handleCloseFilterDialog(); // Close the dialog upon applying filters
     };
 
     const fetchFilteredActivities = (location) => {
+
+        const formattedStartDate = startDate ? startDate.toISOString().split('T')[0] : '';
+        const formattedEndDate = endDate ? endDate.toISOString().split('T')[0] : '';
+
+        // Update the URL to include date range parameters
+        const url = `${baseURL}/activities/location/${location}/${type}?page=0&size=20&start_date=${formattedStartDate}&end_date=${formattedEndDate}`;
+
         // Here, use the appropriate URL, HTTP method, and body to match your backend API
-        fetch(`${baseURL}/activities/location/${location}/${type}?page=0&size=20`, {
+        fetch(url, {
             method: 'GET', // or 'POST', if required by your backend
             headers: {
                 'Content-Type': 'application/json',
@@ -58,7 +80,7 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                     Select filters to refine your activity search.
                 </DialogContentText>
 
-                {/* Filter by Location */}
+
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="location-label">Location</InputLabel>
                     <Select
@@ -77,10 +99,25 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                         <MenuItem value="Hiiumaa">Hiiumaa</MenuItem>
                         {/* Add other locations here */}
                     </Select>
+
+
                 </FormControl>
 
-                {/* Additional filter options can be added here */}
 
+                <DatePicker
+                    label="Start Date"
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                />
+
+                {/* Filter by End Date */}
+                <DatePicker
+                    label="End Date"
+                    value={endDate}
+                    onChange={handleEndDateChange}
+                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                />
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseFilterDialog} color="primary">
