@@ -72,8 +72,9 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                         <MenuItem value="Tallinn">Tallinn</MenuItem>
                         <MenuItem value="Tartu">Tartu</MenuItem>
                         <MenuItem value="Parnu">Parnu</MenuItem>
+                        <MenuItem value="Narva">Narva</MenuItem>
                         <MenuItem value="Saaremaa">Saaremaa</MenuItem>
-                        <MenuItem value="Hijumaa">Hijumaa</MenuItem>
+                        <MenuItem value="Hiiumaa">Hiiumaa</MenuItem>
                         {/* Add other locations here */}
                     </Select>
                 </FormControl>

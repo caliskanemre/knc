@@ -138,7 +138,21 @@ const EventList = () => {
             console.error('Error: Your browser doesn\'t support geolocation.');
         }
     };
+    const loadMoreEvents = async () => {
+        try {
+            let nextPage = page + 1;
+            let fetchUrl = type === undefined
+                ? `${baseURL}/events/all?page=${nextPage}&size=20`
+                : `${baseURL}/events/${type}?page=${nextPage}&size=20`;
 
+            const response = await Axios.get(fetchUrl);
+            setEvents(prevEvents => [...prevEvents, ...response.data.content]);
+            setHasMore(response.data.totalPages > nextPage + 1);
+            setPage(nextPage);
+        } catch (error) {
+            console.error('Error fetching more activities:', error);
+        }
+    };
 
     return (
         <div className="event-list">
@@ -194,6 +208,18 @@ const EventList = () => {
                         );
                     })}
                 </Grid>
+                {hasMore && (
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                        <Button
+                            onClick={loadMoreEvents}
+                            variant="contained"
+                            color="primary"
+                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
+                        >
+                            Load More
+                        </Button>
+                    </div>
+                )}
                 {isGoogleMapsApiLoaded() ? (
                     <SwipeableDrawer
                         anchor="bottom"
