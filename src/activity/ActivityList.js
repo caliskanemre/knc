@@ -63,6 +63,10 @@ const ActivityList = () => {
 
     const navigate = useNavigate();
 
+    const updateFilteredActivities = (filteredActivities) => {
+        setActivities(filteredActivities);
+    };
+
     const fetchInitialActivities = async () => {
         try {
             // Fetching the initial list of activities
@@ -131,7 +135,6 @@ const ActivityList = () => {
         }
     };
     const handleOpenMapDialog = async () => {
-        // Fetch pins for the current activity type
         await fetchPins(type);
         setMapOpen(true);
         askForUserLocation();
@@ -256,10 +259,11 @@ const ActivityList = () => {
                     </div>
                 )}
             </Container>
-            <Button onClick={handleOpenFilterDialog}>Open Filter</Button>
             <ActivityFilter
                 openFilterDialog={openFilterDialog}
                 handleCloseFilterDialog={handleCloseFilterDialog}
+                type={type}
+                updateFilteredActivities={updateFilteredActivities}
             />
             {isGoogleMapsApiLoaded() ? (
                 <SwipeableDrawer

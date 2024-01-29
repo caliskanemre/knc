@@ -71,7 +71,7 @@ const EventList = () => {
 
     const fetchPins = async () => {
         try {
-            const response = await Axios.get(`${baseURL}/events/pins/}`);
+            const response = await Axios.get(`${baseURL}/events/pins`);
             const pinsData = response.data;
             prepareMarkers(pinsData);
         } catch (error) {
@@ -108,12 +108,11 @@ const EventList = () => {
 
     const handleInfoWindowClick = (event) => {
         if (event && event.id) {
-            navigate(`/events/detail/${event.id}`);
+            navigate(`/events/${event.id}`);
         }
     };
     const handleOpenMapDialog = async () => {
-        // Fetch pins for the current activity type
-        await fetchPins(type);
+        await fetchPins();
         setMapOpen(true);
         askForUserLocation();
     };
