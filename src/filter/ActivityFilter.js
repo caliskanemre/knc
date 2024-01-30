@@ -15,14 +15,12 @@ import { DatePicker } from '@mui/x-date-pickers';
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 
-export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredActivities}) => {
+export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredActivities, applyFilter }) => {
 
     const [selectedLocation, setSelectedLocation] = useState('');
     const [startDate, setStartDate] = useState(null); // State for start date
     const [endDate, setEndDate] = useState(null); // State for end date
 
-
-    // Handle location selection change
     const handleLocationChange = (event) => {
         setSelectedLocation(event.target.value);
     };
@@ -39,6 +37,10 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
 
     // Send request to backend with selected location as a filter
     const applyFilters = () => {
+        applyFilter('location ', selectedLocation);
+
+        /*        if (startDate) applyFilter('startDate', startDate.toISOString().split('T')[0]);
+        if (endDate) applyFilter('endDate', endDate.toISOString().split('T')[0]);*/
         // Assuming you have a function to make the backend call
         // replace `fetchFilteredActivities` with your actual function
         fetchFilteredActivities(selectedLocation, startDate, endDate);
@@ -51,7 +53,7 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
         const formattedEndDate = endDate ? endDate.toISOString().split('T')[0] : '';
 
         // Update the URL to include date range parameters
-        const url = `${baseURL}/activities/location/${location}/${type}?page=0&size=20&start_date=${formattedStartDate}&end_date=${formattedEndDate}`;
+        const url = `${baseURL}/activities/location/${location}/${type}?page=0&size=20`;
 
         // Here, use the appropriate URL, HTTP method, and body to match your backend API
         fetch(url, {
@@ -104,20 +106,20 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                 </FormControl>
 
 
-                <DatePicker
+            {/*    <DatePicker
                     label="Start Date"
                     value={startDate}
                     onChange={handleStartDateChange}
                     renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
                 />
 
-                {/* Filter by End Date */}
+
                 <DatePicker
                     label="End Date"
                     value={endDate}
                     onChange={handleEndDateChange}
                     renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
-                />
+                />*/}
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseFilterDialog} color="primary">

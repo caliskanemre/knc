@@ -6,10 +6,10 @@ import Card from "@mui/material/Card";
 import {
     Avatar,
     Button,
-    CardHeader,
+    CardHeader, Chip,
     Dialog,
     DialogContent,
-    DialogTitle,
+    DialogTitle, Stack,
     SwipeableDrawer,
     useMediaQuery,
     useTheme
@@ -58,11 +58,30 @@ const ActivityList = () => {
     const [selectedMarker, setSelectedMarker] = useState(null);
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const [filters, setFilters] = useState([]);
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
 
+    const applyFilter = (filterType, filterValue) => {
+        // Add a new filter or update the existing one
+        setFilters(currentFilters => ({
+            ...currentFilters,
+            [filterType]: filterValue
+        }));
+        // Trigger activity or event refetch with new filters here
+    };
+
+    const removeFilter = (filterType) => {
+        setFilters(currentFilters => {
+            const newFilters = { ...currentFilters };
+            delete newFilters[filterType];
+            fetchInitialActivities()
+            return newFilters;
+        });
+        // Trigger activity or event refetch with updated filters here
+    };
     const updateFilteredActivities = (filteredActivities) => {
         setActivities(filteredActivities);
     };
@@ -217,9 +236,21 @@ const ActivityList = () => {
                 >
                     Map
                 </Button>
+
             </div>
             <Container sx={{ py: 9 }} maxWidth="xl">
+                <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
+                    {Object.entries(filters).map(([filterType, filterValue]) => (
+                        <Chip
+                            key={filterType}
+                            label={`${filterType}: ${filterValue}`}
+                            onDelete={() => removeFilter(filterType)}
+                            color="secondary"
+                        />
+                    ))}
+                </Stack>
                 <Grid container spacing={4}>
+
                     {activities.map((item) => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
@@ -263,6 +294,7 @@ const ActivityList = () => {
                 openFilterDialog={openFilterDialog}
                 handleCloseFilterDialog={handleCloseFilterDialog}
                 type={type}
+                applyFilter={applyFilter}
                 updateFilteredActivities={updateFilteredActivities}
             />
             {isGoogleMapsApiLoaded() ? (

@@ -29,7 +29,7 @@ const BackgroundGallery = ({ images }) => {
                 setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
                 setIsFading(false); // Begin fade-in
             }, 500); // Delay for fade-out, should match CSS transition time
-        }, 10000);
+        }, 100000);
 
         return () => clearInterval(interval);
     }, [images.length]);
