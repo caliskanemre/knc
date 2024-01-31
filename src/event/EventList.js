@@ -4,7 +4,16 @@ import Header from "../header/Header";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Button, CardHeader, DialogContent, DialogTitle, SwipeableDrawer, useMediaQuery, useTheme} from "@mui/material";
+import {
+    Button,
+    CardHeader, Chip,
+    DialogContent,
+    DialogTitle,
+    Stack,
+    SwipeableDrawer,
+    useMediaQuery,
+    useTheme
+} from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CardMedia from "@mui/material/CardMedia";
@@ -15,6 +24,8 @@ import EventSubHeader from "./EventSubHeader";
 import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import {MapOutlined} from "@mui/icons-material";
+import {ActivityFilter} from "../filter/ActivityFilter";
+import {EventFilter} from "../filter/EventFilter";
 
 
 const mapContainerStyle = {
@@ -39,8 +50,9 @@ const EventList = () => {
     const [selectedMarker, setSelectedMarker] = useState(null);
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-
+    const [openFilterDialog, setOpenFilterDialog] = useState(false);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [filters, setFilters] = useState([]);
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
@@ -68,6 +80,23 @@ const EventList = () => {
                 console.error('Error fetching events:', error);
             });
     }, []);
+
+    const applyFilter = (filterType, filterValue) => {
+        // Add a new filter or update the existing one
+        setFilters(currentFilters => ({
+            ...currentFilters,
+            [filterType]: filterValue
+        }));
+        // Trigger activity or event refetch with new filters here
+    };
+
+    const updateFilteredEvents = (filteredEvents) => {
+        setEvents(filteredEvents);
+    };
+
+    const handleCloseFilterDialog = () => {
+        setOpenFilterDialog(false);
+    };
 
     const fetchPins = async () => {
         try {
@@ -153,7 +182,18 @@ const EventList = () => {
             console.error('Error fetching more activities:', error);
         }
     };
-
+    const handleOpenFilterDialog = () => {
+        setOpenFilterDialog(true);
+    };
+    const removeFilter = (filterType) => {
+        setFilters(currentFilters => {
+            const newFilters = { ...currentFilters };
+            delete newFilters[filterType];
+            //fetchInitialActivities()
+            return newFilters;
+        });
+        // Trigger activity or event refetch with updated filters here
+    };
     return (
         <div className="event-list">
             <Header/>
@@ -162,7 +202,7 @@ const EventList = () => {
                         variant="outlined"
                         color="primary"
                         startIcon={<FilterListIcon />}
-
+                        onClick={handleOpenFilterDialog}
                 >
                     Filter
                 </Button>
@@ -178,6 +218,16 @@ const EventList = () => {
             </div>
             {/*<EventSubHeader/>*/}
             <Container sx={{ py: 9 }} maxWidth="xl">
+                <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
+                    {Object.entries(filters).map(([filterType, filterValue]) => (
+                        <Chip
+                            key={filterType}
+                            label={`${filterType}: ${filterValue}`}
+                            onDelete={() => removeFilter(filterType)}
+                            color="secondary"
+                        />
+                    ))}
+                </Stack>
                 <Grid container spacing={4}>
                     {events.map((item) => {
                         return (
@@ -290,6 +340,13 @@ const EventList = () => {
                     <div>Loading Maps...</div>
                 )}
             </Container>
+            <EventFilter
+                openFilterDialog={openFilterDialog}
+                handleCloseFilterDialog={handleCloseFilterDialog}
+                type={type}
+                applyFilter={applyFilter}
+                updateFilteredEvents={updateFilteredEvents}
+            />
         </div>
     );
 };
