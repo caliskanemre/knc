@@ -302,6 +302,7 @@ const EventList = () => {
                                 zoom={8}
                                 center={userLocation || center}
                                 onUnmount={() => setIsMapReady(false)}
+                                options={{ gestureHandling: 'greedy' }}
                                 onLoad={() => {
                                     setTimeout(() => {
                                         setIsMapReady(true);

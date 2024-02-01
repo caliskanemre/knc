@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { GoogleMap, Marker } from '@react-google-maps/api';
+import {GoogleMap, InfoWindow, Marker} from '@react-google-maps/api';
 
 const MapForActivity = ({ activity }) => {
     const [map, setMap] = useState(null);
     const [markerPosition, setMarkerPosition] = useState(null);
+    const [selectedMarker, setSelectedMarker] = useState(null);
+
+    const handleMarkerClick = (marker) => {
+        setSelectedMarker(marker);
+    };
+
 
     const mapContainerStyle = {
         width: '100%',
@@ -61,7 +67,28 @@ const MapForActivity = ({ activity }) => {
                     <Marker
                         position={markerPosition}
                         title={activity.title}
+                        onClick={() => handleMarkerClick(markerPosition)}
                     />
+                )}
+
+                {selectedMarker && (
+                    <InfoWindow
+                        position={selectedMarker}
+                        onCloseClick={() => setSelectedMarker(null)}
+                    >
+                        <div>
+                            <h2>{activity.title}</h2>
+                            <p>
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedMarker.lat},${selectedMarker.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Get Directions
+                                </a>
+                            </p>
+                        </div>
+                    </InfoWindow>
                 )}
             </GoogleMap>
         </div>

@@ -325,6 +325,7 @@ const ActivityList = () => {
                             mapContainerStyle={mapContainerStyle}
                             zoom={8}
                             center={userLocation || center}
+                            options={{ gestureHandling: 'greedy' }}
                             onUnmount={() => setIsMapReady(false)}
                             onLoad={() => {
                                 setTimeout(() => {
