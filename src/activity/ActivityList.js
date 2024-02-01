@@ -29,7 +29,7 @@ import museumIcon from "../images/museum2.jpg"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
 import {MapOutlined, MapRounded} from "@mui/icons-material";
-import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
+import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import BackgroundGallery from "../shared/BackgroundGallery";
 
 
@@ -213,7 +213,11 @@ const ActivityList = () => {
             console.error('Error: Your browser doesn\'t support geolocation.');
         }
     };
-
+    const getDynamicFontSize = (title) => {
+        if (title.length < 10) return "1.8rem";
+        if (title.length < 20) return "1.5rem"
+        return "1.2rem"; // Fallback font size
+    };
 
     return (
         <div className="activity-list">
@@ -261,14 +265,21 @@ const ActivityList = () => {
                                             <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '5px', marginTop: '10px' }}>
                                                 <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
                                             </Avatar>
-                                            <CardHeader style={{display:'top', height:'40px'}}
-                                                        title={item.title}
-                                        />
-                                    </div>
+                                            <CardHeader style={{height : '40px'}}
+                                                titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }} // Adjust font size and line height as needed
+                                                title={item.title}
+                                            />
+                                         </div>
                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </Link>
-                                    <CardContent sx={{ flexGrow: 1, maxHeight:'100px'}}>
-                                        <Typography>
+                                    <CardContent sx={{ flexGrow: 1, maxHeight:'100px', overflow: 'hidden'}}>
+                                        <Typography
+                                            sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                fontSize: '1rem', // Set a reasonable font size
+                                                lineHeight: '1.22rem' // Adjust line height as needed
+                                            }}>
                                             {item.activity_description}
                                         </Typography>
                                     </CardContent>
@@ -308,9 +319,8 @@ const ActivityList = () => {
                         keepMounted: true, // Better performance on mobile
                     }}
                 >
-                <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
-                <DialogContent>
-
+                    <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
+                    <DialogContent>
                         <GoogleMap
                             mapContainerStyle={mapContainerStyle}
                             zoom={8}
@@ -321,7 +331,6 @@ const ActivityList = () => {
                                     setIsMapReady(true);
                                 }, 2000); // 2 seconds delay
                             }}
-
                         >
                             {userLocation && (
                                 <Marker
@@ -336,36 +345,55 @@ const ActivityList = () => {
                                     }}
                                 />
                             )}
-                            {isMapReady && markers.map((marker, index) => {
-                                return (
-                                    <Marker
-                                        key={marker.id} // Assuming each activity has a unique id
-                                        position={marker}
-                                        title={marker.title}
-                                        onClick={() => handleMarkerClick(marker)}
-                                    />
-                                );
-                            })}
+                            {isMapReady && (
+                                <MarkerClusterer
+                                    options={{ imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' }}
+                                >
+                                    {(clusterer) =>
+                                        markers.map((marker) => (
+                                            <Marker
+                                                key={marker.id} // Use the unique id of the marker
+                                                position={{ lat: marker.lat, lng: marker.lng }} // Ensure position is an object with lat and lng
+                                                title={marker.title}
+                                                onClick={() => {
+                                                    if (selectedMarker && selectedMarker.id === marker.id) {
+                                                        // If the clicked marker's InfoWindow is already open, close it
+                                                        setSelectedMarker(null);
+                                                    } else {
+                                                        // Otherwise, open the new InfoWindow
+                                                        setSelectedMarker({
+                                                            id: marker.id,
+                                                            position: { lat: marker.lat, lng: marker.lng },
+                                                            title: marker.title,
+                                                        });
+                                                    }
+                                                }}
+                                                clusterer={clusterer}
+                                            />
+                                        ))
+                                    }
+                                </MarkerClusterer>
+                            )}
                             {selectedMarker && (
                                 <InfoWindow
-                                    position={selectedMarker.position}
-                                    onCloseClick={() => setSelectedMarker(null)}
+                                    position={selectedMarker.position} // Use the position from selectedMarker
+                                    onCloseClick={() => setSelectedMarker(null)} // Reset selectedMarker state to null on close
                                 >
-                                    <div>
-                                        <h3>{selectedMarker.title}</h3>
-                                        <button onClick={() => handleInfoWindowClick(selectedMarker)}>
+                                    <div style={{ maxWidth: '150px'}}>
+                                        <h4>{selectedMarker.title}</h4>
+                                        <Button style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }} onClick={() => handleInfoWindowClick(selectedMarker)}>
                                             View Details
-                                        </button>
+                                        </Button>
                                     </div>
                                 </InfoWindow>
                             )}
 
                         </GoogleMap>
-
-                </DialogContent>
-                </SwipeableDrawer> ) : (
+                    </DialogContent>
+                </SwipeableDrawer>
+            ) : (
                 <div>Loading Maps...</div>
-                )}
+            )}
         </div>
     );
 };

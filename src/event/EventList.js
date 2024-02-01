@@ -194,6 +194,13 @@ const EventList = () => {
         });
         // Trigger activity or event refetch with updated filters here
     };
+
+    const getDynamicFontSize = (title) => {
+        if (title.length < 10) return "1.8rem";
+        if (title.length < 20) return "1.5rem"
+        return "1.2rem"; // Fallback font size
+    };
+
     return (
         <div className="event-list">
             <Header/>
@@ -235,10 +242,10 @@ const EventList = () => {
 
                                 <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
                                     <Link to={`/event/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <CardHeader style={{display:'top', height:'40px'}}
+                                        <CardHeader style={{display:'top', height:'60px'}}
                                             title={item.title}
                                             subheader={item.date}
-
+                                            titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                         />
                                     </Link>
                                     <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -249,7 +256,13 @@ const EventList = () => {
                                         />
                                     </Link>
                                     <CardContent sx={{ flexGrow: 1, maxHeight:'100px'}}>
-                                        <Typography>
+                                        <Typography
+                                            sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                fontSize: '1rem', // Set a reasonable font size
+                                                lineHeight: '1.22rem' // Adjust line height as needed
+                                            }}>
                                             {item.description}
                                         </Typography>
                                     </CardContent>

@@ -55,6 +55,7 @@ const MapForActivity = ({ activity }) => {
                 zoom={8}
                 center={markerPosition || mapContainerStyle}
                 onLoad={setMap}
+                options={{ gestureHandling: 'greedy' }}
             >
                 {markerPosition && (
                     <Marker
