@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import Axios from 'axios';
 import Header from "../header/Header";
 import Container from "@mui/material/Container";
@@ -6,26 +6,28 @@ import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import {
     Button,
-    CardHeader, Chip,
+    CardHeader,
+    Chip,
     DialogContent,
     DialogTitle,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
     Stack,
     SwipeableDrawer,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import {Link, useNavigate, useParams} from "react-router-dom";
-import EventSubHeader from "./EventSubHeader";
 import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import {MapOutlined} from "@mui/icons-material";
-import {ActivityFilter} from "../filter/ActivityFilter";
 import {EventFilter} from "../filter/EventFilter";
+import Box from "@mui/material/Box";
 
 
 const mapContainerStyle = {
@@ -53,6 +55,7 @@ const EventList = () => {
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [filters, setFilters] = useState([]);
+    const [sort, setSort] = useState('');
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
@@ -201,6 +204,41 @@ const EventList = () => {
         return "1.2rem"; // Fallback font size
     };
 
+    const handleChangeSort = async (event) => {
+        setSort(event.target.value);
+
+        const page = 0;
+        const size = 20;
+
+        // Define the sorting criteria
+        const sort = event.target.value; // This sorts the events by 'interest' in descending order
+        let url = `${baseURL}/events/all?page=${page}&size=${size}`;
+        if (sort === "near") {
+            askForUserLocation(); // Wait for the user location to be fetched
+            // Ensure userLocation is not null before building the URL
+            if (userLocation) {
+                url += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
+                // Make the HTTP GET request here
+            } else {
+                console.error('User location is not available.');
+                // Consider providing user feedback or defaulting to a different sort
+                return;
+            }
+        } else {
+            url += `&sort=${encodeURIComponent(sort)}`;
+            // Make the HTTP GET request here
+        }
+
+
+        Axios.get(url)
+            .then((response) => {
+                setEvents(response.data.content);
+            })
+            .catch((error) => {
+                console.error('Error fetching events:', error);
+            });
+    };
+
     return (
         <div className="event-list">
             <Header/>
@@ -235,6 +273,23 @@ const EventList = () => {
                         />
                     ))}
                 </Stack>
+                <Box display="flex" justifyContent="flex-end" p="5px">
+                    <FormControl sx={{ m: 2, minWidth: 120 }}>
+                        <InputLabel id="autowidth-label">Sort</InputLabel>
+                        <Select
+                            labelId="autowidth-label"
+                            id="autowidth"
+                            value={sort}
+                            onChange={handleChangeSort}
+                            autoWidth
+                            label="Sort"
+                        >
+                            <MenuItem value={"interested"}>Popularity</MenuItem>
+                            <MenuItem value={"near"}>Nearest</MenuItem>
+                            <MenuItem value={"dateFrom"}>Date/Time</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Box>
                 <Grid container spacing={4}>
                     {events.map((item) => {
                         return (
