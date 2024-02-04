@@ -299,7 +299,7 @@ const EventList = () => {
                                     <Link to={`/event/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardHeader style={{display:'top', height:'60px'}}
                                             title={item.title}
-                                            subheader={item.date}
+                                            subheader={item.date} subheaderTypographyProps={{style: {fontSize: '11px'}}}
                                             titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                         />
                                     </Link>
@@ -316,7 +316,7 @@ const EventList = () => {
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 fontSize: '1rem', // Set a reasonable font size
-                                                lineHeight: '1.22rem' // Adjust line height as needed
+                                                lineHeight: '1.21rem' // Adjust line height as needed
                                             }}>
                                             {item.description}
                                         </Typography>

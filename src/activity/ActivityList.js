@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
@@ -59,6 +59,7 @@ const ActivityList = () => {
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [filters, setFilters] = useState([]);
+    const listRef = useRef(null);
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
@@ -104,11 +105,38 @@ const ActivityList = () => {
     };
 
     useEffect(() => {
-        setActivities([]);
-        setPage(0);
-        setHasMore(true);
-        fetchInitialActivities();
-    }, [type]);
+        const fetchActivities = async () => {
+            setActivities([]);
+            setPage(0);
+            setHasMore(true);
+            await fetchInitialActivities(); // Ensure this function is awaited if it's asynchronous
+
+            // Restore scroll position after data has loaded and the list is populated
+            const savedScrollPosition = sessionStorage.getItem('activityListScrollPosition');
+            if (savedScrollPosition && listRef.current) {
+                listRef.current.scrollTop = parseInt(savedScrollPosition, 10);
+            }
+        };
+
+        fetchActivities();
+    }, [type]); // Dependency on 'type'
+
+    useEffect(() => {
+        const saveScrollPosition = () => {
+            if (listRef.current) {
+                sessionStorage.setItem('activityListScrollPosition', listRef.current.scrollTop.toString());
+            }
+        };
+
+        // Consider when to save the scroll position. For SPA navigation, 'beforeunload' might not be sufficient.
+        window.addEventListener('beforeunload', saveScrollPosition);
+        // Additional events or actions to save scroll position can be added here.
+
+        return () => {
+            window.removeEventListener('beforeunload', saveScrollPosition);
+            // Clean up other event listeners or actions if added.
+        };
+    }, []); // No dependencies, runs on mount and unmount
 
 
     const fetchPins = async (activityType) => {
@@ -220,7 +248,7 @@ const ActivityList = () => {
     };
 
     return (
-        <div className="activity-list">
+        <div className="activity-list"  ref={listRef}>
             <Header/>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                 <Button style={{ marginRight: '20px' }}
