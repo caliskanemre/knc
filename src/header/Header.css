@@ -64,8 +64,7 @@
     .mobile-app-title {
 
         display: block; /* Show mobile title */
-        font-size: 1.8rem; /* Set font size */
-        margin-left: 20px;
+        font-size: 2rem; /* Set font size */
     }
 
     .search-desktop-image {

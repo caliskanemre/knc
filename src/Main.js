@@ -88,39 +88,9 @@ export default function Main () {
             <Header/>
             <main>
                 {/* Hero unit */}
-                <Grid container spacing={3}> {/* Creates a grid container */}
-                    <Grid item xs={12} md={2}>
-                        {/* List Component */}
-                        {/*<Container>
-                            <h3>Best Activities</h3>
-                            <List component="nav" aria-label="main mailbox folders">
-                                <ListItem button>
-                                    <ListItemText primary="Category 1" />
-                                </ListItem>
-                                <ListItem button>
-                                    <ListItemText primary="Category 2" />
-                                </ListItem>
-                                 More ListItems
-                            </List>
-                        </Container>*/}
-                    </Grid>
-                    <Grid item xs={10} md={8}> {/* Adjusts the size of the grid item */}
+                <Grid container spacing={3}> {/* Maintains the outer grid container */}
+                    <Grid item xs={12}> {/* Allows the grid item to span the full width */}
                         <BackgroundGallery images={deneme}/>
-                    </Grid>
-                    <Grid item xs={12} md={2}>
-                        {/* List Component */}
-                        {/*<Container>
-                            <h3>Top Events</h3>
-                            <List component="nav" aria-label="main mailbox folders">
-                                < ListItemButton button>
-                                    <ListItemText primary="Category 1" />
-                                </ ListItemButton>
-                                < ListItemButton button>
-                                    <ListItemText primary="Category 2" />
-                                </ ListItemButton>
-                                 More ListItems
-                            </List>
-                        </Container>*/}
                     </Grid>
                 </Grid>
 

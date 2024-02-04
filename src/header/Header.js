@@ -34,7 +34,7 @@ function Header() {
         <AppBar position="relative" style={{ backgroundColor: 'white' }}>
             <Toolbar className={isMobile ? 'toolbar-mobile' : ''}>
                 {/* Use NavLink for "activenty" to get the active styling */}
-                <div onClick={() => handleNavigation('/main')} style={{ cursor: 'pointer', flexGrow: isMobile ? 1 : 0 }}>
+                <div onClick={() => handleNavigation('/main')} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center', flexGrow: isMobile ? 1 : 0 }}>
                     <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '2rem', color: 'darkorange', marginTop: '7px' }}>
                        {/* <span className={isMobile ? "large-letter-mobile" : "large-letter-desktop"}>α</span>*/}
                         <span className={isMobile ? "mobile-app-title" : "desktop-app-title"}>αctiventy</span>
