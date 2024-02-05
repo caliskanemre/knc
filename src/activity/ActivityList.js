@@ -286,7 +286,7 @@ const ActivityList = () => {
                     {activities.map((item) => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
-                                <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
+                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
 
                                     <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>
@@ -306,7 +306,7 @@ const ActivityList = () => {
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 fontSize: '1rem', // Set a reasonable font size
-                                                lineHeight: '1.22rem' // Adjust line height as needed
+                                                lineHeight: '1.1rem' // Adjust line height as needed
                                             }}>
                                             {item.activity_description}
                                         </Typography>
