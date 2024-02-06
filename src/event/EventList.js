@@ -5,6 +5,7 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import {
+    Avatar,
     Button,
     CardHeader,
     Chip,
@@ -297,11 +298,17 @@ const EventList = () => {
 
                                 <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
                                     <Link to={`/event/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <CardHeader style={{display:'top', height:'60px'}}
-                                            title={item.title}
-                                            subheader={item.date} subheaderTypographyProps={{style: {fontSize: '11px'}}}
-                                            titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
-                                        />
+                                        <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '10px' }}>
+                                                event
+                                            </Avatar>
+                                            <CardHeader
+                                                style={{ display: 'top', height: '40px' }}
+                                                title={item.title}
+                                                subheader={item.date} subheaderTypographyProps={{ style: { fontSize: '11px' } }}
+                                                titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
+                                            />
+                                        </div>
                                     </Link>
                                     <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
