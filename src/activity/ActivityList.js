@@ -18,14 +18,14 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import {Link, useNavigate, useParams} from "react-router-dom";
-import CampingIcon2 from "../images/camping3.jpg"
-import wellness from "../images/wellness.jpg"
-import winter from "../images/winter2.jpg"
-import swimming from "../images/summer2.jpg"
-import park from "../images/park2.png"
+import CampingIcon2 from "../images/camping_summer2.jpg"
+import wellness from "../images/wellness_green2.png"
+import winter from "../images/winter_green.jpeg"
+import swimming from "../images/summer_green3.jpg"
+import park from "../images/park_green2.png"
 import nature from "../images/nature2.jpg"
-import naturalPark from "../images/nationalPark3.png"
-import museumIcon from "../images/museum2.jpg"
+import naturalPark from "../images/park_green.jpg"
+import museumIcon from "../images/green_museum.png"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
 import {MapOutlined, MapRounded} from "@mui/icons-material";
