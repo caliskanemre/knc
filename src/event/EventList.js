@@ -24,7 +24,7 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import {Link, useNavigate, useParams} from "react-router-dom";
-import {GoogleMap, InfoWindow, Marker} from "@react-google-maps/api";
+import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import {MapOutlined} from "@mui/icons-material";
 import {EventFilter} from "../filter/EventFilter";
@@ -174,9 +174,14 @@ const EventList = () => {
     const loadMoreEvents = async () => {
         try {
             let nextPage = page + 1;
-            let fetchUrl = type === undefined
-                ? `${baseURL}/events/all?page=${nextPage}&size=20`
-                : `${baseURL}/events/${type}?page=${nextPage}&size=20`;
+            let fetchUrl = `${baseURL}/events/all?page=${nextPage}&size=20`;
+
+            // Check if the current sort is 'near' and ensure userLocation is available
+            if (sort === "near" && userLocation) {
+                fetchUrl += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
+            } else if (sort) { // For other sorts, append the sort parameter
+                fetchUrl += `&sort=${encodeURIComponent(sort)}`;
+            }
 
             const response = await Axios.get(fetchUrl);
             setEvents(prevEvents => [...prevEvents, ...response.data.content]);
@@ -186,6 +191,7 @@ const EventList = () => {
             console.error('Error fetching more activities:', error);
         }
     };
+
     const handleOpenFilterDialog = () => {
         setOpenFilterDialog(true);
     };
@@ -385,16 +391,35 @@ const EventList = () => {
                                         }}
                                     />
                                 )}
-                                {isMapReady && markers.map((marker, index) => {
-                                    return (
-                                        <Marker
-                                            key={marker.id} // Assuming each activity has a unique id
-                                            position={marker}
-                                            title={marker.title}
-                                            onClick={() => handleMarkerClick(marker)}
-                                        />
-                                    );
-                                })}
+                                {isMapReady && (
+                                    <MarkerClusterer
+                                        options={{ imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' }}
+                                    >
+                                        {(clusterer) =>
+                                            markers.map((marker) => (
+                                                <Marker
+                                                    key={marker.id} // Use the unique id of the marker
+                                                    position={{ lat: marker.lat, lng: marker.lng }} // Ensure position is an object with lat and lng
+                                                    title={marker.title}
+                                                    onClick={() => {
+                                                        if (selectedMarker && selectedMarker.id === marker.id) {
+                                                            // If the clicked marker's InfoWindow is already open, close it
+                                                            setSelectedMarker(null);
+                                                        } else {
+                                                            // Otherwise, open the new InfoWindow
+                                                            setSelectedMarker({
+                                                                id: marker.id,
+                                                                position: { lat: marker.lat, lng: marker.lng },
+                                                                title: marker.title,
+                                                            });
+                                                        }
+                                                    }}
+                                                    clusterer={clusterer}
+                                                />
+                                            ))
+                                        }
+                                    </MarkerClusterer>
+                                )}
                                 {selectedMarker && (
                                     <InfoWindow
                                         position={selectedMarker.position}

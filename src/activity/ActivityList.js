@@ -286,7 +286,7 @@ const ActivityList = () => {
                     {activities.map((item) => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <Card sx={{ height: '89%', display: 'flex', flexDirection: 'column' }}>
 
                                     <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>
@@ -300,7 +300,7 @@ const ActivityList = () => {
                                          </div>
                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </Link>
-                                    <CardContent sx={{ flexGrow: 1, maxHeight:'100px', overflow: 'hidden'}}>
+                                    <CardContent sx={{ flexGrow: 1, maxHeight:'80px', overflow: 'hidden'}}>
                                         <Typography
                                             sx={{
                                                 overflow: 'hidden',
