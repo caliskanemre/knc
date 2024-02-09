@@ -6,19 +6,20 @@ import {Avatar, Button, CardHeader} from "@mui/material";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import BackgroundGallery from "../shared/BackgroundGallery";
-import CampingIcon2 from "../images/camping3.jpg";
-import wellness from "../images/wellness.jpg";
-import winter from "../images/winter2.jpg";
-import swimming from "../images/summer2.jpg";
-import park from "../images/park2.png";
+import CampingIcon2 from "../images/camping_summer2.jpg";
+import wellness from "../images/wellness_green2.png";
+import winter from "../images/winter_green.jpeg";
+import swimming from "../images/summer_green3.jpg";
+import park from "../images/park_green.jpg";
 import nature from "../images/nature2.jpg";
-import naturalPark from "../images/nationalPark3.png";
-import museumIcon from "../images/museum2.jpg";
+import naturalPark from "../images/park_green2.png";
+import museumIcon from "../images/green_museum.png";
+import * as events from "events";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +28,8 @@ const SearchPage = () => {
     const [activityResult, setActivityResult] = useState([]);
     const [allResult, setAllResult] = useState({ event: [], activity: [] });
     const [eventPage, setEventPage] = useState(0);
+    const [hasMoreEvents, setHasMoreEvents] = useState(0);
+    const [hasMoreActivity, setHasMoreActivity] = useState(0);
     const [activityPage, setActivityPage] = useState(0);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const navigate = useNavigate();
@@ -83,7 +86,16 @@ const SearchPage = () => {
         navigate(`${basePath}/${item.id}`, { state: { fromSearch: { searchQuery, searchLocation, allResult } } });
     };
 
-    const handleSearch = async () => {
+    const handleSearch = async (options ={}) => {
+
+        const {
+            query = searchQuery, // Use provided query or fallback to existing state
+            location = searchLocation, // Use provided location or fallback to existing state
+            eventPageNumber = eventPage, // Use provided eventPage or fallback to existing state
+            activityPageNumber = activityPage // Use provided activityPage or fallback to existing state
+        } = options;
+
+
         const eventSize = 20; // Number of items per page
         const activitySize = 20;
 
@@ -96,12 +108,18 @@ const SearchPage = () => {
                     size: eventSize
                 }
             });
+            const events = eventResponse.data.content;
             setEventResult(prevEvents => [...prevEvents, ...eventResponse.data.content]);
             setAllResult(prevAllResult => ({
                 ...prevAllResult,
                 event: [...prevAllResult.event, ...eventResponse.data.content]
             }));
-            setEventPage(prevPage => prevPage + 1);
+            if (events.length === eventSize) {
+                setEventPage(prevPage => prevPage + 1);
+                setHasMoreEvents(true);
+            } else {
+                setHasMoreEvents(false); // No more events to load
+            }
         } catch (error) {
             console.error('Error loading more events:', error);
         }
@@ -115,12 +133,18 @@ const SearchPage = () => {
                     size: activitySize
                 }
             });
+
             setActivityResult(prevActivities => [...prevActivities, ...activityResponse.data.content]);
             setAllResult(prevAllResult => ({
                 ...prevAllResult,
                 activity: [...prevAllResult.activity, ...activityResponse.data.content]
             }));
-            setActivityPage(prevPage => prevPage + 1);
+            if (events.length === eventSize) {
+                setActivityPage(prevPage => prevPage + 1);
+                setHasMoreActivity(true);
+            } else {
+                setHasMoreActivity(false); // No more events to load
+            }
         } catch (error) {
             console.error('Error loading more activities:', error);
         }
@@ -154,7 +178,6 @@ const SearchPage = () => {
                     <div className="filters">
                         <Button>Today</Button>
                         <Button>This weekend</Button>
-                        <Button>Free</Button>
                         <Button>Music</Button>
                         <Button>Food & Drink</Button>
                     </div>
@@ -212,7 +235,7 @@ const SearchPage = () => {
                                                 <CardMedia
                                                     component="div"
                                                     sx={{ pt: '56.25%' }}
-                                                    /* image={item.photo} */ // Uncomment and use the actual image property
+                                                    image={item.photo}
                                                 />
                                             </div>
                                         </div>
@@ -230,7 +253,7 @@ const SearchPage = () => {
                     ))}
                 </Grid>
             </Container>
-            {(eventPage > 0 || activityPage > 0) && (
+            {hasMoreEvents || hasMoreActivity && (eventPage > 0 || activityPage > 0) && (
                 <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                     <Button
                         onClick={handleSearch}

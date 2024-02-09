@@ -66,10 +66,10 @@ const ActivityDetails = () => {
                     {activity.activity_location && <p>Location: {activity.activity_location}</p>}
                     {activity.activity_type && <p>Type: {activity.activity_type}</p>}
                     {activity.activity_open_from && <p>Open Time: {activity.activity_open_from}</p>}
-                    {activity.activity_phone && <p>Phone: {activity.activity_phone}</p>}
-                    {activity.activity_email && <p>E-mail: {activity.activity_email}</p>}
-                    {activity.activity_website && <p>Website: {activity.activity_website}</p>}
-                    {activity.activity_price && <p>Price: {activity.activity_price}</p>}
+                    {activity.activity_phone && <p>{activity.activity_phone}</p>}
+                    {activity.activity_email && <p> {activity.activity_email}</p>}
+                    {activity.activity_website && <p>{activity.activity_website}</p>}
+                    {activity.activity_price && <p>{activity.activity_price}</p>}
                     <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
 
                 </div>
