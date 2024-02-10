@@ -13,6 +13,8 @@ const ActivityDetails = () => {
     const [activity, setActivity] = useState(null);
     const [isMapOpen, setIsMapOpen] = useState(false);
 
+    const isMobile = window.innerWidth <= 768;
+
     const toggleMap = () => {
         setIsMapOpen(!isMapOpen);
         console.log("Map Open State:", !isMapOpen); // This should log true/false alternately on each click
@@ -56,8 +58,11 @@ const ActivityDetails = () => {
                     >
 
                     </div>
-                    {/* Concatenate photo URLs into a single array */}
-                    <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)} />
+                    {isMobile ? (
+                        <BackgroundGallery images={activity.photos.map((photo) => photo.photo)} />
+                    ) : (
+                        <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)} />
+                    )}
                 </div>
             )}
             <div className="activity-container">
