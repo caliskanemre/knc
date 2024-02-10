@@ -32,6 +32,7 @@ import {MapOutlined, MapRounded} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import BackgroundGallery from "../shared/BackgroundGallery";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
+import PinDropIcon from "@mui/icons-material/PinDrop";
 
 
 const mapContainerStyle = {
@@ -291,13 +292,22 @@ const ActivityList = () => {
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                     <a href={`/activities/detail/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>
-                                            <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '5px', marginTop: '10px' }}>
+                                            <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
                                                 <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
                                             </Avatar>
-                                            <CardHeader style={{height : '40px'}}
+                                            <CardHeader style={{height : '50px'}}
                                                 titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }} // Adjust font size and line height as needed
                                                 title={item.title}
+                                                subheader={
+                                                    <div>
+                                                        <div>
+                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.activity_location}
+                                                        </div>
+                                                    </div>
+                                                }
+                                                subheaderTypographyProps={{ component: 'div', style: { fontSize: '12px' } }}
                                             />
+
                                          </div>
                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </a>
