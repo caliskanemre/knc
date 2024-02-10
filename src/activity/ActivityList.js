@@ -31,6 +31,7 @@ import {ActivityFilter} from "../filter/ActivityFilter";
 import {MapOutlined, MapRounded} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import BackgroundGallery from "../shared/BackgroundGallery";
+import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 
 
 const mapContainerStyle = {
@@ -286,7 +287,7 @@ const ActivityList = () => {
                     {activities.map((item) => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
-                                <Card sx={{ height: '89%', display: 'flex', flexDirection: 'column' }}>
+                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
 
                                     <Link to={`/activities/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>

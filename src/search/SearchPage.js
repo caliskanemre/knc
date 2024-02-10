@@ -224,7 +224,7 @@ const SearchPage = () => {
                 <Grid container spacing={4}>
                     {combinedResults.map((item, index) => (
                         <Grid item key={index} xs={12} sm={6} md={3}>
-                            <Card sx={{ height: '89%', display: 'flex', flexDirection: 'column' }}>
+                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 {item.type === 'activities' ? (
                                     <a href={`/activities/detail/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>

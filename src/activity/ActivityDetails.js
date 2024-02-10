@@ -6,6 +6,7 @@ import MapForActivity from "./MapForActivity";
 import BackgroundGallery from "../shared/BackgroundGallery";
 import './ActivityDetails.css';
 import {Button} from "@mui/material";
+import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 
 const ActivityDetails = () => {
     const { id } = useParams();
@@ -56,7 +57,7 @@ const ActivityDetails = () => {
 
                     </div>
                     {/* Concatenate photo URLs into a single array */}
-                    <BackgroundGallery images={activity.photos.map((photo) => photo.photo)} />
+                    <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)} />
                 </div>
             )}
             <div className="activity-container">
