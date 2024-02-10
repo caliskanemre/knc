@@ -21,15 +21,13 @@ import {
     useTheme
 } from "@mui/material";
 import CardMedia from "@mui/material/CardMedia";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import {Link, useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import {MapOutlined} from "@mui/icons-material";
 import {EventFilter} from "../filter/EventFilter";
 import Box from "@mui/material/Box";
-
+import PinDropIcon from '@mui/icons-material/PinDrop';
 
 const mapContainerStyle = {
     width: '100%',
@@ -206,9 +204,9 @@ const EventList = () => {
     };
 
     const getDynamicFontSize = (title) => {
-        if (title.length < 10) return "1.8rem";
-        if (title.length < 20) return "1.5rem"
-        return "1.2rem"; // Fallback font size
+        if (title.length < 10) return "1.6rem";
+        if (title.length < 30) return "1.3rem"
+        return "1rem"; // Fallback font size
     };
 
     const handleChangeSort = async (event) => {
@@ -302,38 +300,35 @@ const EventList = () => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={3}>
 
-                                <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
-                                    <Link to={`/event/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                    <a href={`/event/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '10px' }}>
+                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                 event
                                             </Avatar>
                                             <CardHeader
-                                                style={{ display: 'top', height: '40px' }}
+                                                style={{ display: 'top', maxHeight: '65px' }}
                                                 title={item.title}
-                                                subheader={item.date} subheaderTypographyProps={{ style: { fontSize: '11px' } }}
                                                 titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
+                                                subheader={
+                                                    <div>
+                                                        <div>{item.date}</div> {/* First line of subheader */}
+                                                        <div>
+                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.place}
+                                                        </div>
+                                                    </div>
+                                                }
+                                                subheaderTypographyProps={{ component: 'div', style: { fontSize: '11px' } }}
                                             />
                                         </div>
-                                    </Link>
-                                    <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    </a>
+                                    <a href={`/events/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="div"
                                             sx={{ pt: '56.25%' }}
                                             image={item.photo}
                                         />
-                                    </Link>
-                                    <CardContent sx={{ flexGrow: 1, maxHeight:'100px'}}>
-                                        <Typography
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                fontSize: '1rem', // Set a reasonable font size
-                                                lineHeight: '1.21rem' // Adjust line height as needed
-                                            }}>
-                                            {item.description}
-                                        </Typography>
-                                    </CardContent>
+                                    </a>
                                 </Card>
                             </Grid>
                         );
