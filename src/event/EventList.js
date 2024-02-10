@@ -126,20 +126,10 @@ const EventList = () => {
         setMarkers(tempMarkers);
     };
 
-    const handleMarkerClick = (activity) => {
-        setSelectedMarker({
-            ...activity,
-            position: {
-                lat: parseFloat(activity.lat),
-                lng: parseFloat(activity.lon)
-            }
-        });
-    };
-
-
     const handleInfoWindowClick = (event) => {
         if (event && event.id) {
-            navigate(`/events/${event.id}`);
+            const fullUrl = window.location.origin + `/events/${event.id}`;
+            window.open(fullUrl, '_blank');
         }
     };
     const handleOpenMapDialog = async () => {
