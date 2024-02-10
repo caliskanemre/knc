@@ -300,17 +300,6 @@ const ActivityList = () => {
                                          </div>
                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
                                     </Link>
-                                    <CardContent sx={{ flexGrow: 1, maxHeight:'80px', overflow: 'hidden'}}>
-                                        <Typography
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                fontSize: '1rem', // Set a reasonable font size
-                                                lineHeight: '1.1rem' // Adjust line height as needed
-                                            }}>
-                                            {item.activity_description}
-                                        </Typography>
-                                    </CardContent>
                                 </Card>
                             </Grid>
                         );

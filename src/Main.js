@@ -17,12 +17,13 @@ import CardActions from '@mui/material/CardActions';
 import IconButton from '@mui/material/IconButton';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
-import {CardHeader, ListItemButton} from "@mui/material";
+import {Avatar, CardHeader, ListItemButton} from "@mui/material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import BackgroundGallery from "./shared/BackgroundGallery";
+import PinDropIcon from "@mui/icons-material/PinDrop";
 
 /*function Copyright() {
     return (
@@ -82,6 +83,12 @@ export default function Main () {
             });
     }, []);
 
+    const getDynamicFontSize = (title) => {
+        if (title.length < 10) return "1.6rem";
+        if (title.length < 30) return "1.3rem"
+        return "1rem"; // Fallback font size
+    };
+
     return (
         <ThemeProvider theme={defaultTheme}>
             <CssBaseline />
@@ -100,46 +107,46 @@ export default function Main () {
 
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={3}>
-                                    <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
-                                        <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                            <CardHeader
-                                                title={item.title}
-                                                subheader={item.date}
-                                            />
-                                        </Link>
-                                        <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                        <a href={`/event/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
+                                                    event
+                                                </Avatar>
+                                                <CardHeader
+                                                    style={{ display: 'top', height: '100px' }}
+                                                    title={
+                                                        <div style={{
+                                                            maxWidth: '100%', // Limit the width to the parent container
+                                                            overflow: 'hidden', // Hide overflow
+                                                            display: '-webkit-box', // Use webkit box model for line clamp
+                                                            WebkitLineClamp: 2, // Limit to two lines
+                                                            WebkitBoxOrient: 'vertical', // Set the orientation to vertical
+                                                            textOverflow: 'ellipsis' // Add ellipsis to text overflow
+                                                        }}>
+                                                            {item.title}
+                                                        </div>
+                                                    }
+                                                    titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
+                                                    subheader={
+                                                        <div>
+                                                            <div>{item.date}</div> {/* First line of subheader */}
+                                                            <div>
+                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.place}
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '11px' } }}
+                                                />
+                                            </div>
+                                        </a>
+                                        <a href={`/events/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <CardMedia
                                                 component="div"
                                                 sx={{ pt: '56.25%' }}
                                                 image={item.photo}
                                             />
-                                        </Link>
-                                        <CardContent sx={{ flexGrow: 1 }}>
-                                            <Typography>
-                                                {item.description}
-                                            </Typography>
-                                        </CardContent>
-                                        <CardActions disableSpacing>
-                                            <ExpandMore
-                                                expand={expanded}
-                                                onClick={handleExpandClick}
-                                                aria-expanded={expanded}
-                                                aria-label="show more"
-                                            >
-                                                <ExpandMoreIcon />
-                                            </ExpandMore>
-                                        </CardActions>
-                                        <Collapse in={expanded} timeout="auto" unmountOnExit>
-                                            <CardContent>
-                                                {/* Place additional details here */}
-                                                {item.additionalDetails && (
-                                                    <>
-                                                        <Typography paragraph>Additional Details: {item.additionalDetails}</Typography>
-                                                        {/* Include other details you want to show in expanded section */}
-                                                    </>
-                                                )}
-                                            </CardContent>
-                                        </Collapse>
+                                        </a>
                                     </Card>
                                 </Grid>
                             );
@@ -150,7 +157,7 @@ export default function Main () {
             {/* Footer */}
             <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
-                    Footer
+                    activenty
                 </Typography>
                 <Typography
                     variant="subtitle1"
@@ -158,7 +165,7 @@ export default function Main () {
                     color="text.secondary"
                     component="p"
                 >
-                    Something here to give the footer a purpose!
+                    All rights reserved @2024 Activenty
                 </Typography>
           {/*      <Copyright />*/}
             </Box>

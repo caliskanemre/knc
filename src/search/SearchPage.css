@@ -1,8 +1,5 @@
 .parent-container {
     display: block;
-    grid-template-columns: repeat(10, 1fr); /* Creates a 10-column grid */
-    grid-template-rows: repeat(10, 1fr); /* Creates a 10-row grid */
-    height: 70vh; /* Adjust the height as needed */
     width: 100vw; /* Adjust the width as needed */
 }
 .search-bar input {
@@ -17,11 +14,44 @@
 .location-input input {
     width: 90%;
     padding: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border: none;
     border-bottom: 1px solid #ddd;
     font-size: 20px;
 }
+.location-input {
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    align-items: start; /* Center children horizontally */
+    gap: 7px; /* Add some space between the input and the button */
+}
+
+.location-input input {
+    flex-grow: 1; /* Let the input expand to fill the space */
+    /* Other styles remain the same */
+}
+
+/* Add a new style for the button within .location-input */
+.location-input button {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    background-color: #5C6BC0; /* Change the color to your preference */
+    color: white; /* Change the text color to white for better contrast */
+    cursor: pointer; /* Change the cursor to indicate it's clickable */
+    /* You can add :hover state if needed */
+}
+
+.location-input button:hover {
+    background-color: #3949AB; /* Darken button color on hover */
+}
+
+/* Ensure the button's font size is consistent */
+.filters button, .location-input button {
+    font-size: 1rem; /* Adjust the size as needed */
+}
+
 .search-page .location-input input::placeholder {
     color: #aaa;
     opacity: 0.7;

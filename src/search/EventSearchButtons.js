@@ -4,7 +4,7 @@ import {getTodayDate} from "@mui/x-date-pickers/internals";
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-const EventSearchButtons = ({ updateFilteredEvents }) => {
+const EventSearchButtons = ({handleNewSearch, updateFilteredEvents }) => {
 
     const getTodayDate = () => {
         // Implement the function or import it if defined elsewhere
@@ -42,6 +42,9 @@ const EventSearchButtons = ({ updateFilteredEvents }) => {
             const startDay = getWeekendStartDay()
             const endDay = getWeekendEndDay()
             callFilter(startDay, endDay)
+        }
+        else {
+            handleNewSearch(term);
         }
     };
 
@@ -84,7 +87,7 @@ const EventSearchButtons = ({ updateFilteredEvents }) => {
             <Button onClick={() => handleButtonClick('Today')}>Today</Button>
             <Button onClick={() => handleButtonClick('This weekend')}>This weekend</Button>
             <Button onClick={() => handleButtonClick('Music')}>Music</Button>
-            <Button onClick={() => handleButtonClick('Food & Drink')}>Food & Drink </Button>
+            <Button onClick={() => handleButtonClick('Children')}>Children</Button>
         </div>
     );
 };
