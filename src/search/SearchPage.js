@@ -20,6 +20,7 @@ import nature from "../images/nature2.jpg";
 import naturalPark from "../images/park_green2.png";
 import museumIcon from "../images/green_museum.png";
 import * as events from "events";
+import EventSearchButtons from "./EventSearchButtons";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -86,8 +87,14 @@ const SearchPage = () => {
         navigate(`${basePath}/${item.id}`, { state: { fromSearch: { searchQuery, searchLocation, allResult } } });
     };
 
-    const handleSearch = async (options ={}) => {
+    const updateFilteredEvents = (filteredEvents) => {
+        setAllResult(prevAllResult => ({
+            ...prevAllResult,
+            event: [...prevAllResult.event, ...filteredEvents]
+        }));
+    };
 
+    async function extractedEvent(options) {
         const {
             query = searchQuery, // Use provided query or fallback to existing state
             location = searchLocation, // Use provided location or fallback to existing state
@@ -123,7 +130,10 @@ const SearchPage = () => {
         } catch (error) {
             console.error('Error loading more events:', error);
         }
+        return {eventSize, activitySize};
+    }
 
+    async function extractedActivity(activitySize, eventSize) {
         try {
             const activityResponse = await axios.get(`${baseURL}/activities/search`, {
                 params: {
@@ -148,7 +158,13 @@ const SearchPage = () => {
         } catch (error) {
             console.error('Error loading more activities:', error);
         }
+    }
+
+    const handleSearch = async (options = {}) => {
+        await extractedEvent(options);
+        await extractedActivity(20);
     };
+
     const combinedResults = [
         ...(Array.isArray(allResult.event) ? allResult.event.map(item => ({ ...item, type: 'events' })) : []),
         ...(Array.isArray(allResult.activity) ? allResult.activity.map(item => ({ ...item, type: 'activities' })) : [])
@@ -176,10 +192,9 @@ const SearchPage = () => {
                     </div>
 
                     <div className="filters">
-                        <Button>Today</Button>
-                        <Button>This weekend</Button>
-                        <Button>Music</Button>
-                        <Button>Food & Drink</Button>
+                        <EventSearchButtons
+                            updateFilteredEvents={updateFilteredEvents}
+                        />
                     </div>
 
                     <div className="recent-searches">

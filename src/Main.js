@@ -103,11 +103,6 @@ export default function Main () {
                                     <Card sx={{ height: '90%', display: 'flex', flexDirection: 'column' }}>
                                         <Link to={`/events/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <CardHeader
-                                                action={
-                                                    <IconButton aria-label="settings">
-                                                        <MoreVertIcon />
-                                                    </IconButton>
-                                                }
                                                 title={item.title}
                                                 subheader={item.date}
                                             />
