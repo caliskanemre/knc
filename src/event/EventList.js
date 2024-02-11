@@ -28,6 +28,7 @@ import {MapOutlined} from "@mui/icons-material";
 import {EventFilter} from "../filter/EventFilter";
 import Box from "@mui/material/Box";
 import PinDropIcon from '@mui/icons-material/PinDrop';
+import {Helmet} from "react-helmet";
 
 const mapContainerStyle = {
     width: '100%',
@@ -128,7 +129,7 @@ const EventList = () => {
 
     const handleInfoWindowClick = (event) => {
         if (event && event.id) {
-            const fullUrl = window.location.origin + `/events/${event.id}`;
+            const fullUrl = window.location.origin + `/events/${event.id}-${event.title}`;
             window.open(fullUrl, '_blank');
         }
     };
@@ -243,6 +244,9 @@ const EventList = () => {
 
     return (
         <div className="event-list">
+            <Helmet>
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+            </Helmet>
             <Header/>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                 <Button style={{ marginRight: '20px' }}
@@ -298,7 +302,7 @@ const EventList = () => {
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
 
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <a href={`/event/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
                                             <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                 event
@@ -330,7 +334,7 @@ const EventList = () => {
                                             />
                                         </div>
                                     </a>
-                                    <a href={`/events/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="div"
                                             sx={{ pt: '56.25%' }}

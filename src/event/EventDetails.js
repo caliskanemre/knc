@@ -6,9 +6,11 @@ import MapForEvent from "./MapForEvent";
 import "./EventDetails.css";
 import {Button} from "@mui/material";
 import BackgroundGallery from "../shared/BackgroundGallery";
+import {Helmet} from "react-helmet";
 
 const EventDetails = () => {
     const { eventId } = useParams();
+    const { eventName } = useParams();
     const [event, setEvent] = useState(null);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
@@ -21,14 +23,14 @@ const EventDetails = () => {
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/events/eventId?eventId=${eventId}`)
+        Axios.get(`${baseURL}/events/${eventName}`)
             .then((response) => {
                 setEvent(response.data);
             })
             .catch((error) => {
                 console.error('Error fetching events:', error);
             });
-    }, [eventId]); // Include eventId as a dependency in useEffect
+    }, [eventName]); // Include eventId as a dependency in useEffect
 
     if (event === null) {
         return <div>Loading...</div>;
@@ -36,6 +38,9 @@ const EventDetails = () => {
 
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
+            <Helmet>
+                <link rel="canonical" href={`${window.location.origin}/events/${eventName}`} />
+            </Helmet>
             <Header/>
             {event.photo && (
                 <div style={{ position: 'relative' }}>
