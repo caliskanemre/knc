@@ -223,7 +223,7 @@ const SearchPage = () => {
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
                     {combinedResults.map((item, index) => (
-                        <Grid item key={index} xs={12} sm={6} md={3}>
+                        <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 {item.type === 'activities' ? (
                                     <a href={`/activities/detail/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>

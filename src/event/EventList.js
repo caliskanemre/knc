@@ -142,23 +142,22 @@ const EventList = () => {
         setMapOpen(false);
     };
 
-    const askForUserLocation = () => {
-        if (navigator.geolocation) {
+    function askForUserLocation() {
+        return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setUserLocation({
+                    const userLocation = {
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    });
+                        lng: position.coords.longitude
+                    };
+                    resolve(userLocation); // Resolve the promise with the location
                 },
-                () => {
-                    console.error('Error: The Geolocation service failed.');
+                (error) => {
+                    reject(error); // Reject the promise if there's an error
                 }
             );
-        } else {
-            console.error('Error: Your browser doesn\'t support geolocation.');
-        }
-    };
+        });
+    }
     const loadMoreEvents = async () => {
         try {
             let nextPage = page + 1;
@@ -204,35 +203,43 @@ const EventList = () => {
 
         const page = 0;
         const size = 20;
-
-        // Define the sorting criteria
         const sort = event.target.value; // This sorts the events by 'interest' in descending order
         let url = `${baseURL}/events/all?page=${page}&size=${size}`;
+
         if (sort === "near") {
-            askForUserLocation(); // Wait for the user location to be fetched
-            // Ensure userLocation is not null before building the URL
-            if (userLocation) {
-                url += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
-                // Make the HTTP GET request here
-            } else {
-                console.error('User location is not available.');
-                // Consider providing user feedback or defaulting to a different sort
-                return;
-            }
+            askForUserLocation().then((userLocation) => {
+                // This code now waits for the user location to be fetched
+                if (userLocation) {
+                    url += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
+                    // Make the HTTP GET request here using the updated URL
+                    Axios.get(url)
+                        .then((response) => {
+                            setEvents(response.data.content);
+                        })
+                        .catch((error) => {
+                            console.error('Error fetching events:', error);
+                        });
+                } else {
+                    console.error('User location is not available.');
+                    // Consider providing user feedback or defaulting to a different sort
+                }
+            }).catch((error) => {
+                console.error('Error getting user location:', error);
+                // Handle the error (e.g., user denied location access)
+            });
         } else {
             url += `&sort=${encodeURIComponent(sort)}`;
-            // Make the HTTP GET request here
+            // Make the HTTP GET request here using the URL without location
+            Axios.get(url)
+                .then((response) => {
+                    setEvents(response.data.content);
+                })
+                .catch((error) => {
+                    console.error('Error fetching events:', error);
+                });
         }
-
-
-        Axios.get(url)
-            .then((response) => {
-                setEvents(response.data.content);
-            })
-            .catch((error) => {
-                console.error('Error fetching events:', error);
-            });
     };
+
 
     return (
         <div className="event-list">
@@ -288,7 +295,7 @@ const EventList = () => {
                 <Grid container spacing={4}>
                     {events.map((item) => {
                         return (
-                            <Grid item key={item.id} xs={12} sm={6} md={3}>
+                            <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
 
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                     <a href={`/event/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>

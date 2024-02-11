@@ -288,7 +288,7 @@ const ActivityList = () => {
 
                     {activities.map((item) => {
                         return (
-                            <Grid item key={item.id} xs={12} sm={6} md={3}>
+                            <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                     <a href={`/activities/detail/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>

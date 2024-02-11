@@ -75,9 +75,8 @@ const ActivityDetails = () => {
                     {activity.activity_phone && <p>{activity.activity_phone}</p>}
                     {activity.activity_email && <p> {activity.activity_email}</p>}
                     {activity.activity_website && <p>{activity.activity_website}</p>}
-                    {activity.activity_price && <p>{activity.activity_price}</p>}
-                    <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
-
+                    {activity.activity_price && <p>Price: {activity.activity_price}</p>}
+                    {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForActivity activity={activity} />
