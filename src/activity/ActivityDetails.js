@@ -7,6 +7,7 @@ import BackgroundGallery from "../shared/BackgroundGallery";
 import './ActivityDetails.css';
 import {Button} from "@mui/material";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
+import {Helmet} from "react-helmet";
 
 const ActivityDetails = () => {
     const { id } = useParams();
@@ -40,6 +41,48 @@ const ActivityDetails = () => {
 
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
+            <Helmet>
+                <title>{activity.title} - Activity Details | Activenty</title>
+                <meta name="description" content={`Discover more about ${activity.title} at ${activity.activity_location}. Contact: ${activity.activity_email || 'N/A'} | ${activity.activity_phone || 'N/A'}`} />
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+                {/* Open Graph / Facebook */}
+                <meta property="og:title" content={activity.title} />
+                <meta property="og:description" content={activity.activity_description || 'Learn more about this activity.'} />
+                <meta property="og:image" content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined} />
+                <meta property="og:url" content={`${window.location.origin}${window.location.pathname}`} />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Activenty" />
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={activity.title} />
+                <meta name="twitter:description" content={activity.activity_description || 'Learn more about this activity.'} />
+                <meta name="twitter:image" content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined} />
+                {/* Structured Data */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "http://schema.org",
+                        "@type": "TouristAttraction", // Adjust based on the activity type
+                        "name": activity.title,
+                        "description": activity.activity_description,
+                        "image": activity.photos.map(photo => photo.photo),
+                        "location": {
+                            "@type": "Place",
+                            "name": activity.activity_location,
+                            // Additional location details if available
+                        },
+                        "offers": {
+                            "@type": "Offer",
+                            "price": activity.activity_price,
+                            // Additional offer details if available
+                        },
+                        "telephone": activity.activity_phone,
+                        "email": activity.activity_email,
+                        "url": activity.activity_website,
+                        // Additional activity details if available
+                    })}
+                </script>
+            </Helmet>
+
             <Header/>
 
             {activity.photos.length > 0 && (

@@ -245,6 +245,7 @@ const EventList = () => {
     return (
         <div className="event-list">
             <Helmet>
+                <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
             <Header/>

@@ -33,6 +33,7 @@ import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps
 import BackgroundGallery from "../shared/BackgroundGallery";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 import PinDropIcon from "@mui/icons-material/PinDrop";
+import {Helmet} from "react-helmet";
 
 
 const mapContainerStyle = {
@@ -252,6 +253,10 @@ const ActivityList = () => {
 
     return (
         <div className="activity-list"  ref={listRef}>
+            <Helmet>
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+            </Helmet>
             <Header/>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                 <Button style={{ marginRight: '20px' }}

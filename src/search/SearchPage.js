@@ -22,6 +22,7 @@ import museumIcon from "../images/green_museum.png";
 import * as events from "events";
 import EventSearchButtons from "./EventSearchButtons";
 import PinDropIcon from "@mui/icons-material/PinDrop";
+import {Helmet} from "react-helmet";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -177,6 +178,11 @@ const SearchPage = () => {
 
     return (
         <div>
+            <Helmet>
+                <title>Search Results | Activenty</title>
+                <meta name="robots" content="noindex, follow" />
+                <link rel="canonical" href={`${window.location.origin}`} />
+            </Helmet>
             <Header/>
 
             <div className="parent-container">

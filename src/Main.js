@@ -24,6 +24,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
+import {Helmet} from "react-helmet";
 
 /*function Copyright() {
     return (
@@ -82,6 +83,10 @@ export default function Main () {
 
     return (
         <ThemeProvider theme={defaultTheme}>
+            <Helmet>
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+            </Helmet>
             <CssBaseline />
             <Header/>
             <main>

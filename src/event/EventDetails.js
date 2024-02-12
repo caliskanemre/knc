@@ -39,8 +39,41 @@ const EventDetails = () => {
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
             <Helmet>
+                <title>{event.title} - Event Details | Activenty</title>
+                <meta name="description" content={`Learn more about ${event.title}, happening on ${event.date}.`} />
                 <link rel="canonical" href={`${window.location.origin}/events/${eventName}`} />
+                {/* Open Graph / Facebook */}
+                <meta property="og:title" content={event.title} />
+                <meta property="og:description" content={event.description} />
+                <meta property="og:image" content={event.photo} />
+                <meta property="og:url" content={`${window.location.origin}/events/${eventName}`} />
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={event.title} />
+                <meta name="twitter:description" content={event.description} />
+                <meta name="twitter:image" content={event.photo} />
+                {/* Structured Data */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "http://schema.org",
+                        "@type": "Event",
+                        "name": event.title,
+                        "startDate": event.dateFrom,
+                        "endDate": event.dateTo,
+                        "location": {
+                            "@type": "Place",
+                            "name": event.place,
+                            // Include additional location details if available
+                        },
+                        "image": [
+                            event.photo
+                            // Include additional image URLs if available
+                        ],
+                        "description": event.description
+                    })}
+                </script>
             </Helmet>
+
             <Header/>
             {event.photo && (
                 <div style={{ position: 'relative' }}>
@@ -67,9 +100,6 @@ const EventDetails = () => {
                     <p>{event.date}</p>
                     <h2>{event.title}</h2>
                     <p>About the event: {event.description}</p>
-                    <p>Type: {event.type}</p>
-                    <p>Start Date: {event.dateFrom}</p>
-                    <p>End Date: {event.dateTo}</p>
                     <p>Place: {event.place}</p>
                     <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
                 </div>
