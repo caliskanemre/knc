@@ -104,7 +104,7 @@ export default function Main () {
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                        <a href={`/event/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                                 <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                     event
@@ -136,7 +136,7 @@ export default function Main () {
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/events/${item.id}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <CardMedia
                                                 component="div"
                                                 sx={{ pt: '56.25%' }}
