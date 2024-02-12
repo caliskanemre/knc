@@ -11,6 +11,7 @@ import {Helmet} from "react-helmet";
 
 const ActivityDetails = () => {
     const { id } = useParams();
+    const { title } = useParams();
     const [activity, setActivity] = useState(null);
     const [isMapOpen, setIsMapOpen] = useState(false);
 
@@ -26,7 +27,7 @@ const ActivityDetails = () => {
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/activities/detail/${id}`)
+        Axios.get(`${baseURL}/activities/detail/${id}/${title}`)
             .then((response) => {
                 setActivity(response.data);
             })

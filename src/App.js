@@ -25,7 +25,7 @@ function App() {
                         <Route path="/main" element={<Main/>}/>
                         <Route path="/map" element={<Map/>}/>
                         <Route path="/events/:eventName" element={<EventDetails/>} />
-                        <Route path="/activities/detail/:id" element={<ActivityDetails/>} />
+                        <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>} />
                         <Route path="/search/" element={<SearchPage/>} />
                     </Routes>
                 </div>
