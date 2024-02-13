@@ -254,6 +254,8 @@ const ActivityList = () => {
     return (
         <div className="activity-list"  ref={listRef}>
             <Helmet>
+                <title>{type ? `${type} Activities` : 'All Activities'} - Activenty</title>
+                <meta name="description" content={`Explore ${type ? type : 'all'} activities on Activenty. Find outdoor adventures, cultural experiences, and more.`} />
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
@@ -279,6 +281,7 @@ const ActivityList = () => {
 
             </div>
             <Container sx={{ py: 9 }} maxWidth="xl">
+                <Typography variant="h1" component="h2" style={{ marginBottom: '20px' }}>{type}</Typography>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
@@ -302,11 +305,17 @@ const ActivityList = () => {
                                             </Avatar>
                                             <CardHeader style={{height : '50px'}}
                                                 titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }} // Adjust font size and line height as needed
-                                                title={item.title}
+                                               title={ <Typography variant="h3" component="h3" style={{ fontSize: '1.25rem' }}>
+                                                    {item.title}
+                                                </Typography>}
                                                 subheader={
                                                     <div>
                                                         <div>
-                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.activity_location}
+                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
+                                                            <Typography variant="h4" component="h4" style={{ fontSize: '1.25rem' }}>
+                                                                {item.activity_location}
+                                                            </Typography>
+
                                                         </div>
                                                     </div>
                                                 }

@@ -1,48 +1,47 @@
-import React, {useEffect, useState} from 'react';
-import {useParams} from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useParams } from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForEvent from "./MapForEvent";
 import "./EventDetails.css";
-import {Button} from "@mui/material";
-import BackgroundGallery from "../shared/BackgroundGallery";
-import {Helmet} from "react-helmet";
+import { Button } from "@mui/material";
+import { Helmet } from "react-helmet";
 
 const EventDetails = () => {
-    const { eventId } = useParams();
-    const { eventName } = useParams();
+    const { eventId, eventName } = useParams(); // Combined the two useParams calls into one
     const [event, setEvent] = useState(null);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
-
+    const isMobile = window.innerWidth <= 768;
     const toggleMap = () => {
         setIsMapOpen(!isMapOpen);
-        console.log("Map Open State:", !isMapOpen); // This should log true/false alternately on each click
     };
 
-
     useEffect(() => {
-        // Make an HTTP GET request to fetch events from the backend
         Axios.get(`${baseURL}/events/${eventName}`)
             .then((response) => {
                 setEvent(response.data);
             })
             .catch((error) => {
-                console.error('Error fetching events:', error);
+                console.error('Error fetching event details:', error);
             });
-    }, [eventName]); // Include eventId as a dependency in useEffect
+    }, [eventName]);
 
     if (event === null) {
         return <div>Loading...</div>;
     }
 
+    // Improved alt text for the event photo
+    const altText = `${event.title} in ${event.place}`;
+
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
             <Helmet>
-                <title>{event.title} - Event Details | Activenty</title>
-                <meta name="description" content={`Learn more about ${event.title}, happening on ${event.date}.`} />
+                <title>{`${event.title} - Event Details | Activenty`}</title>
+                <meta name="description" content={`Learn more about ${event.title}, happening on ${event.date}, at ${event.place}.`} />
                 <link rel="canonical" href={`${window.location.origin}/events/${eventName}`} />
                 {/* Open Graph / Facebook */}
+                <meta property="og:type" content="event" />
                 <meta property="og:title" content={event.title} />
                 <meta property="og:description" content={event.description} />
                 <meta property="og:image" content={event.photo} />
@@ -62,19 +61,23 @@ const EventDetails = () => {
                         "endDate": event.dateTo,
                         "location": {
                             "@type": "Place",
-                            "name": event.place,
-                            // Include additional location details if available
+                            "name": event.place
                         },
-                        "image": [
-                            event.photo
-                            // Include additional image URLs if available
-                        ],
-                        "description": event.description
+                        "image": [event.photo],
+                        "description": event.description,
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Activenty",
+                            "logo": {
+                                "@type": "ImageObject",
+                                "url": "https://activenty.com/logo.png"
+                            }
+                        }
                     })}
                 </script>
             </Helmet>
 
-            <Header/>
+            <Header />
             {event.photo && (
                 <div style={{ position: 'relative' }}>
                     {/* Background overlay */}
@@ -97,11 +100,11 @@ const EventDetails = () => {
             )}
             <div className="event-container">
                 <div className="event">
-                    <p>{event.date}</p>
-                    <h2>{event.title}</h2>
+                    <h4>{event.date}</h4>
+                    <h1>{event.title}</h1>
                     <p>About the event: {event.description}</p>
-                    <p>Place: {event.place}</p>
-                    <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>
+                    <h4>Place: {event.place}</h4>
+                    {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForEvent event={event} />

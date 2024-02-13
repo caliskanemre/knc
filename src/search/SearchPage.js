@@ -165,6 +165,7 @@ const SearchPage = () => {
         }
     }
 
+    const totalResults = eventResult.length + activityResult.length;
     const handleSearch = async (options = {}) => {
         await extractedEvent(options);
         await extractedActivity(options);
@@ -178,7 +179,8 @@ const SearchPage = () => {
     return (
         <div>
             <Helmet>
-                <title>Search Results | Activenty</title>
+                <title>{searchQuery ? `${searchQuery} - Search Results | Activenty` : 'Search | Activenty'}</title>
+                <meta name="description" content={`Discover events and activities related to ${searchQuery ? searchQuery : 'your interests'} on Activenty.`} />
                 <meta name="robots" content="noindex, follow" />
                 <link rel="canonical" href={`${window.location.origin}`} />
             </Helmet>
@@ -217,12 +219,19 @@ const SearchPage = () => {
                     <div className="recent-searches">
                         <h2>Recent and popular searches</h2>
                         <ul>
-                            <li>Tallinn</li>
-                            <li>Music</li>
-                            <li>Spa</li>
+                            <h4>Tallinn</h4>
+                            <h4>Music</h4>
+                            <h4>Spa</h4>
+                            <h4>Museum</h4>
+                            <h4>Concert</h4>
                         </ul>
                     </div>
                 </div>
+                {searchQuery && (
+                    <Typography variant="h6" style={{ textAlign: 'center', margin: '20px 0' }}>
+                        Found {totalResults} results for "{searchQuery}"
+                    </Typography>
+                )}
 
             </div>
             <Container sx={{ py: 9 }} maxWidth="xl">

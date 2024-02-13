@@ -40,6 +40,24 @@ const ActivityDetails = () => {
         return <div>Loading...</div>;
     }
 
+    const renderLink = (content) => {
+        // Regex for detecting an email address
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Regex for detecting a URL (basic version for demonstration, can be expanded)
+        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+
+        if (emailRegex.test(content)) {
+            // If content is an email address
+            return <a href={`mailto:${content}`} style={{ textDecoration: 'none' }}>{content}</a>;
+        } else if (urlRegex.test(content)) {
+            // If content is a URL
+            return <a href={content} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>Visit Website</a>;
+        } else {
+            // If content is neither, just display the content
+            return <span>{content}</span>;
+        }
+    };
+
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
             <Helmet>
@@ -79,6 +97,14 @@ const ActivityDetails = () => {
                         "telephone": activity.activity_phone,
                         "email": activity.activity_email,
                         "url": activity.activity_website,
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Activenty",
+                            "logo": {
+                                "@type": "ImageObject",
+                                "url": "https://activenty.com/logo.png"
+                            }
+                        }
                         // Additional activity details if available
                     })}
                 </script>
@@ -111,15 +137,34 @@ const ActivityDetails = () => {
             )}
             <div className="activity-container">
                 <div className="activity">
-                    <h2>{activity.title}</h2>
+                    <h1>{activity.title}</h1>
                     {activity.activity_description && <p>{activity.activity_description}</p>}
-                    {activity.activity_location && <p>Location: {activity.activity_location}</p>}
+                    {activity.activity_location && (
+                        <>
+                            <h3>Location</h3>
+                            <p>{activity.activity_location}</p>
+                        </>
+                    )}
                     {activity.activity_type && <p>Type: {activity.activity_type}</p>}
                     {activity.activity_open_from && <p>Open Time: {activity.activity_open_from}</p>}
-                    {activity.activity_phone && <p>{activity.activity_phone}</p>}
-                    {activity.activity_email && <p> {activity.activity_email}</p>}
-                    {activity.activity_website && <p>{activity.activity_website}</p>}
-                    {activity.activity_price && <p>Price: {activity.activity_price}</p>}
+                    {activity.activity_phone && (
+                        <h4>
+                            <a href={`tel:${activity.activity_phone}`} style={{ textDecoration: 'none' }}>
+                                {activity.activity_phone}
+                            </a>
+                        </h4>
+                    )}
+                    {activity.activity_email && (
+                        <h4>
+                            {renderLink(activity.activity_email)}
+                        </h4>
+                    )}
+                    {activity.activity_website && (
+                        <h4>
+                            {renderLink(activity.activity_website)}
+                        </h4>
+                    )}
+                    {activity.activity_price && <h5>Price: {activity.activity_price}</h5>}
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>

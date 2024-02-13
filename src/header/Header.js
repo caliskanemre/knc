@@ -1,17 +1,18 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import {NavLink, useNavigate} from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import './Header.css';
-import SearchImage from "../search/search.png"
+import SearchImage from "../search/search.png";
 import ActivitySubHeader from "../activity/ActivitySubHeader";
 import { Helmet } from 'react-helmet';
-function Header() {
 
+function Header() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const navigate = useNavigate();
+    const keywords = "event, activity, tallinn, concert, museums, nearest, spa";
 
     useEffect(() => {
         const handleResize = () => {
@@ -22,52 +23,44 @@ function Header() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
     const handleNavigation = (path) => {
         navigate(path);
     };
 
     return (
         <>
-                <Helmet>
-                    <link rel="canonical" href="http://www.activenty.com" />
-                </Helmet>
+            <Helmet>
+                <title>Activenty - Discover Local Events and Activities</title>
+                <meta name="description" content="Discover local events and activities with Activenty! Explore concerts, outdoor adventures, and cultural experiences. Start your next adventure today." />
+                <meta name="keywords" content={keywords} />
+                <link rel="canonical" href="http://www.activenty.com" />
+            </Helmet>
             <AppBar position="relative" style={{ backgroundColor: 'white' }}>
                 <Toolbar className={isMobile ? 'toolbar-mobile' : ''}>
-                    {/* Use NavLink for "activenty" to get the active styling */}
-                    <div onClick={() => handleNavigation('/main')} style={{ cursor: 'pointer', display: 'flex', flexGrow: isMobile ? 1 : 0 }}>
-                        <Typography variant="h4" noWrap style={{ fontWeight: 'bold', fontSize: '2rem', color: 'darkorange', marginTop: '7px' }}>
-                           {/* <span className={isMobile ? "large-letter-mobile" : "large-letter-desktop"}>α</span>*/}
-                            <span className={isMobile ? "mobile-app-title" : "desktop-app-title"}>αctiventy</span>
-                        </Typography>
-                    </div>
+                    <Typography variant="h1" component="h1" style={{ flexGrow: 1, cursor: 'pointer', color: 'darkorange', fontSize: isMobile ? '1.5rem' : '2.5rem', fontWeight: 'bold' }} onClick={() => handleNavigation('/main')}>
+                        αctiventy
+                    </Typography>
                     <NavLink to="/search" className="nav-link" activeClassName="active">
-
                         <span className="search-desktop-image">
-                            <img
-                            src={SearchImage}
-                            alt="Search events"
-                            style={{ cursor: 'pointer' }}/>
+                            <img src={SearchImage} alt="Search events" style={{ cursor: 'pointer' }} />
                         </span>
                         <span className="search-mobile-image">
                             <i className="fas fa-search"></i>
                         </span>
                     </NavLink>
-
                     <NavLink to="/events" className="nav-link nav-item-mobile-hidden" activeClassName="active">
                         Events
                     </NavLink>
                     <div className="nav-item-mobile-hidden">
-                        <ActivitySubHeader/>
+                        <ActivitySubHeader />
                     </div>
                 </Toolbar>
-
                 <Box className="sub-header">
                     <NavLink to="/events" className="nav-link nav-item" activeClassName="active">
                         Events
                     </NavLink>
                     <div>
-                        <ActivitySubHeader/>
+                        <ActivitySubHeader />
                     </div>
                 </Box>
             </AppBar>
@@ -76,5 +69,3 @@ function Header() {
 }
 
 export default Header;
-
-// CSS in your stylesheet

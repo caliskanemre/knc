@@ -29,6 +29,7 @@ import {EventFilter} from "../filter/EventFilter";
 import Box from "@mui/material/Box";
 import PinDropIcon from '@mui/icons-material/PinDrop';
 import {Helmet} from "react-helmet";
+import Typography from "@mui/material/Typography";
 
 const mapContainerStyle = {
     width: '100%',
@@ -306,7 +307,7 @@ const EventList = () => {
                                     <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
                                             <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
-                                                event
+
                                             </Avatar>
                                             <CardHeader
                                                 style={{ display: 'top', maxHeight: '65px' }}
@@ -319,15 +320,23 @@ const EventList = () => {
                                                         WebkitBoxOrient: 'vertical', // Set the orientation to vertical
                                                         textOverflow: 'ellipsis' // Add ellipsis to text overflow
                                                     }}>
-                                                        {item.title}
+                                                        <Typography variant="h3" component="h3" style={{ fontSize: '1.25rem' }}>
+                                                            {item.title}
+                                                        </Typography>
                                                     </div>
                                                 }
                                                 titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                                 subheader={
                                                     <div>
-                                                        <div>{item.date}</div> {/* First line of subheader */}
+                                                        <Typography variant="h4" component="h4" style={{ fontSize: '1rem' }}>
+                                                            {item.date} {/* Adjust as needed */}
+                                                        </Typography> {/* First line of subheader */}
                                                         <div>
-                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.place}
+                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
+                                                            <Typography variant="h5" component="h5" style={{ fontSize: '1rem' }}>
+                                                                {item.place}
+                                                            </Typography>
+
                                                         </div>
                                                     </div>
                                                 }
