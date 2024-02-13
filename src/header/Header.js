@@ -33,11 +33,11 @@ function Header() {
                 <title>Activenty - Discover Local Events and Activities</title>
                 <meta name="description" content="Discover local events and activities with Activenty! Explore concerts, outdoor adventures, and cultural experiences. Start your next adventure today." />
                 <meta name="keywords" content={keywords} />
-                <link rel="canonical" href="http://www.activenty.com" />
+                <link rel="canonical" href="http://www.activenty.com/main" />
             </Helmet>
             <AppBar position="relative" style={{ backgroundColor: 'white' }}>
                 <Toolbar className={isMobile ? 'toolbar-mobile' : ''}>
-                    <Typography variant="h1" component="h1" style={{ flexGrow: 1, cursor: 'pointer', color: 'darkorange', fontSize: isMobile ? '1.5rem' : '2.5rem', fontWeight: 'bold' }} onClick={() => handleNavigation('/main')}>
+                    <Typography variant="h1" component="h1" style={{ cursor: 'pointer', color: 'darkorange', fontSize: isMobile ? '1.5rem' : '2.5rem', fontWeight: 'bold' }} onClick={() => handleNavigation('/main')}>
                         αctiventy
                     </Typography>
                     <NavLink to="/search" className="nav-link" activeClassName="active">
