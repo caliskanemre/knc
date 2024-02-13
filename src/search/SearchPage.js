@@ -213,23 +213,26 @@ const SearchPage = () => {
                         <EventSearchButtons
                             handleNewSearch={handleNewSearch}
                             updateFilteredEvents={updateFilteredEvents}
+                            setSearchQuery={setSearchQuery}
                         />
                     </div>
 
                     <div className="recent-searches">
                         <h2>Recent and popular searches</h2>
                         <ul>
-                            <h4>Tallinn</h4>
-                            <h4>Music</h4>
-                            <h4>Spa</h4>
-                            <h4>Museum</h4>
-                            <h4>Concert</h4>
+                            <li><h6>Tallinn</h6></li>
+                            <li><h6>Music</h6></li>
+                            <li><h6>Spa</h6></li>
+                            <li><h6>Museum</h6></li>
+                            <li><h6>Concert</h6></li>
+                            <li><h6>Family</h6></li>
                         </ul>
                     </div>
+
                 </div>
                 {searchQuery && (
                     <Typography variant="h6" style={{ textAlign: 'center', margin: '20px 0' }}>
-                        Found {totalResults} results for "{searchQuery}"
+                        {totalResults === 0 ? `No activity or events found in Estonia.` : `Found ${totalResults} results for "${searchQuery}"`}
                     </Typography>
                 )}
 

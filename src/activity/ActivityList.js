@@ -248,7 +248,8 @@ const ActivityList = () => {
     const getDynamicFontSize = (title) => {
         if (title.length < 10) return "1.8rem";
         if (title.length < 20) return "1.5rem"
-        return "1.2rem"; // Fallback font size
+        if (title.length < 30) return "1.2rem"
+        return "1rem"; // Fallback font size
     };
 
     return (
@@ -281,7 +282,19 @@ const ActivityList = () => {
 
             </div>
             <Container sx={{ py: 9 }} maxWidth="xl">
-                <Typography variant="h1" component="h2" style={{ marginBottom: '20px' }}>{type}</Typography>
+                <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
+                    {type} activities in {Object.keys(filters).length > 0 ?
+                    Object.entries(filters).map(([filterType, filterValue]) => {
+                        if (typeof filterValue === 'object' && filterValue !== null) {
+                            // Assuming 'filterValue' is an object and has a 'name' property you want to display
+                            return filterValue.name;
+                        } else {
+                            // If 'filterValue' is not an object, render it directly
+                            return filterValue;
+                        }
+                    }).join(', ') : 'Estonia'}
+                </Typography>
+
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
@@ -304,15 +317,21 @@ const ActivityList = () => {
                                                 <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
                                             </Avatar>
                                             <CardHeader style={{height : '50px'}}
-                                                titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }} // Adjust font size and line height as needed
-                                               title={ <Typography variant="h3" component="h3" style={{ fontSize: '1.25rem' }}>
-                                                    {item.title}
-                                                </Typography>}
+                                                        title={
+                                                            <Typography
+                                                                variant="h3"
+                                                                component="h3"
+                                                                style={{ fontSize: getDynamicFontSize(item.title) }}
+                                                            >
+                                                                {item.title}
+                                                            </Typography>
+                                                        }
                                                 subheader={
                                                     <div>
                                                         <div>
-                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
-                                                            <Typography variant="h4" component="h4" style={{ fontSize: '1.25rem' }}>
+
+                                                            <Typography variant="h4" component="h4" style={{ fontSize: '0.8rem' }}>
+                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
                                                                 {item.activity_location}
                                                             </Typography>
 

@@ -132,7 +132,7 @@ export default function Main () {
                                                             </div>
                                                         </div>
                                                     }
-                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '11px' } }}
+                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '12px' } }}
                                                 />
                                             </div>
                                         </a>

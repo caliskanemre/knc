@@ -31,9 +31,9 @@ function ActivitySubHeader() {
                      className="nav-link"
                      activeClassName="active"
                      onMouseEnter={handleMouseEnter}
-                     style={{ cursor: 'pointer', color: 'black', fontSize: '1.2rem', textDecoration: 'none' }}
+                     style={{ cursor: 'pointer', color: 'black', fontSize: '1.4rem', textDecoration: 'none' }}
                 >
-                    Activities
+                     Activities
                 </NavLink>
                 <Menu
                     anchorEl={anchorEl}
@@ -62,7 +62,7 @@ function ActivitySubHeader() {
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={wellness} alt="Health" style={{ width: '24px', height: '24px' }} />
+                            <img src={wellness} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/health" className="nav-link" activeClassName="active">
                             Health

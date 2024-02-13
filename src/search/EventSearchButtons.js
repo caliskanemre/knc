@@ -4,8 +4,7 @@ import {getTodayDate} from "@mui/x-date-pickers/internals";
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-const EventSearchButtons = ({handleNewSearch, updateFilteredEvents }) => {
-
+const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQuery }) => {
     const getTodayDate = () => {
         // Implement the function or import it if defined elsewhere
         return new Date().toISOString().split('T')[0];
@@ -34,6 +33,7 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents }) => {
     };
 
     const handleButtonClick = (term) => {
+
         if (term === 'Today') {
             const today = getTodayDate();
             callFilter(today, today)
@@ -44,6 +44,7 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents }) => {
             callFilter(startDay, endDay)
         }
         else {
+            setSearchQuery(term);
             handleNewSearch(term);
         }
     };
