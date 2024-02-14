@@ -57,7 +57,7 @@ function Header() {
                 </Toolbar>
                 <Box className="sub-header">
                     <NavLink to="/events" className="nav-link nav-item" activeClassName="active">
-                        <h2>Events</h2>
+                        Events
                     </NavLink>
                     <div>
                         <ActivitySubHeader />

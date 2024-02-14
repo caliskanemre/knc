@@ -307,7 +307,7 @@ const EventList = () => {
                                     <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
                                             <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
-
+                                                event
                                             </Avatar>
                                             <CardHeader
                                                 style={{ display: 'top', maxHeight: '65px' }}
@@ -328,15 +328,14 @@ const EventList = () => {
                                                 titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                                 subheader={
                                                     <div>
-                                                        <Typography variant="h4" component="h4" style={{ fontSize: '1rem' }}>
+                                                        <Typography variant="h4" component="h4" style={{ fontSize: '0.7rem' }}>
                                                             {item.date} {/* Adjust as needed */}
                                                         </Typography> {/* First line of subheader */}
                                                         <div>
-                                                            <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
-                                                            <Typography variant="h5" component="h5" style={{ fontSize: '1rem' }}>
+                                                            <Typography variant="h4" component="h4" style={{ fontSize: '0.7rem' }}>
+                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
                                                                 {item.place}
                                                             </Typography>
-
                                                         </div>
                                                     </div>
                                                 }
