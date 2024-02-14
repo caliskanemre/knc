@@ -37,7 +37,7 @@ function Header() {
             </Helmet>
             <AppBar position="relative" style={{ backgroundColor: 'white' }}>
                 <Toolbar className={isMobile ? 'toolbar-mobile' : ''}>
-                    <Typography variant="h1" component="h1" style={{ cursor: 'pointer', color: 'darkorange', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: 'bold' }} onClick={() => handleNavigation('/main')}>
+                    <Typography variant="h1" component="h1" style={{ cursor: 'pointer', color: 'darkorange', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: 'bold' }} onClick={() => handleNavigation('/')}>
                         αctiventy
                     </Typography>
                     <NavLink to="/search" className="nav-link" activeClassName="active">
