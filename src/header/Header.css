@@ -72,7 +72,8 @@
     }
 
     .toolbar-mobile {
-        display: inline-block;
+        display: flex;
+        justify-content: space-between;
 
     }
 
