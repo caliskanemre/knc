@@ -182,7 +182,7 @@ const SearchPage = () => {
                 <title>{searchQuery ? `${searchQuery} - Search Results | Activenty` : 'Search | Activenty'}</title>
                 <meta name="description" content={`Discover events and activities related to ${searchQuery ? searchQuery : 'your interests'} on Activenty.`} />
                 <meta name="robots" content="noindex, follow" />
-                <link rel="canonical" href={`${window.location.origin}`} />
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
             <Header/>
 

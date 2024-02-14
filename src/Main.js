@@ -76,9 +76,10 @@ export default function Main () {
     }, []);
 
     const getDynamicFontSize = (title) => {
-        if (title.length < 10) return "1.6rem";
-        if (title.length < 30) return "1.3rem"
-        return "1rem"; // Fallback font size
+        if (title.length < 10) return "1.6rem"
+        else if (title.length < 30) return "1.3rem"
+        else if (title.length < 50) return "1.1rem"
+        return "0.85rem"; // Fallback font size
     };
 
     return (
@@ -128,11 +129,11 @@ export default function Main () {
                                                         <div>
                                                             <div>{item.date}</div> {/* First line of subheader */}
                                                             <div>
-                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} /> {item.place}
+                                                                <PinDropIcon style={{ fontSize: '0.8rem', verticalAlign: 'bottom' }} /> {item.place}
                                                             </div>
                                                         </div>
                                                     }
-                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '12px' } }}
+                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '0.67rem' } }}
                                                 />
                                             </div>
                                         </a>
