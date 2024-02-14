@@ -33,7 +33,7 @@ function Header() {
                 <title>Activenty - Discover Local Events and Activities</title>
                 <meta name="description" content="Discover local events and activities with Activenty! Explore concerts, outdoor adventures, and cultural experiences. Start your next adventure today." />
                 <meta name="keywords" content={keywords} />
-                <link rel="canonical" href="http://www.activenty.com/main" />
+                <link rel="canonical" href="https://www.activenty.com" />
             </Helmet>
             <AppBar position="relative" style={{ backgroundColor: 'white' }}>
                 <Toolbar className={isMobile ? 'toolbar-mobile' : ''}>
