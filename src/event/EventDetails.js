@@ -6,6 +6,14 @@ import MapForEvent from "./MapForEvent";
 import "./EventDetails.css";
 import { Button } from "@mui/material";
 import { Helmet } from "react-helmet";
+import {
+    FacebookIcon, FacebookMessengerIcon, FacebookMessengerShareButton,
+    FacebookShareButton,
+    TelegramIcon,
+    TelegramShareButton,
+    WhatsappIcon,
+    WhatsappShareButton
+} from "react-share";
 
 const EventDetails = () => {
     const { eventId, eventName } = useParams(); // Combined the two useParams calls into one
@@ -13,6 +21,9 @@ const EventDetails = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
     const isMobile = window.innerWidth <= 768;
+
+
+
     const toggleMap = () => {
         setIsMapOpen(!isMapOpen);
     };
@@ -30,7 +41,8 @@ const EventDetails = () => {
     if (event === null) {
         return <div>Loading...</div>;
     }
-
+    const shareUrl = window.location.href;
+    const shareMessage = `${event.title} - Check out this event on Activenty!`;
     // Improved alt text for the event photo
     const altText = `${event.title} in ${event.place}`;
 
@@ -105,6 +117,18 @@ const EventDetails = () => {
                     <p>About the event: {event.description}</p>
                     <h4>Place: {event.place}</h4>
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
+                    <div className="share-buttons">
+                        {/* WhatsApp Share Button */}
+                        <WhatsappShareButton url={shareUrl} title={shareMessage} separator=":: "  style={{ marginRight: '10px' }}>
+                            <WhatsappIcon size={32} round />
+                        </WhatsappShareButton>
+                        <TelegramShareButton url={shareUrl} title={shareMessage}   style={{ marginRight: '10px' }}>
+                            <TelegramIcon size={32} round />
+                        </TelegramShareButton>
+                        <FacebookShareButton  url={shareUrl} title={shareMessage}  style={{ marginRight: '10px' }}>
+                            <FacebookIcon size={32} round />
+                        </FacebookShareButton>
+                    </div>
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForEvent event={event} />

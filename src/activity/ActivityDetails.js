@@ -8,6 +8,14 @@ import './ActivityDetails.css';
 import {Button} from "@mui/material";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 import {Helmet} from "react-helmet";
+import {
+    FacebookIcon,
+    FacebookShareButton,
+    TelegramIcon,
+    TelegramShareButton,
+    WhatsappIcon,
+    WhatsappShareButton
+} from "react-share";
 
 const ActivityDetails = () => {
     const { id } = useParams();
@@ -57,6 +65,9 @@ const ActivityDetails = () => {
             return <span>{content}</span>;
         }
     };
+
+    const shareUrl = window.location.href;
+    const shareMessage = `${activity.title} - Check out this event on Activenty!`;
 
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
@@ -166,6 +177,19 @@ const ActivityDetails = () => {
                     )}
                     {activity.activity_price && <h5>Price: {activity.activity_price}</h5>}
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
+
+                    <div className="share-buttons">
+                        {/* WhatsApp Share Button */}
+                        <WhatsappShareButton url={shareUrl} title={shareMessage} separator=":: "  style={{ marginRight: '10px' }}>
+                            <WhatsappIcon size={32} round />
+                        </WhatsappShareButton>
+                        <TelegramShareButton url={shareUrl} title={shareMessage}   style={{ marginRight: '10px' }}>
+                            <TelegramIcon size={32} round />
+                        </TelegramShareButton>
+                        <FacebookShareButton  url={shareUrl} title={shareMessage}  style={{ marginRight: '10px' }}>
+                            <FacebookIcon size={32} round />
+                        </FacebookShareButton>
+                    </div>
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForActivity activity={activity} />
