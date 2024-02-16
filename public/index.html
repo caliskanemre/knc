@@ -1,16 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <!-- Google tag (gtag.js) -->
-      <!-- Google tag (gtag.js) -->
-      <!-- Google tag (gtag.js) -->
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-41P0XLVW05"></script>
       <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
 
+          // Set default consent to 'denied' and initialize gtag
+          gtag('consent', 'default', {
+              'ad_storage': 'denied',
+              'analytics_storage': 'denied',
+              'wait_for_update': 500,
+          });
+          gtag('js', new Date());
           gtag('config', 'G-41P0XLVW05');
+      </script>
+      <!-- Consent Update Functions -->
+      <script>
+          function allConsentGranted() {
+              gtag('consent', 'update', {
+                  'ad_storage': 'granted',
+                  'analytics_storage': 'granted'
+              });
+          }
       </script>
       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
       <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
@@ -38,6 +50,12 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <!-- Other meta tags, scripts, and links -->
+
+      <!-- Importing the index.css stylesheet -->
+      <link rel="stylesheet" href="index.css">
     <title>Activenty: Discover Events & Activities Near You</title>
     <script
             async
@@ -45,6 +63,7 @@
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAFYU7aExnl8pUD90oe5A36a3dIzQayeA&libraries=places,geometry"
     ></script>
   </head>
+
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
@@ -57,6 +76,45 @@
 
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
+      We use cookies to personalize content and ads, to provide social media features, and to analyze our traffic. We also share information about your use of our site with our social media, advertising, and analytics partners who may combine it with other information that you’ve provided to them or that they’ve collected from your use of their services
     -->
+    <div id="consentModal" class="consent-modal">
+        <div class="consent-modal-content">
+            <p>We use cookies to personalize content and ads, to provide social media features, and to analyze our traffic. Partners who may combine it with other information that you’ve provided to them or that they’ve collected</p>
+            <div class="consent-buttons">
+                <button id="denyAll" class="btn-deny">Deny</button>
+                <button id="acceptAll" class="btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to show the consent modal
+        function showConsentModal() {
+            document.getElementById('consentModal').style.display = 'block';
+        }
+
+        // Function to hide the consent modal
+        function hideConsentModal() {
+            document.getElementById('consentModal').style.display = 'none';
+        }
+
+        // Handling 'Accept All' button click
+        document.getElementById('acceptAll').addEventListener('click', function() {
+            allConsentGranted(); // Grant all consents
+            hideConsentModal();  // Hide the consent modal
+        });
+
+        // Handling 'Deny' button click (You may need to define what happens when all consents are denied)
+        document.getElementById('denyAll').addEventListener('click', function() {
+            hideConsentModal();  // Hide the consent modal
+            // Implement what should happen when consents are denied
+        });
+
+        // Show the consent modal when the page loads
+        window.onload = function() {
+            showConsentModal();
+        };
+    </script>
   </body>
 </html>
