@@ -25,9 +25,10 @@
 }
 
 .btn-deny {
-    background-color: #f44336;
-    color: white;
+    background-color: white;
+    color: black;
     margin-left: 10px;
+    border: 1px solid black; /* Optional: adds a black border to the buttons */
 }
 .consent-modal-content {
     display: flex;
@@ -40,4 +41,15 @@
     display: flex;
     justify-content: flex-end; /* This will align the buttons to the right */
     gap: 10px; /* This adds some space between your buttons */
+}
+@media (max-width: 768px) {
+    .consent-modal-content {
+        flex-direction: column; /* Stack the elements on top of each other */
+        max-height: none; /* Remove max-height restriction on mobile */
+    }
+
+    .consent-buttons {
+        justify-content: center; /* Center the buttons on small screens */
+        padding-top: 20px; /* Add some space between the text and the buttons */
+    }
 }
