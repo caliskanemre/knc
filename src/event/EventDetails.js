@@ -16,7 +16,8 @@ import {
 } from "react-share";
 
 const EventDetails = () => {
-    const { eventId, eventName } = useParams(); // Combined the two useParams calls into one
+    const { eventName } = useParams(); // Combined the two useParams calls into one
+    const { eventId} = useParams(); // Combined the two useParams calls into one
     const [event, setEvent] = useState(null);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
@@ -29,7 +30,7 @@ const EventDetails = () => {
     };
 
     useEffect(() => {
-        Axios.get(`${baseURL}/events/${eventName}`)
+        Axios.get(`${baseURL}/events/${eventId}/${eventName}`)
             .then((response) => {
                 setEvent(response.data);
             })
@@ -82,7 +83,7 @@ const EventDetails = () => {
                             "name": "Activenty",
                             "logo": {
                                 "@type": "ImageObject",
-                                "url": "https://activenty.com/logo.png"
+                                "url": "https://www.activenty.com/logo512.png"
                             }
                         }
                     })}

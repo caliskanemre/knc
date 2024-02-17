@@ -24,7 +24,7 @@ function App() {
                         <Route path="/activities/:type" element={<ActivityList/>}/>
                         <Route path="/" element={<Main/>}/>
                         <Route path="/map" element={<Map/>}/>
-                        <Route path="/events/:eventName" element={<EventDetails/>} />
+                        <Route path="/events/:eventId/:eventName" element={<EventDetails/>} />
                         <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>} />
                         <Route path="/search/" element={<SearchPage/>} />
                     </Routes>

@@ -311,7 +311,7 @@ const ActivityList = () => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <a href={`/activities/detail/${item.id}/${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/activities/detail/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div  style={{display: 'flex', flexDirection: 'row'}}>
                                             <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
                                                 <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />

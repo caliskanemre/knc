@@ -243,7 +243,7 @@ const SearchPage = () => {
                         <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 {item.type === 'activities' ? (
-                                    <a href={`/activities/detail/${item.id}/${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/activities/detail/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                                 <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '5px', marginTop: '10px' }}>
@@ -280,7 +280,7 @@ const SearchPage = () => {
                                     </a>
                                 ) : (
                                     <>
-                                        <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                                 <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                     event
@@ -312,7 +312,7 @@ const SearchPage = () => {
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/events/${item.id}-${item.title}`} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <CardMedia
                                                 component="div"
                                                 sx={{ pt: '56.25%' }}
