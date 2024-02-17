@@ -280,7 +280,7 @@ const SearchPage = () => {
                                     </a>
                                 ) : (
                                     <>
-                                        <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                                 <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                     event
@@ -312,7 +312,7 @@ const SearchPage = () => {
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <CardMedia
                                                 component="div"
                                                 sx={{ pt: '56.25%' }}

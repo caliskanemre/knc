@@ -304,7 +304,7 @@ const EventList = () => {
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
 
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
                                             <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
                                                 event
@@ -343,7 +343,7 @@ const EventList = () => {
                                             />
                                         </div>
                                     </a>
-                                    <a href={`/events/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="div"
                                             sx={{ pt: '56.25%' }}

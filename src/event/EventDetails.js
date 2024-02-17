@@ -30,7 +30,7 @@ const EventDetails = () => {
     };
 
     useEffect(() => {
-        Axios.get(`${baseURL}/events/${eventId}/${eventName}`)
+        Axios.get(`${baseURL}/events/${eventId}/${encodeURIComponent(eventName)}`)
             .then((response) => {
                 setEvent(response.data);
             })
