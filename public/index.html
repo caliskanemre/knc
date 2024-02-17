@@ -27,7 +27,7 @@
       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
       <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
       <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon2.ico" />
+    <link rel="icon" href="%PUBLIC_URL%/faviconlogo.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -91,8 +91,9 @@
     <script>
         // Function to show the consent modal
         function showConsentModal() {
-            const consentGiven = localStorage.getItem('userConsent');
-            if(consentGiven !== "granted" && consentGiven !== "denied") {
+            const consentGiven = localStorage.getItem('storage_key');
+            if (consentGiven !== "granted" && consentGiven !== "denied") {
+                // Show the modal only if consent is not set
                 document.getElementById('consentModal').style.display = 'block';
             }
         }
@@ -104,7 +105,7 @@
 
         // Save user's consent to local storage
         function setUserConsent(consent) {
-            localStorage.setItem('userConsent', consent);
+            localStorage.setItem('storage_key', consent); // "your_new_storage_key" defines your chosen value
             hideConsentModal();
         }
 
