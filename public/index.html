@@ -91,7 +91,7 @@
     <script>
         // Function to show the consent modal
         function showConsentModal() {
-            const consentGiven = localStorage.getItem('storage_key');
+            const consentGiven = localStorage.getItem('userConsent');
             if (consentGiven !== "granted" && consentGiven !== "denied") {
                 // Show the modal only if consent is not set
                 document.getElementById('consentModal').style.display = 'block';
@@ -105,7 +105,7 @@
 
         // Save user's consent to local storage
         function setUserConsent(consent) {
-            localStorage.setItem('storage_key', consent); // "your_new_storage_key" defines your chosen value
+            localStorage.setItem('userConsent', consent); // "your_new_storage_key" defines your chosen value
             hideConsentModal();
         }
 
@@ -120,11 +120,25 @@
             // You should define what happens when consents are denied
             setUserConsent("denied"); // Save consent as denied
         });
-
-        // Show the consent modal when the page loads
         window.onload = function() {
-            showConsentModal();
+            const urlParams = new URLSearchParams(window.location.search);
+            const userConsent = urlParams.get('consent') || localStorage.getItem('userConsent');
+            if(userConsent !== "granted") {
+                showConsentModal();
+            }
         };
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userConsent = urlParams.get('consent') || localStorage.getItem('userConsent');
+
+            if (userConsent !== 'granted') {
+                localStorage.setItem('userConsent', 'granted'); // Set consent as granted
+                showConsentModal();
+            } else {
+                hideConsentModal();
+            }
+        });
+
     </script>
 
   </body>
