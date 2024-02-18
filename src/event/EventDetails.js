@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from "react-router-dom";
+import React, {useEffect, useState} from 'react';
+import {useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForEvent from "./MapForEvent";
 import "./EventDetails.css";
-import { Button } from "@mui/material";
-import { Helmet } from "react-helmet";
+import {Button} from "@mui/material";
+import {Helmet} from "react-helmet";
 import {
-    FacebookIcon, FacebookMessengerIcon, FacebookMessengerShareButton,
+    FacebookIcon,
     FacebookShareButton,
     TelegramIcon,
     TelegramShareButton,
     WhatsappIcon,
     WhatsappShareButton
 } from "react-share";
+import Linkify from 'react-linkify';
+import DOMPurify from 'dompurify';
 
 const EventDetails = () => {
     const { eventName } = useParams(); // Combined the two useParams calls into one
@@ -22,7 +24,43 @@ const EventDetails = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
     const isMobile = window.innerWidth <= 768;
+    const [showConsentModal, setShowConsentModal] = useState(false); // State to control consent modal visibility
 
+    useEffect(() => {
+        const checkUserConsent = () => {
+            const userConsent = localStorage.getItem('userConsent');
+            if (userConsent !== 'granted' && userConsent !== 'denied') {
+                setShowConsentModal(true);
+            } else {
+                setShowConsentModal(false);
+            }
+        };
+
+        checkUserConsent();
+
+        Axios.get(`${baseURL}/events/${eventId}/${encodeURIComponent(eventName)}`)
+            .then((response) => {
+                setEvent(response.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching event details:', error);
+            });
+    }, [eventName, eventId]);
+
+    const createMarkup = (text) => {
+        const sanitizedText = DOMPurify.sanitize(text).replace(/(\r\n|\n|\r)/gm, '<br />');
+        return { __html: sanitizedText };
+    };
+
+    const handleConsentGranted = () => {
+        localStorage.setItem('userConsent', 'granted');
+        setShowConsentModal(false);
+    };
+
+    const handleConsentDenied = () => {
+        localStorage.setItem('userConsent', 'denied');
+        setShowConsentModal(false);
+    };
 
 
     const toggleMap = () => {
@@ -115,7 +153,12 @@ const EventDetails = () => {
                 <div className="event">
                     <h4>{event.date}</h4>
                     <h1>{event.title}</h1>
-                    <p>About the event: {event.description}</p>
+                    <div>
+                        <p>About the event:</p>
+                        <Linkify>
+                            <div dangerouslySetInnerHTML={createMarkup(event.description)} />
+                        </Linkify>
+                    </div>
                     <h4>Place: {event.place}</h4>
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
                     <div className="share-buttons">
@@ -134,6 +177,18 @@ const EventDetails = () => {
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForEvent event={event} />
                 </div>
+                {showConsentModal && (
+                    <div id="consentModal" className="consent-modal">
+                        {/* Modal content */}
+                        <div className="consent-modal-content">
+                            <p>We use cookies to personalize content and ads...</p>
+                            <div className="consent-buttons">
+                                <button onClick={handleConsentDenied} className="btn-deny">Deny</button>
+                                <button onClick={handleConsentGranted} className="btn-accept">Accept All</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
         </div>
