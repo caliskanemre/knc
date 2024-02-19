@@ -2,25 +2,29 @@
 <html lang="en">
   <head>
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-41P0XLVW05"></script>
-      <script>
+      <script type="text/javascript">
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
-
-          // Set default consent to 'denied' and initialize gtag
+      </script>
+      <script>
           gtag('consent', 'default', {
-              'ad_storage': 'denied',
-              'analytics_storage': 'denied',
-              'wait_for_update': 500,
+              ad_storage: 'denied',
+              analytics_storage: 'denied',
+              functionality_storage: 'denied',
+              personalization_storage: 'denied',
+              security_storage: 'denied',
+              wait_for_update: 500
           });
-          gtag('js', new Date());
-          gtag('config', 'G-41P0XLVW05');
       </script>
       <!-- Consent Update Functions -->
       <script>
           function allConsentGranted() {
               gtag('consent', 'update', {
-                  'ad_storage': 'granted',
-                  'analytics_storage': 'granted'
+                  ad_storage: 'granted',
+                  analytics_storage: 'granted',
+                  functionality_storage: 'granted',
+                  personalization_storage: 'granted',
+                  security_storage: 'granted'
               });
           }
       </script>
@@ -116,11 +120,12 @@
         // Event handlers for the consent buttons
         document.getElementById('acceptAll').addEventListener('click', function() {
             setUserConsent("granted");
-            // additional code for granting consent like allConsentGranted();
+            allConsentGranted(); // Call this function to grant all consents
         });
 
         document.getElementById('denyAll').addEventListener('click', function() {
             setUserConsent("denied");
+            // You can also call a function here to set all consents to 'denied', if needed
         });
 
     </script>
