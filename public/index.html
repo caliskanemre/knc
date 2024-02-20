@@ -5,8 +5,8 @@
       <script type="text/javascript">
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
-      </script>
-      <script>
+
+          // Set default consent to 'denied' and initialize gtag
           gtag('consent', 'default', {
               ad_storage: 'denied',
               analytics_storage: 'denied',
@@ -15,6 +15,8 @@
               security_storage: 'denied',
               wait_for_update: 500
           });
+          gtag('js', new Date());
+          gtag('config', 'G-41P0XLVW05');
       </script>
       <!-- Consent Update Functions -->
       <script>
