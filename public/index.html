@@ -19,17 +19,6 @@
           gtag('config', 'G-41P0XLVW05');
       </script>
       <!-- Consent Update Functions -->
-      <script>
-          function allConsentGranted() {
-              gtag('consent', 'update', {
-                  ad_storage: 'granted',
-                  analytics_storage: 'granted',
-                  functionality_storage: 'granted',
-                  personalization_storage: 'granted',
-                  security_storage: 'granted'
-              });
-          }
-      </script>
       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
       <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
       <meta charset="utf-8" />
@@ -73,64 +62,6 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-      We use cookies to personalize content and ads, to provide social media features, and to analyze our traffic. We also share information about your use of our site with our social media, advertising, and analytics partners who may combine it with other information that you’ve provided to them or that they’ve collected from your use of their services
-    -->
-    <div id="consentModal" class="consent-modal">
-        <div class="consent-modal-content">
-            <p>We use cookies to personalize content and ads, to provide social media features, and to analyze our traffic. Partners who may combine it with other information that you’ve provided to them or that they’ve collected</p>
-            <div class="consent-buttons">
-                <button id="denyAll" class="btn-deny">Deny</button>
-                <button id="acceptAll" class="btn-accept">Accept All</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function checkConsentAndShowModal() {
-            const userConsent = localStorage.getItem('userConsent');
-            if (userConsent !== 'granted') {
-                showConsentModal();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', (event) => {
-            checkConsentAndShowModal();
-        });
-
-        function showConsentModal() {
-            document.getElementById('consentModal').style.display = 'block';
-        }
-
-        function hideConsentModal() {
-            document.getElementById('consentModal').style.display = 'none';
-        }
-
-        function setUserConsent(consent) {
-            localStorage.setItem('userConsent', consent);
-            hideConsentModal();
-        }
-
-        // Event handlers for the consent buttons
-        document.getElementById('acceptAll').addEventListener('click', function() {
-            setUserConsent("granted");
-            allConsentGranted(); // Call this function to grant all consents
-        });
-
-        document.getElementById('denyAll').addEventListener('click', function() {
-            setUserConsent("denied");
-            // You can also call a function here to set all consents to 'denied', if needed
-        });
-
-    </script>
 
   </body>
 </html>
