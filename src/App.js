@@ -25,11 +25,13 @@ function App() {
 
         // Update consent configuration for Google Analytics using gtag
         gtag('consent', 'update', {
-            'ad_storage': 'granted',
-            'analytics_storage': 'granted',
-            'functionality_storage': 'granted',
-            'personalization_storage': 'granted',
-            'security_storage': 'granted'
+            ad_storage: 'granted',
+            ad_user_data: 'granted',
+            ad_personalization: 'granted',
+            analytics_storage: 'granted',
+            functionality_storage: 'granted',
+            personalization_storage: 'granted',
+            security_storage: 'granted',
         });
 
     };
