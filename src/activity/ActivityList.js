@@ -181,7 +181,7 @@ const ActivityList = () => {
 
     const handleInfoWindowClick = (activity) => {
         if (activity && activity.id) {
-            const fullUrl = window.location.origin + `/activities/detail/${activity.id}`;
+            const fullUrl = window.location.origin + `/activities/detail/${activity.id}/${activity.title}`;
             window.open(fullUrl, '_blank');
         }
     };

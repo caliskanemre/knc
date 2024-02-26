@@ -130,7 +130,7 @@ const EventList = () => {
 
     const handleInfoWindowClick = (event) => {
         if (event && event.id) {
-            const fullUrl = window.location.origin + `/events/${event.id}-${event.title}`;
+            const fullUrl = window.location.origin + `/events/${event.id}/${event.title}`;
             window.open(fullUrl, '_blank');
         }
     };
