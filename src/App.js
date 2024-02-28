@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import Main from "./Main";
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import EventList from "./event/EventList";
 import ActivityList from "./activity/ActivityList";
 import Map from "./header/Map";
@@ -10,6 +10,7 @@ import SearchPage from "./search/SearchPage";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFnsV3";
 import {CookieConsent} from "react-cookie-consent";
+import IdealForList from "./ideal/IdealForList";
 
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Main/>}/>
                         <Route path="/events" element={<EventList/>}/>
+                        <Route path="/ideal-for" element={<IdealForList/>}/>
                         <Route path="/activities" element={<ActivityList/>}/>
                         <Route path="/activities/:type" element={<ActivityList/>}/>
                         <Route path="/" element={<Main/>}/>

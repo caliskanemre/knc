@@ -27,16 +27,6 @@ const EventDetails = () => {
     const [showConsentModal, setShowConsentModal] = useState(false); // State to control consent modal visibility
 
     useEffect(() => {
-        const checkUserConsent = () => {
-            const userConsent = localStorage.getItem('userConsent');
-            if (userConsent !== 'granted' && userConsent !== 'denied') {
-                setShowConsentModal(true);
-            } else {
-                setShowConsentModal(false);
-            }
-        };
-
-        checkUserConsent();
 
         Axios.get(`${baseURL}/events/${eventId}/${encodeURIComponent(eventName)}`)
             .then((response) => {
@@ -50,16 +40,6 @@ const EventDetails = () => {
     const createMarkup = (text) => {
         const sanitizedText = DOMPurify.sanitize(text).replace(/(\r\n|\n|\r)/gm, '<br />');
         return { __html: sanitizedText };
-    };
-
-    const handleConsentGranted = () => {
-        localStorage.setItem('userConsent', 'granted');
-        setShowConsentModal(false);
-    };
-
-    const handleConsentDenied = () => {
-        localStorage.setItem('userConsent', 'denied');
-        setShowConsentModal(false);
     };
 
 
@@ -152,6 +132,7 @@ const EventDetails = () => {
             <div className="event-container">
                 <div className="event">
                     <h4>{event.date}</h4>
+                    <h4>Category: {event.type}</h4>
                     <h1>{event.title}</h1>
                     <div>
                         <p>About the event:</p>
@@ -159,7 +140,11 @@ const EventDetails = () => {
                             <div dangerouslySetInnerHTML={createMarkup(event.description)} />
                         </Linkify>
                     </div>
+                    <h4>Attendee Suggestions: {event.idealFor}</h4>
+                    {event.contact && <h4>contact: {event.contact}</h4>}
                     <h4>Place: {event.place}</h4>
+                    {event.price && <h5>Price: {event.price}</h5>}
+                    <h5><a href={event.externalLink} target="_blank">{event.externalLink}</a></h5>
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
                     <div className="share-buttons">
                         {/* WhatsApp Share Button */}
@@ -177,18 +162,6 @@ const EventDetails = () => {
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
                     <MapForEvent event={event} />
                 </div>
-                {showConsentModal && (
-                    <div id="consentModal" className="consent-modal">
-                        {/* Modal content */}
-                        <div className="consent-modal-content">
-                            <p>We use cookies to personalize content and ads...</p>
-                            <div className="consent-buttons">
-                                <button onClick={handleConsentDenied} className="btn-deny">Deny</button>
-                                <button onClick={handleConsentGranted} className="btn-accept">Accept All</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
         </div>

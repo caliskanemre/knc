@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Axios from 'axios';
 import Header from "../header/Header";
-import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import {
@@ -20,23 +19,20 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import CardMedia from "@mui/material/CardMedia";
-import {useNavigate, useParams} from "react-router-dom";
-import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import {MapOutlined} from "@mui/icons-material";
-import {EventFilter} from "../filter/EventFilter";
-import Box from "@mui/material/Box";
-import PinDropIcon from '@mui/icons-material/PinDrop';
-import {Helmet} from "react-helmet";
 import Typography from "@mui/material/Typography";
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import LandscapeIcon from '@mui/icons-material/Landscape';
-import ScienceIcon from '@mui/icons-material/Science';
-import SchoolIcon from '@mui/icons-material/School';
-import ChildCareIcon from '@mui/icons-material/ChildCare';
-import PaletteIcon from '@mui/icons-material/Palette';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import Container from "@mui/material/Container";
+import {useNavigate, useParams} from "react-router-dom";
+import FilterListIcon from '@mui/icons-material/FilterList';
+import {MapOutlined} from "@mui/icons-material";
+import PinDropIcon from "@mui/icons-material/PinDrop";
+import {Helmet} from "react-helmet";
+import Box from "@mui/material/Box";
+import CardMedia from "@mui/material/CardMedia";
+import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
+import {EventFilter} from "../filter/EventFilter";
+import PersonIcon from '@mui/icons-material/Person'; // Represents Alone
+import FavoriteIcon from '@mui/icons-material/Favorite'; // Represents Couple
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 
 const mapContainerStyle = {
     width: '100%',
@@ -48,7 +44,7 @@ const center = {
     lng: 25.15, // Example longitude
 };
 
-const EventList = () => {
+const IdealForList = () => {
     const [events, setEvents] = useState([]);
     const { type } = useParams();
     const [page, setPage] = useState(0);
@@ -64,6 +60,7 @@ const EventList = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
+    const [selectedType, setSelectedType] = useState('Alone');
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
@@ -77,7 +74,7 @@ const EventList = () => {
         const sort = 'interested,desc'; // This sorts the events by 'interest' in descending order
 
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/events/all`, {
+        Axios.get(`${baseURL}/events/${selectedType}`, {
             params: {
                 page: page,
                 size: size,
@@ -90,7 +87,7 @@ const EventList = () => {
             .catch((error) => {
                 console.error('Error fetching events:', error);
             });
-    }, []);
+    }, [selectedType]);
 
     const applyFilter = (filterType, filterValue) => {
         // Add a new filter or update the existing one
@@ -150,7 +147,9 @@ const EventList = () => {
     const handleCloseMapDialog = () => {
         setMapOpen(false);
     };
-
+    const handleButtonSelect = (value) => {
+        setSelectedType(value);
+    };
     function askForUserLocation() {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -170,7 +169,7 @@ const EventList = () => {
     const loadMoreEvents = async () => {
         try {
             let nextPage = page + 1;
-            let fetchUrl = `${baseURL}/events/all?page=${nextPage}&size=20`;
+            let fetchUrl = `${baseURL}/events/${selectedType}?page=${nextPage}&size=20`;
 
             // Check if the current sort is 'near' and ensure userLocation is available
             if (sort === "near" && userLocation) {
@@ -248,15 +247,7 @@ const EventList = () => {
                 });
         }
     };
-    const eventIcons = {
-        "music & concerts": <MusicNoteIcon />,
-        "outdoor & adventure": <LandscapeIcon />,
-        "tech & innovation": <ScienceIcon />,
-        "education": <SchoolIcon />,
-        "children": <ChildCareIcon />,
-        "arts & culture": <PaletteIcon />,
-        "other": <HelpOutlineIcon />,
-    };
+
 
     return (
         <div className="event-list">
@@ -266,25 +257,49 @@ const EventList = () => {
             </Helmet>
             <Header/>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-                <Button style={{ marginRight: '20px' }}
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<FilterListIcon />}
-                        onClick={handleOpenFilterDialog}
+                <Button
+                    style={{ marginRight: '20px' }}
+                    variant={selectedType === 'alone' ? "contained" : "outlined"}
+                    color="primary"
+                    startIcon={<PersonIcon />}
+                    onClick={() => handleButtonSelect('Alone')}
                 >
-                    Filter
+                    Alone
                 </Button>
 
                 <Button
-                    variant="outlined"
+                    style={{ marginRight: '20px' }}
+                    variant={selectedType === 'couple' ? "contained" : "outlined"}
                     color="secondary"
-                    startIcon={<MapOutlined />}
-                    onClick={handleOpenMapDialog}
+                    startIcon={<FavoriteIcon />}
+                    onClick={() => handleButtonSelect('Couple')}
                 >
-                    Map
+                    Couple
+                </Button>
+
+                <Button
+                    variant={selectedType === 'family' ? "contained" : "outlined"}
+                    color="success"
+                    startIcon={<FamilyRestroomIcon />}
+                    onClick={() => handleButtonSelect('Family')}
+                >
+                    Family
                 </Button>
             </div>
+            {/*<EventSubHeader/>*/}
             <Container sx={{ py: 9 }} maxWidth="xl">
+                <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
+                    Best {selectedType} events in {Object.keys(filters).length > 0 ?
+                    Object.entries(filters).map(([filterType, filterValue]) => {
+                        if (typeof filterValue === 'object' && filterValue !== null) {
+                            // Assuming 'filterValue' is an object and has a 'name' property you want to display
+                            return filterValue.name;
+                        } else {
+                            // If 'filterValue' is not an object, render it directly
+                            return filterValue;
+                        }
+                    }).join(', ') : 'Estonia'}
+                </Typography>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
@@ -296,21 +311,52 @@ const EventList = () => {
                     ))}
                 </Stack>
                 <Box display="flex" justifyContent="flex-end" p="5px">
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                        <Button style={{ marginRight: '20px' }}
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<FilterListIcon />}
+                                onClick={handleOpenFilterDialog}
+                        >
+                            Filter
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<MapOutlined />}
+                            onClick={handleOpenMapDialog}
+                        >
+                            Map
+                        </Button>
+                    </div>
                     <FormControl sx={{ m: 2, minWidth: 120 }}>
-                        <InputLabel id="autowidth-label">Sort</InputLabel>
+                        <InputLabel id="autowidth-label">Sort by</InputLabel>
                         <Select
                             labelId="autowidth-label"
                             id="autowidth"
                             value={sort}
                             onChange={handleChangeSort}
                             autoWidth
-                            label="Sort"
+                            label="Sort by"
+                            sx={{
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    border: 'none',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    border: 'none',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    border: 'none',
+                                }
+                            }}
                         >
                             <MenuItem value={"interested"}>Popularity</MenuItem>
                             <MenuItem value={"near"}>Nearest</MenuItem>
                             <MenuItem value={"dateFrom"}>Date/Time</MenuItem>
                         </Select>
                     </FormControl>
+
                 </Box>
                 <Grid container spacing={4}>
                     {events.map((item) => {
@@ -320,8 +366,8 @@ const EventList = () => {
                                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                     <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
-                                                {eventIcons[item.type.toLowerCase()]}
+                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
+                                                event
                                             </Avatar>
                                             <CardHeader
                                                 style={{ display: 'top', maxHeight: '65px' }}
@@ -481,5 +527,4 @@ const EventList = () => {
         </div>
     );
 };
-
-export default EventList;
+export default IdealForList

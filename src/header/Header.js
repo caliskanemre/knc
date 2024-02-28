@@ -54,6 +54,9 @@ function Header() {
                     <div className="nav-item-mobile-hidden">
                         <ActivitySubHeader />
                     </div>
+                    <NavLink to="/ideal-for" className="nav-link nav-item-mobile-hidden" activeClassName="active">
+                        AI Assistant
+                    </NavLink>
                 </Toolbar>
                 <Box className="sub-header">
                     <NavLink to="/events" className="nav-link nav-item" activeClassName="active">
@@ -62,6 +65,9 @@ function Header() {
                     <div>
                         <ActivitySubHeader />
                     </div>
+                    <NavLink to="/ideal-for" className="nav-link nav-item" activeClassName="active">
+                        AI Assistant
+                    </NavLink>
                 </Box>
             </AppBar>
         </>

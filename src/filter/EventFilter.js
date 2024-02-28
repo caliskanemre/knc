@@ -18,11 +18,16 @@ const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredEvents, applyFilter }) => {
 
     const [selectedLocation, setSelectedLocation] = useState('');
+    const [selectedType, setSelectedType] = useState('');
     const [startDate, setStartDate] = useState(null); // State for start date
     const [endDate, setEndDate] = useState(null); // State for end date
 
     const handleLocationChange = (event) => {
         setSelectedLocation(event.target.value);
+    };
+
+    const handleTypeChange = (event) => {
+        setSelectedType(event.target.value);
     };
 
     // Handle start date change
@@ -38,16 +43,16 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
     // Send request to backend with selected location as a filter
     const applyFilters = () => {
         applyFilter('location ', selectedLocation);
-
+        applyFilter('type', selectedType);
         if (startDate) applyFilter('startDate', startDate.toISOString().split('T')[0]);
         if (endDate) applyFilter('endDate', endDate.toISOString().split('T')[0]);
         // Assuming you have a function to make the backend call
         // replace `fetchFilteredActivities` with your actual function
-        fetchFilteredActivities(selectedLocation, startDate, endDate);
+        fetchFilteredActivities(selectedType, selectedLocation, startDate, endDate);
         handleCloseFilterDialog(); // Close the dialog upon applying filters
     };
 
-    const fetchFilteredActivities = (location, startDate, endDate) => {
+    const fetchFilteredActivities = (type, location, startDate, endDate) => {
 
 
         const formattedStartDate = startDate ? startDate.toISOString().split('T')[0] : '';
@@ -91,6 +96,26 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
                 <DialogContentText>
                     Select filters to refine your activity search.
                 </DialogContentText>
+
+                <FormControl fullWidth margin="20px">
+                    <InputLabel id="type-label">Type</InputLabel>
+                    <Select
+                        labelId="type-label"
+                        id="location-select"
+                        value={selectedType} // Set the value to the selectedLocation state
+                        onChange={handleTypeChange} // Set onChange to use the handleLocationChange function
+                        label="type"
+                    >
+                        <MenuItem value="Music & Concerts">Music & Concerts</MenuItem>
+                        <MenuItem value="Outdoor & Adventure">Outdoor & Adventure</MenuItem>
+                        <MenuItem value="Tech & Innovation">Tech & Innovation</MenuItem>
+                        <MenuItem value="Education">Education</MenuItem>
+                        <MenuItem value="Arts & Culture">Arts & Culture</MenuItem>
+
+                    </Select>
+
+
+                </FormControl>
 
 
                 <FormControl fullWidth margin="normal">
