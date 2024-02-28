@@ -66,7 +66,7 @@ function Header() {
                         <ActivitySubHeader />
                     </div>
                     <NavLink to="/ideal-for" className="nav-link nav-item" activeClassName="active">
-                        AI Assistant
+                        AI
                     </NavLink>
                 </Box>
             </AppBar>
