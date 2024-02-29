@@ -1,30 +1,27 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import CssBaseline from '@mui/material/CssBaseline';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import {Link} from "react-router-dom";
-import {createTheme, styled, ThemeProvider} from '@mui/material/styles';
+import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
 import backgroundImage from './background2.png';
-import CardActions from '@mui/material/CardActions';
-import IconButton from '@mui/material/IconButton';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Collapse from '@mui/material/Collapse';
-import {Avatar, CardHeader, ListItemButton} from "@mui/material";
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
+import {Avatar, CardHeader} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import LandscapeIcon from "@mui/icons-material/Landscape";
+import ScienceIcon from "@mui/icons-material/Science";
+import SchoolIcon from "@mui/icons-material/School";
+import ChildCareIcon from "@mui/icons-material/ChildCare";
+import PaletteIcon from "@mui/icons-material/Palette";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 /*function Copyright() {
     return (
@@ -82,6 +79,15 @@ export default function Main () {
         return "0.85rem"; // Fallback font size
     };
 
+    const eventIcons = {
+        "music & concerts": <MusicNoteIcon />,
+        "outdoor & adventure": <LandscapeIcon />,
+        "tech & innovation": <ScienceIcon />,
+        "education": <SchoolIcon />,
+        "children": <ChildCareIcon />,
+        "arts & culture": <PaletteIcon />,
+        "other": <HelpOutlineIcon />,
+    };
     return (
         <ThemeProvider theme={defaultTheme}>
             <Helmet>
@@ -107,8 +113,8 @@ export default function Main () {
                                     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                         <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
-                                                    event
+                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
+                                                    {eventIcons[item.type.toLowerCase()]}
                                                 </Avatar>
                                                 <CardHeader
                                                     style={{ display: 'top', height: '100px' }}

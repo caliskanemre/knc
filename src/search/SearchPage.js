@@ -22,6 +22,13 @@ import museumIcon from "../images/green_museum.png";
 import EventSearchButtons from "./EventSearchButtons";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import LandscapeIcon from "@mui/icons-material/Landscape";
+import ScienceIcon from "@mui/icons-material/Science";
+import SchoolIcon from "@mui/icons-material/School";
+import ChildCareIcon from "@mui/icons-material/ChildCare";
+import PaletteIcon from "@mui/icons-material/Palette";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +183,17 @@ const SearchPage = () => {
         ...(Array.isArray(allResult.activity) ? allResult.activity.map(item => ({ ...item, type: 'activities' })) : [])
     ];
 
+    const eventIcons = {
+        "music & concerts": <MusicNoteIcon />,
+        "outdoor & adventure": <LandscapeIcon />,
+        "tech & innovation": <ScienceIcon />,
+        "education": <SchoolIcon />,
+        "children": <ChildCareIcon />,
+        "arts & culture": <PaletteIcon />,
+        "other": <HelpOutlineIcon />,
+    };
+
+
     return (
         <div>
             <Helmet>
@@ -282,8 +300,8 @@ const SearchPage = () => {
                                     <>
                                         <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '1rem', marginLeft: '5px', marginTop: '15px' }}>
-                                                    event
+                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
+                                                    {eventIcons[item.type.toLowerCase()]}
                                                 </Avatar>
                                                 <CardHeader
                                                     style={{ display: 'top', maxHeight: '65px' }}
