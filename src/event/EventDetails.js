@@ -28,7 +28,9 @@ const EventDetails = () => {
 
     useEffect(() => {
 
-        Axios.get(`${baseURL}/events/${eventId}/${encodeURIComponent(eventName)}`)
+        const formattedEventName = encodeURIComponent(eventName.replace(/\//g, '-'));
+
+        Axios.get(`${baseURL}/events/${eventId}/${formattedEventName}`)
             .then((response) => {
                 setEvent(response.data);
             })
