@@ -37,6 +37,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import PaletteIcon from '@mui/icons-material/Palette';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import backgroundImage from "../images/background256.png";
 
 const mapContainerStyle = {
     width: '100%',
@@ -67,6 +68,8 @@ const EventList = () => {
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
+    const deneme = []
+    deneme.push(backgroundImage);
 
     useEffect(() => {
         // Define the page and size for pagination
@@ -360,9 +363,18 @@ const EventList = () => {
                                     <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="div"
-                                            sx={{ pt: '56.25%' }}
-                                            image={item.photo}
-                                        />
+                                            sx={{ pt: '56.25%', position: 'relative', overflow: 'hidden' }} // Ensure the position is relative to position the image correctly
+                                        >
+                                            <img
+                                                src={item.photo}
+                                                alt={item.title}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} // Full cover image
+                                                onError={(e) => {
+                                                    e.target.onerror = null; // Prevents looping
+                                                    e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
+                                                }}
+                                            />
+                                        </CardMedia>
                                     </a>
                                 </Card>
                             </Grid>

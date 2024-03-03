@@ -16,6 +16,7 @@ import {
 } from "react-share";
 import Linkify from 'react-linkify';
 import DOMPurify from 'dompurify';
+import backgroundImage from "../images/background512.png";
 
 const EventDetails = () => {
     const { eventName } = useParams(); // Combined the two useParams calls into one
@@ -25,6 +26,9 @@ const EventDetails = () => {
     const [isMapOpen, setIsMapOpen] = useState(false);
     const isMobile = window.innerWidth <= 768;
     const [showConsentModal, setShowConsentModal] = useState(false); // State to control consent modal visibility
+
+    const deneme = []
+    deneme.push(backgroundImage);
 
     useEffect(() => {
 
@@ -112,23 +116,30 @@ const EventDetails = () => {
 
             <Header />
             {event.photo && (
-                <div style={{ position: 'relative' }}>
-                    {/* Background overlay */}
+                <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: 'auto' }}>
+                    {/* Background overlay with blur */}
                     <div
                         style={{
                             position: 'absolute',
                             top: 0,
                             left: 0,
-                            width: '100%', // Cover 100% on mobile
-                            height: '100%',
-                            zIndex: 1, // Make sure it's above the images
+                            width: '100%',  // Ensure it covers the whole container
+                            height: '100%', // Ensure it covers the whole container
+                            backgroundImage: `url(${event.photo})`, // Corrected syntax
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            filter: 'blur(10px)',
+                            zIndex: -1,
                         }}
-
-                    >
-
-                    </div>
+                    ></div>
                     {/* Concatenate photo URLs into a single array */}
-                    <img src={event.photo} alt="Event" className="event-photo" />
+                    <img
+                        src={event.photo} alt="Event" className="event-photo"
+                        onError={(e) => {
+                            e.target.onerror = null; // Prevents looping
+                            e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
+                        }}
+                    />
                 </div>
             )}
             <div className="event-container">
