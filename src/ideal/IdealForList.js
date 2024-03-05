@@ -33,6 +33,7 @@ import {EventFilter} from "../filter/EventFilter";
 import PersonIcon from '@mui/icons-material/Person'; // Represents Alone
 import FavoriteIcon from '@mui/icons-material/Favorite'; // Represents Couple
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import GroupIcon from '@mui/icons-material/Group';
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
 import LandscapeIcon from "@mui/icons-material/Landscape";
 import ScienceIcon from "@mui/icons-material/Science";
@@ -40,6 +41,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import PaletteIcon from "@mui/icons-material/Palette";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import LocalPlayIcon from "@mui/icons-material/LocalPlay";
 
 const mapContainerStyle = {
     width: '100%',
@@ -67,7 +69,7 @@ const IdealForList = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
-    const [selectedType, setSelectedType] = useState('Alone');
+    const [selectedType, setSelectedType] = useState('Single');
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
     const navigate = useNavigate();
@@ -262,6 +264,7 @@ const IdealForList = () => {
         "children": <ChildCareIcon />,
         "arts & culture": <PaletteIcon />,
         "other": <HelpOutlineIcon />,
+        "fair": <LocalPlayIcon />,
     };
 
 
@@ -274,13 +277,12 @@ const IdealForList = () => {
             <Header/>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                 <Button
-                    style={{ marginRight: '20px' }}
-                    variant={selectedType === 'alone' ? "contained" : "outlined"}
-                    color="primary"
+                    style={{ marginRight: '20px'}}
+                    variant={selectedType === 'Single' ? "contained" : "outlined"}
                     startIcon={<PersonIcon />}
-                    onClick={() => handleButtonSelect('Alone')}
+                    onClick={() => handleButtonSelect('Single')}
                 >
-                    Alone
+                    Single
                 </Button>
 
                 <Button
@@ -292,7 +294,17 @@ const IdealForList = () => {
                 >
                     Couple
                 </Button>
-
+                <Button
+                    style={{
+                        marginRight: '20px',
+                    }}
+                    variant={selectedType === 'friends' ? "contained" : "outlined"}
+                    startIcon={<GroupIcon />}
+                    color="warning"
+                    onClick={() => handleButtonSelect('Friends')}
+                >
+                    Friends
+                </Button>
                 <Button
                     variant={selectedType === 'family' ? "contained" : "outlined"}
                     color="success"
