@@ -179,7 +179,7 @@ export default function Header() {
                                     open={Boolean(anchorEl)}
                                     onClose={handleMenuClose}
                                 >
-                                    <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
+                                    {/*<MenuItem onClick={handleMenuClose}>Profile</MenuItem>*/}
                                     <MenuItem onClick={handleFetchFavorites}>Favorites</MenuItem>
                                     <MenuItem onClick={handleLogout}>Logout</MenuItem>
                                 </Menu>
@@ -187,35 +187,63 @@ export default function Header() {
                         )}
                     </Toolbar>
                     {isMobile && (
-                        <Drawer anchor="left" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+                        <Drawer
+                            anchor="left"
+                            open={mobileMenuOpen}
+                            onClose={() => setMobileMenuOpen(false)}
+                            sx={{
+                                '& .MuiDrawer-paper': { width: { xs: '50%', sm: '400px' } }, // Responsive width
+                            }}
+                        >
                             <List>
-                                <Typography variant="h2" component="h2" sx={{
-                                    flexGrow: 1,
-                                    cursor: 'pointer',
-                                    color: 'darkorange',
-                                    fontSize: '1.3rem',
-                                    fontWeight: 'bold',
-                                    textAlign: 'center',
-                                }} onClick={() => handleNavigation('/')}>
+                                <Typography
+                                    variant="h2"
+                                    component="h2"
+                                    sx={{
+                                        flexGrow: 1,
+                                        cursor: 'pointer',
+                                        color: 'darkorange',
+                                        fontSize: { xs: '2rem', sm: '2rem' }, // Responsive font size
+                                        fontWeight: 'bold',
+                                        textAlign: 'center',
+                                        marginBottom: '20px', // Add some space below the header
+                                    }}
+                                    onClick={() => handleNavigation('/')}
+                                >
                                     αctiventy
                                 </Typography>
+
+                                {/* ListItem with increased font size for "Search" */}
                                 <ListItem button onClick={() => handleNavigation('/search')}>
-                                    <Box display="flex" alignItems="center" marg>
+                                    <Box display="flex" alignItems="center">
                                         <i className="fas fa-search"></i>
-                                        <ListItemText primary="Search" style={{marginLeft: '10px'}}/>
+                                        <ListItemText
+                                            primary="Search"
+                                            primaryTypographyProps={{ style: { fontSize: '1.2rem', marginLeft: '10px' } }} // Increase font size
+                                        />
                                     </Box>
                                 </ListItem>
+
+                                {/* Continue with other ListItems, adjusting font size similarly */}
                                 <ListItem button onClick={() => handleNavigation('/ideal-for')}>
-                                    <ListItemText primary="AI Assistant"/>
+                                    <ListItemText
+                                        primary="AI Assistant"
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                    />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/events')}>
-                                    <ListItemText primary="Events"/>
+                                    <ListItemText
+                                        primary="Events"
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                    />
                                 </ListItem>
-                                <ActivitySubHeaderMobile/>
+
+                                <ActivitySubHeaderMobile />
 
                                 {/* Add more mobile navigation items as needed */}
                             </List>
                         </Drawer>
+
                     )}
                 </AppBar>
                 <Dialog open={openRegisterDialog} onClose={handleCloseRegisterDialog}>

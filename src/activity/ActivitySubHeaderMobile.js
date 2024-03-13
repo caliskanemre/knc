@@ -21,7 +21,8 @@ function ActivitySubHeaderMobile() {
     return (
         <List component="nav">
             <ListItem button onClick={handleClick}>
-                <ListItemText primary="Activities" />
+                <ListItemText primary="Activities"  primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}/>
+
             </ListItem>
             <Collapse in={open} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
