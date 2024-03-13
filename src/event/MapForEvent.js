@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { GoogleMap, Marker } from '@react-google-maps/api';
+import React, {useEffect, useState} from 'react';
+import {GoogleMap, Marker} from '@react-google-maps/api';
 
-const MapForEvent = ({ event }) => {
+const MapForEvent = ({event}) => {
     const [map, setMap] = useState(null);
     const [markerPosition, setMarkerPosition] = useState(null);
 

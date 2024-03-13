@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
-import {Button} from "@mui/material";
+import { Button } from "@mui/material";
 
 const BackgroundGallery = ({ images }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -21,26 +21,33 @@ const BackgroundGallery = ({ images }) => {
         trackMouse: true
     });
 
-
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIsFading(true); // Begin fade-out
-            setTimeout(() => {
-                setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-                setIsFading(false); // Begin fade-in
-            }, 500); // Delay for fade-out, should match CSS transition time
-        }, 100000);
+        if (images && Array.isArray(images)) {
+            const interval = setInterval(() => {
+                setIsFading(true); // Begin fade-out
+                setTimeout(() => {
+                    setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
+                    setIsFading(false); // Begin fade-in
+                }, 500); // Delay for fade-out, should match CSS transition time
+            }, 100000);
 
-        return () => clearInterval(interval);
-    }, [images.length]);
+            return () => clearInterval(interval);
+        }
+    }, [images]);
+
+
+    // Render nothing if images is undefined, not an array, or empty
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        return null;
+    }
+
     const goToNextImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+        setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
     };
 
     const goToPreviousImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+        setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length);
     };
-
 
     return (
         <div {...handlers} style={{
@@ -63,7 +70,7 @@ const BackgroundGallery = ({ images }) => {
                 transform: 'translateY(-50%)',
                 zIndex: 2 // Ensure it's above the background
             }}>
-                {"<"}  {/* Replace with styled arrow */}
+                {"<"} {/* Replace with styled arrow */}
             </Button>
             <Button onClick={goToNextImage} style={{
                 position: 'absolute',
@@ -72,7 +79,7 @@ const BackgroundGallery = ({ images }) => {
                 transform: 'translateY(-50%)',
                 zIndex: 2 // Ensure it's above the background
             }}>
-                {">"}  {/* Replace with styled arrow */}
+                {">"} {/* Replace with styled arrow */}
             </Button>
             <div style={{
                 position: 'absolute',
@@ -100,4 +107,5 @@ const BackgroundGallery = ({ images }) => {
         </div>
     );
 };
-export default BackgroundGallery
+
+export default BackgroundGallery;

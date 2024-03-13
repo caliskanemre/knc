@@ -1,21 +1,23 @@
 import {
-    Button, Checkbox,
-    Dialog, DialogActions,
+    Button,
+    Dialog,
+    DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
     FormControl,
-    FormControlLabel,
-    InputLabel, MenuItem,
-    Select, TextField
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField
 } from "@mui/material";
 import React, {useState} from "react";
-import { DatePicker } from '@mui/x-date-pickers';
+import {DatePicker} from '@mui/x-date-pickers';
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 
-export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredEvents, applyFilter }) => {
+export const EventFilter = ({openFilterDialog, handleCloseFilterDialog, type, updateFilteredEvents, applyFilter}) => {
 
     const [selectedLocation, setSelectedLocation] = useState('');
     const [selectedType, setSelectedType] = useState('');
@@ -30,24 +32,19 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
         setSelectedType(event.target.value);
     };
 
-    // Handle start date change
     const handleStartDateChange = (newValue) => {
         setStartDate(newValue);
     };
 
-    // Handle end date change
     const handleEndDateChange = (newValue) => {
         setEndDate(newValue);
     };
 
-    // Send request to backend with selected location as a filter
     const applyFilters = () => {
         applyFilter('location ', selectedLocation);
         applyFilter('type', selectedType);
         if (startDate) applyFilter('startDate', startDate.toISOString().split('T')[0]);
         if (endDate) applyFilter('endDate', endDate.toISOString().split('T')[0]);
-        // Assuming you have a function to make the backend call
-        // replace `fetchFilteredActivities` with your actual function
         fetchFilteredActivities(selectedType, selectedLocation, startDate, endDate);
         handleCloseFilterDialog(); // Close the dialog upon applying filters
     };
@@ -62,15 +59,14 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
         const urlParams = new URLSearchParams({
             page: 0,
             size: 20,
-            ...(location && { location }),
-            ...(type && { type }),
-            ...(formattedStartDate && { start_date: formattedStartDate }),
-            ...(formattedEndDate && { end_date: formattedEndDate }),
+            ...(location && {location}),
+            ...(type && {type}),
+            ...(formattedStartDate && {start_date: formattedStartDate}),
+            ...(formattedEndDate && {end_date: formattedEndDate}),
         });
 
         const url = `${baseURL}/events/filter?${urlParams.toString()}`;
 
-        // Here, use the appropriate URL, HTTP method, and body to match your backend API
         fetch(url, {
             method: 'GET', // or 'POST', if required by your backend
             headers: {
@@ -144,7 +140,7 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
                     label="Start Date"
                     value={startDate}
                     onChange={handleStartDateChange}
-                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                    renderInput={(params) => <TextField {...params} fullWidth margin="normal"/>}
                 />
 
 
@@ -152,7 +148,7 @@ export const EventFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,
                     label="End Date"
                     value={endDate}
                     onChange={handleEndDateChange}
-                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                    renderInput={(params) => <TextField {...params} fullWidth margin="normal"/>}
                 />
             </DialogContent>
             <DialogActions>

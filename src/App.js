@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Main from "./Main";
-import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 import EventList from "./event/EventList";
 import ActivityList from "./activity/ActivityList";
 import Map from "./header/Map";
@@ -11,9 +11,48 @@ import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFnsV3";
 import {CookieConsent} from "react-cookie-consent";
 import IdealForList from "./ideal/IdealForList";
-
+import Login from "./login/Login";
+import Register from "./login/Register";
+import {jwtDecode} from 'jwt-decode';
+import Favorites from "./user/Favorites";
+import {AuthProvider} from "./auth/AuthProvider";
 
 function App() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
+
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const decoded = jwtDecode(token);
+                const currentTime = Date.now() / 1000;
+                if (decoded.exp < currentTime) {
+                    // Token expired, remove it and redirect to login
+                    localStorage.removeItem('token');
+                } else {
+                    setIsAuthenticated(true);
+                    // Optionally decode user information from token and set user state
+                }
+            } catch (error) {
+                console.error('Token decoding failed', error);
+            }
+        }
+    }, []);
+    const handleLoginSuccess = (data) => {
+        localStorage.setItem('token', data.accessToken); // Assuming the response contains an accessToken
+        setIsAuthenticated(true);
+        setUser(data.user); // Assuming the response contains user information
+        // Redirect to home page or dashboard as needed
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+        setUser(null);
+        // Redirect to login page or home page as needed
+    };
 
     const handleAccept = () => {
         // Example: Update Google Analytics consent
@@ -38,38 +77,41 @@ function App() {
     };
 
 
-
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Router>
-                <div className="App">
-                    <Routes>
-                        <Route path="/" element={<Main/>}/>
-                        <Route path="/events" element={<EventList/>}/>
-                        <Route path="/ideal-for" element={<IdealForList/>}/>
-                        <Route path="/activities" element={<ActivityList/>}/>
-                        <Route path="/activities/:type" element={<ActivityList/>}/>
-                        <Route path="/" element={<Main/>}/>
-                        <Route path="/map" element={<Map/>}/>
-                        <Route path="/events/:eventId/:eventName" element={<EventDetails/>} />
-                        <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>} />
-                        <Route path="/search/" element={<SearchPage/>} />
-                    </Routes>
+                <AuthProvider>
+                    <div className="App">
+                        <Routes>
+                            <Route path="/" element={<Main/>}/>
+                            <Route path="/events" element={<EventList/>}/>
+                            <Route path="/ideal-for" element={<IdealForList/>}/>
+                            <Route path="/activities" element={<ActivityList/>}/>
+                            <Route path="/activities/:type" element={<ActivityList/>}/>
+                            <Route path="/map" element={<Map/>}/>
+                            <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
+                            <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>}/>
+                            <Route path="/search" element={<SearchPage/>}/>
+                            <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess}/>}/>
+                            <Route path="/users/favorites" element={<Favorites/>}/>
+                            <Route path="/register" element={<Register/>}/>
+                        </Routes>
 
-                    <CookieConsent
-                        onAccept={handleAccept}
-                        location="bottom"
-                        buttonText="Accept"
-                        declineButtonText="Decline"
-                        cookieName="activentyUserConsent"
-                        style={{ background: "#2B373B" }}
-                        buttonStyle={{ color: "#4e503b", fontSize: "13px" }}
-                        declineButtonStyle={{ fontSize: "13px" }}
-                        expires={150}
-                    >
-                        This website uses cookies to enhance the user experience.{" "}
-                    </CookieConsent>
-                </div>
+                        <CookieConsent
+                            onAccept={handleAccept}
+                            location="bottom"
+                            buttonText="Accept"
+                            declineButtonText="Decline"
+                            cookieName="activentyUserConsent"
+                            style={{background: "#2B373B"}}
+                            buttonStyle={{color: "#4e503b", fontSize: "13px"}}
+                            declineButtonStyle={{fontSize: "13px"}}
+                            expires={150}
+                        >
+                            This website uses cookies to enhance the user experience.{" "}
+                        </CookieConsent>
+                    </div>
+                </AuthProvider>
             </Router>
         </LocalizationProvider>
     );

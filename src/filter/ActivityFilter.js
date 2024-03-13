@@ -1,61 +1,47 @@
 import {
-    Button, Checkbox,
-    Dialog, DialogActions,
+    Button,
+    Dialog,
+    DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
     FormControl,
-    FormControlLabel,
-    InputLabel, MenuItem,
-    Select, TextField
+    InputLabel,
+    MenuItem,
+    Select
 } from "@mui/material";
 import React, {useState} from "react";
-import { DatePicker } from '@mui/x-date-pickers';
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 
-export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, type ,updateFilteredActivities, applyFilter }) => {
+export const ActivityFilter = ({
+                                   openFilterDialog,
+                                   handleCloseFilterDialog,
+                                   type,
+                                   updateFilteredActivities,
+                                   applyFilter
+                               }) => {
 
     const [selectedLocation, setSelectedLocation] = useState('');
-    const [startDate, setStartDate] = useState(null); // State for start date
-    const [endDate, setEndDate] = useState(null); // State for end date
 
     const handleLocationChange = (event) => {
         setSelectedLocation(event.target.value);
     };
 
-    // Handle start date change
-    const handleStartDateChange = (newValue) => {
-        setStartDate(newValue);
-    };
 
-    // Handle end date change
-    const handleEndDateChange = (newValue) => {
-        setEndDate(newValue);
-    };
-
-    // Send request to backend with selected location as a filter
     const applyFilters = () => {
         applyFilter('location ', selectedLocation);
 
-        /*        if (startDate) applyFilter('startDate', startDate.toISOString().split('T')[0]);
-        if (endDate) applyFilter('endDate', endDate.toISOString().split('T')[0]);*/
-        // Assuming you have a function to make the backend call
-        // replace `fetchFilteredActivities` with your actual function
-        fetchFilteredActivities(selectedLocation, startDate, endDate);
+        fetchFilteredActivities(selectedLocation);
         handleCloseFilterDialog(); // Close the dialog upon applying filters
     };
 
     const fetchFilteredActivities = (location) => {
 
-        const formattedStartDate = startDate ? startDate.toISOString().split('T')[0] : '';
-        const formattedEndDate = endDate ? endDate.toISOString().split('T')[0] : '';
-
         // Update the URL to include date range parameters
         const url = `${baseURL}/activities/location/${location}/${type}?page=0&size=20`;
 
-        // Here, use the appropriate URL, HTTP method, and body to match your backend API
         fetch(url, {
             method: 'GET', // or 'POST', if required by your backend
             headers: {
@@ -82,7 +68,6 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                     Select filters to refine your activity search.
                 </DialogContentText>
 
-
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="location-label">Location</InputLabel>
                     <Select
@@ -102,24 +87,7 @@ export const ActivityFilter  = ({ openFilterDialog, handleCloseFilterDialog, typ
                         {/* Add other locations here */}
                     </Select>
 
-
                 </FormControl>
-
-
-            {/*    <DatePicker
-                    label="Start Date"
-                    value={startDate}
-                    onChange={handleStartDateChange}
-                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
-                />
-
-
-                <DatePicker
-                    label="End Date"
-                    value={endDate}
-                    onChange={handleEndDateChange}
-                    renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
-                />*/}
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseFilterDialog} color="primary">

@@ -11,7 +11,7 @@ import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
 import backgroundImage from './background2.png';
-import {Avatar, CardHeader} from "@mui/material";
+import {Avatar, CardHeader, IconButton, Tooltip} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
@@ -22,7 +22,15 @@ import SchoolIcon from "@mui/icons-material/School";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import PaletteIcon from "@mui/icons-material/Palette";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import {Link} from "react-router-dom";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import {useAuth} from "./auth/AuthProvider";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
 
 /*
 function Copyright() {
@@ -42,14 +50,36 @@ function Copyright() {
 const defaultTheme = createTheme();
 const deneme = []
 deneme.push(backgroundImage);
-export default function Main () {
+export default function Main() {
     const [events, setEvents] = useState([]);
-    const [expanded, setExpanded] = React.useState(false);
 
+    const [expanded, setExpanded] = React.useState(false);
+    const { toggleFavorite, favorites,isLoggedIn } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [openDialog, setOpenDialog] = useState(false);
+
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+    };
+
+
     const handleExpandClick = () => {
         setExpanded(!expanded);
     };
+
+
+    const handleFavoriteClick = (eventId) => {
+        if (isLoggedIn) {
+            toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+        } else {
+            handleOpenDialog();
+        }
+    };
+
 
     useEffect(() => {
         // Define the page and size for pagination
@@ -83,21 +113,25 @@ export default function Main () {
     };
 
     const eventIcons = {
-        "music & concerts": <MusicNoteIcon />,
-        "outdoor & adventure": <LandscapeIcon />,
-        "tech & innovation": <ScienceIcon />,
-        "education": <SchoolIcon />,
-        "children": <ChildCareIcon />,
-        "arts & culture": <PaletteIcon />,
-        "other": <HelpOutlineIcon />,
+        "music & concerts": <MusicNoteIcon/>,
+        "outdoor & adventure": <LandscapeIcon/>,
+        "tech & innovation": <ScienceIcon/>,
+        "education": <SchoolIcon/>,
+        "children": <ChildCareIcon/>,
+        "arts & culture": <PaletteIcon/>,
+        "other": <HelpOutlineIcon/>,
     };
+
+
+
+
     return (
         <ThemeProvider theme={defaultTheme}>
             <Helmet>
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+                <meta name="robots" content="index, follow"/>
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
-            <CssBaseline />
+            <CssBaseline/>
             <Header/>
             <main>
                 {/* Hero unit */}
@@ -107,20 +141,26 @@ export default function Main () {
                     </Grid>
                 </Grid>
 
-                <Container sx={{ py: 9 }} maxWidth="xl">
+                <Container sx={{py: 9}} maxWidth="xl">
                     <Grid container spacing={4}>
                         {events.map((item) => {
-
+                            const isAlreadyFavorited = favorites.favoriteEvents?.map(event => event.id).includes(item.id) ?? false;
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                                <Avatar sx={{ bgcolor: 'darkorange', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
+                                    <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                           style={{textDecoration: 'none', color: 'inherit'}}>
+                                            <div style={{display: 'flex', flexDirection: 'row'}}>
+                                                <Avatar sx={{
+                                                    bgcolor: 'darkorange',
+                                                    fontSize: '0.7rem',
+                                                    marginLeft: '8px',
+                                                    marginTop: '15px'
+                                                }}>
                                                     {eventIcons[item.type.toLowerCase()]}
                                                 </Avatar>
                                                 <CardHeader
-                                                    style={{ display: 'top', height: '100px' }}
+                                                    style={{display: 'top', height: '100px'}}
                                                     title={
                                                         <div style={{
                                                             maxWidth: '100%', // Limit the width to the parent container
@@ -133,28 +173,47 @@ export default function Main () {
                                                             {item.title}
                                                         </div>
                                                     }
-                                                    titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
+                                                    titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
                                                     subheader={
                                                         <div>
-                                                            <div>{item.date}</div> {/* First line of subheader */}
+                                                            <div>{item.date}</div>
+                                                            {/* First line of subheader */}
                                                             <div>
-                                                                <PinDropIcon style={{ fontSize: '0.8rem', verticalAlign: 'bottom' }} /> {item.place}
+                                                                <PinDropIcon style={{
+                                                                    fontSize: '0.8rem',
+                                                                    verticalAlign: 'bottom'
+                                                                }}/> {item.place}
                                                             </div>
                                                         </div>
                                                     }
-                                                    subheaderTypographyProps={{ component: 'div', style: { fontSize: '0.67rem' } }}
+                                                    subheaderTypographyProps={{
+                                                        component: 'div',
+                                                        style: {fontSize: '0.67rem'}
+                                                    }}
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                           style={{textDecoration: 'none', color: 'inherit'}}>
                                             <CardMedia
                                                 component="div"
-                                                sx={{ pt: '56.25%', position: 'relative', overflow: 'hidden' }} // Ensure the position is relative to position the image correctly
+                                                sx={{
+                                                    pt: '56.25%',
+                                                    position: 'relative',
+                                                    overflow: 'hidden'
+                                                }} // Ensure the position is relative to position the image correctly
                                             >
                                                 <img
                                                     src={item.photo}
                                                     alt={item.title}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} // Full cover image
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0
+                                                    }} // Full cover image
                                                     onError={(e) => {
                                                         e.target.onerror = null; // Prevents looping
                                                         e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
@@ -162,16 +221,36 @@ export default function Main () {
                                                 />
                                             </CardMedia>
                                         </a>
+                                        <IconButton
+                                            aria-label="add to favorites"
+                                            onClick={() => handleFavoriteClick(item.id)}
+                                        >
+                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                        </IconButton>
 
                                     </Card>
                                 </Grid>
                             );
                         })}
                     </Grid>
+                    <Dialog open={openDialog} onClose={handleCloseDialog}>
+                        <DialogTitle>{"Just a moment!"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleCloseDialog} color="primary" autoFocus>
+                                Got it, thanks!
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
                 </Container>
             </main>
             {/* Footer */}
-            <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
+            <Box sx={{bgcolor: 'background.paper', p: 6}} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
                     activenty
                 </Typography>
@@ -183,8 +262,10 @@ export default function Main () {
                 >
                     All rights reserved @2024 Activenty
                 </Typography>
-          {/*      <Copyright />*/}
+                {/*      <Copyright />*/}
             </Box>
+
+
             {/* End footer */}
         </ThemeProvider>
     );

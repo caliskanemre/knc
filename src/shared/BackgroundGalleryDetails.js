@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import { useSwipeable } from 'react-swipeable';
+import {useSwipeable} from 'react-swipeable';
 import {Button} from "@mui/material";
 
-const BackgroundGallery = ({ images }) => {
+const BackgroundGallery = ({images}) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isFading, setIsFading] = useState(false);
 
@@ -77,7 +77,7 @@ const BackgroundGallery = ({ images }) => {
                 maxHeight: '600px',
                 backgroundPosition: 'center',
                 zIndex: 1,
-            }} />
+            }}/>
             <Button onClick={goToPreviousImage} style={{
                 position: 'absolute',
                 left: '10px',  // Adjust for better positioning
@@ -85,7 +85,7 @@ const BackgroundGallery = ({ images }) => {
                 transform: 'translateY(-50%)',
                 zIndex: 2 // Ensure it's above the background
             }}>
-                {"<"}  {/* Replace with styled arrow */}
+                {"<"} {/* Replace with styled arrow */}
             </Button>
             <Button onClick={goToNextImage} style={{
                 position: 'absolute',
@@ -94,7 +94,7 @@ const BackgroundGallery = ({ images }) => {
                 transform: 'translateY(-50%)',
                 zIndex: 2 // Ensure it's above the background
             }}>
-                {">"}  {/* Replace with styled arrow */}
+                {">"} {/* Replace with styled arrow */}
             </Button>
             <div style={{
                 position: 'absolute',

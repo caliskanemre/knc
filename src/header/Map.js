@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { GoogleMap, Marker } from '@react-google-maps/api';
+import React, {useEffect, useState} from 'react';
+import {GoogleMap, Marker} from '@react-google-maps/api';
 import Axios from "axios";
 import Header from "./Header";
 
@@ -43,7 +43,7 @@ const Map = () => {
 
             data.forEach((item) => {
                 const marker = new window.google.maps.Marker({
-                    position: { lat: parseFloat(item.lat), lng: parseFloat(item.lon) },
+                    position: {lat: parseFloat(item.lat), lng: parseFloat(item.lon)},
                     map: map,
                     title: item.title,
                 });
@@ -72,7 +72,7 @@ const Map = () => {
                 {data.map((item, index) => (
                     <Marker
                         key={index}
-                        position={{ lat: parseFloat(item.lat), lng: parseFloat(item.lon) }}
+                        position={{lat: parseFloat(item.lat), lng: parseFloat(item.lon)}}
                         title={item.title}
                     />
                 ))}

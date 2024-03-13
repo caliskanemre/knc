@@ -6,18 +6,18 @@ import Card from "@mui/material/Card";
 import {
     Avatar,
     Button,
-    CardHeader, Chip,
-    Dialog,
+    CardHeader,
+    Chip,
     DialogContent,
-    DialogTitle, Stack,
+    DialogTitle, IconButton,
+    Stack,
     SwipeableDrawer,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import {Link, useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import CampingIcon2 from "../images/camping_summer2.jpg"
 import wellness from "../images/wellness_green2.png"
 import winter from "../images/winter_green.jpeg"
@@ -28,13 +28,14 @@ import naturalPark from "../images/park_green.jpg"
 import museumIcon from "../images/green_museum.png"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
-import {MapOutlined, MapRounded} from "@mui/icons-material";
+import {MapOutlined} from "@mui/icons-material";
 import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import BackgroundGallery from "../shared/BackgroundGallery";
-import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
-
+import {useAuth} from "../auth/AuthProvider";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 const mapContainerStyle = {
     width: '100%',
@@ -48,7 +49,7 @@ const center = {
 
 
 const ActivityList = () => {
-    const { type } = useParams();
+    const {type} = useParams();
     const [activities, setActivities] = useState([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
@@ -63,11 +64,10 @@ const ActivityList = () => {
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [filters, setFilters] = useState([]);
     const listRef = useRef(null);
+    const { toggleFavorite, favorites } = useAuth();
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
-
-    const navigate = useNavigate();
-
+    useNavigate();
     const applyFilter = (filterType, filterValue) => {
         // Add a new filter or update the existing one
         setFilters(currentFilters => ({
@@ -77,9 +77,14 @@ const ActivityList = () => {
         // Trigger activity or event refetch with new filters here
     };
 
+    const handleFavoriteClick = (eventId) => {
+        toggleFavorite(eventId, favorites.favoriteActivities.map(event => event.id).includes(eventId), "activity");
+    };
+
+
     const removeFilter = (filterType) => {
         setFilters(currentFilters => {
-            const newFilters = { ...currentFilters };
+            const newFilters = {...currentFilters};
             delete newFilters[filterType];
             fetchInitialActivities()
             return newFilters;
@@ -253,20 +258,21 @@ const ActivityList = () => {
     };
 
     return (
-        <div className="activity-list"  ref={listRef}>
+        <div className="activity-list" ref={listRef}>
             <Helmet>
                 <title>{type ? `${type} Activities` : 'All Activities'} - Activenty</title>
-                <meta name="description" content={`Explore ${type ? type : 'all'} activities on Activenty. Find outdoor adventures, cultural experiences, and more.`} />
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+                <meta name="description"
+                      content={`Explore ${type ? type : 'all'} activities on Activenty. Find outdoor adventures, cultural experiences, and more.`}/>
+                <meta name="robots" content="index, follow"/>
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
             <Header/>
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-                <Button style={{ marginRight: '20px' }}
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<FilterListIcon />}
-                    onClick={handleOpenFilterDialog}
+            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
+                <Button style={{marginRight: '20px'}}
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<FilterListIcon/>}
+                        onClick={handleOpenFilterDialog}
                 >
                     Filter
                 </Button>
@@ -274,22 +280,20 @@ const ActivityList = () => {
                 <Button
                     variant="outlined"
                     color="secondary"
-                    startIcon={<MapOutlined />}
+                    startIcon={<MapOutlined/>}
                     onClick={handleOpenMapDialog}
                 >
                     Map
                 </Button>
 
             </div>
-            <Container sx={{ py: 9 }} maxWidth="xl">
-                <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
+            <Container sx={{py: 9}} maxWidth="xl">
+                <Typography variant="h2" component="div" style={{fontSize: '2rem', marginBottom: '20px'}}>
                     {type} activities in {Object.keys(filters).length > 0 ?
                     Object.entries(filters).map(([filterType, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
-                            // Assuming 'filterValue' is an object and has a 'name' property you want to display
                             return filterValue.name;
                         } else {
-                            // If 'filterValue' is not an object, render it directly
                             return filterValue;
                         }
                     }).join(', ') : 'Estonia'}
@@ -308,54 +312,76 @@ const ActivityList = () => {
                 <Grid container spacing={4}>
 
                     {activities.map((item) => {
+                        const isAlreadyFavorited = favorites.favoriteActivities?.map(event => event.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <a href={`/activities/detail/${item.id}/${item.title}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <div  style={{display: 'flex', flexDirection: 'row'}}>
-                                            <Avatar sx={{ bgcolor: 'primary.main', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
-                                                <img src={activityIcons[item.activity_type.toLocaleLowerCase()]} alt={`${item.activity_type} Icon`} style={{ width: '100%', height: '100%' }} />
+                                <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                                    <a href={`/activities/detail/${item.id}/${item.title}`}
+                                       style={{textDecoration: 'none', color: 'inherit'}}>
+                                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                                            <Avatar sx={{
+                                                bgcolor: 'primary.main',
+                                                fontSize: '0.7rem',
+                                                marginLeft: '8px',
+                                                marginTop: '15px'
+                                            }}>
+                                                <img src={activityIcons[item.activity_type.toLocaleLowerCase()]}
+                                                     alt={`${item.activity_type} Icon`}
+                                                     style={{width: '100%', height: '100%'}}/>
                                             </Avatar>
-                                            <CardHeader style={{height : '50px'}}
+                                            <CardHeader style={{height: '50px'}}
                                                         title={
                                                             <Typography
                                                                 variant="h3"
                                                                 component="h3"
-                                                                style={{ fontSize: getDynamicFontSize(item.title) }}
+                                                                style={{fontSize: getDynamicFontSize(item.title)}}
                                                             >
                                                                 {item.title}
                                                             </Typography>
                                                         }
-                                                subheader={
-                                                    <div>
-                                                        <div>
+                                                        subheader={
+                                                            <div>
+                                                                <div>
 
-                                                            <Typography variant="h4" component="h4" style={{ fontSize: '0.8rem' }}>
-                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
-                                                                {item.activity_location}
-                                                            </Typography>
+                                                                    <Typography variant="h4" component="h4"
+                                                                                style={{fontSize: '0.8rem'}}>
+                                                                        <PinDropIcon style={{
+                                                                            fontSize: '1rem',
+                                                                            verticalAlign: 'bottom'
+                                                                        }}/>
+                                                                        {item.activity_location}
+                                                                    </Typography>
 
-                                                        </div>
-                                                    </div>
-                                                }
-                                                subheaderTypographyProps={{ component: 'div', style: { fontSize: '12px' } }}
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        subheaderTypographyProps={{
+                                                            component: 'div',
+                                                            style: {fontSize: '12px'}
+                                                        }}
                                             />
 
-                                         </div>
-                                       <BackgroundGallery images={item.photos.map((photo) => photo.photo)} />
+                                        </div>
+                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)}/>
                                     </a>
+                                    <IconButton
+                                        aria-label="add to favorites"
+                                        onClick={() => handleFavoriteClick(item.id)}
+                                    >
+                                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                    </IconButton>
                                 </Card>
                             </Grid>
                         );
                     })}
                 </Grid>
                 {hasMore && (
-                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                    <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
                         <Button
                             onClick={loadMoreActivities}
                             variant="contained"
                             color="primary"
-                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
+                            style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
                         >
                             Load More
                         </Button>
@@ -386,7 +412,7 @@ const ActivityList = () => {
                             mapContainerStyle={mapContainerStyle}
                             zoom={8}
                             center={userLocation || center}
-                            options={{ gestureHandling: 'greedy' }}
+                            options={{gestureHandling: 'greedy'}}
                             onUnmount={() => setIsMapReady(false)}
                             onLoad={() => {
                                 setTimeout(() => {
@@ -409,13 +435,16 @@ const ActivityList = () => {
                             )}
                             {isMapReady && (
                                 <MarkerClusterer
-                                    options={{ imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' }}
+                                    options={{imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}}
                                 >
                                     {(clusterer) =>
                                         markers.map((marker) => (
                                             <Marker
                                                 key={marker.id} // Use the unique id of the marker
-                                                position={{ lat: marker.lat, lng: marker.lng }} // Ensure position is an object with lat and lng
+                                                position={{
+                                                    lat: marker.lat,
+                                                    lng: marker.lng
+                                                }} // Ensure position is an object with lat and lng
                                                 title={marker.title}
                                                 onClick={() => {
                                                     if (selectedMarker && selectedMarker.id === marker.id) {
@@ -425,7 +454,7 @@ const ActivityList = () => {
                                                         // Otherwise, open the new InfoWindow
                                                         setSelectedMarker({
                                                             id: marker.id,
-                                                            position: { lat: marker.lat, lng: marker.lng },
+                                                            position: {lat: marker.lat, lng: marker.lng},
                                                             title: marker.title,
                                                         });
                                                     }
@@ -441,9 +470,10 @@ const ActivityList = () => {
                                     position={selectedMarker.position} // Use the position from selectedMarker
                                     onCloseClick={() => setSelectedMarker(null)} // Reset selectedMarker state to null on close
                                 >
-                                    <div style={{ maxWidth: '150px'}}>
+                                    <div style={{maxWidth: '150px'}}>
                                         <h4>{selectedMarker.title}</h4>
-                                        <Button style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }} onClick={() => handleInfoWindowClick(selectedMarker)}>
+                                        <Button style={{display: 'flex', justifyContent: 'center', margin: '10px 0'}}
+                                                onClick={() => handleInfoWindowClick(selectedMarker)}>
                                             View Details
                                         </Button>
                                     </div>

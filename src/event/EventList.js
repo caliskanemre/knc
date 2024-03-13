@@ -38,6 +38,10 @@ import ChildCareIcon from '@mui/icons-material/ChildCare';
 import PaletteIcon from '@mui/icons-material/Palette';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import backgroundImage from "../images/background256.png";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import { IconButton } from "@mui/material";
+import {useAuth} from "../auth/AuthProvider";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 const mapContainerStyle = {
     width: '100%',
@@ -51,11 +55,11 @@ const center = {
 
 const EventList = () => {
     const [events, setEvents] = useState([]);
-    const { type } = useParams();
+    const {type} = useParams();
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [mapOpen, setMapOpen] = useState(false);
-    const [userLocation, setUserLocation] = useState(null);
+    const [userLocation] = useState(null);
     const [markers, setMarkers] = useState([]);
     const [isMapReady, setIsMapReady] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState(null);
@@ -65,11 +69,17 @@ const EventList = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
-    const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
+    const { toggleFavorite, favorites } = useAuth();
 
-    const navigate = useNavigate();
+    const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
+    useNavigate();
     const deneme = []
     deneme.push(backgroundImage);
+
+    const handleFavoriteClick = (eventId) => {
+        toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+    };
+
 
     useEffect(() => {
         // Define the page and size for pagination
@@ -101,7 +111,6 @@ const EventList = () => {
             ...currentFilters,
             [filterType]: filterValue
         }));
-        // Trigger activity or event refetch with new filters here
     };
 
     const updateFilteredEvents = (filteredEvents) => {
@@ -147,7 +156,7 @@ const EventList = () => {
     const handleOpenMapDialog = async () => {
         await fetchPins();
         setMapOpen(true);
-        askForUserLocation();
+        await askForUserLocation();
     };
 
     const handleCloseMapDialog = () => {
@@ -165,17 +174,17 @@ const EventList = () => {
                     resolve(userLocation); // Resolve the promise with the location
                 },
                 (error) => {
-                    reject(error); // Reject the promise if there's an error
+                    reject(error);
                 }
             );
         });
     }
+
     const loadMoreEvents = async () => {
         try {
             let nextPage = page + 1;
             let fetchUrl = `${baseURL}/events/all?page=${nextPage}&size=20`;
 
-            // Check if the current sort is 'near' and ensure userLocation is available
             if (sort === "near" && userLocation) {
                 fetchUrl += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
             } else if (sort) { // For other sorts, append the sort parameter
@@ -196,7 +205,7 @@ const EventList = () => {
     };
     const removeFilter = (filterType) => {
         setFilters(currentFilters => {
-            const newFilters = { ...currentFilters };
+            const newFilters = {...currentFilters};
             delete newFilters[filterType];
             //fetchInitialActivities()
             return newFilters;
@@ -233,7 +242,6 @@ const EventList = () => {
                         });
                 } else {
                     console.error('User location is not available.');
-                    // Consider providing user feedback or defaulting to a different sort
                 }
             }).catch((error) => {
                 console.error('Error getting user location:', error);
@@ -252,27 +260,27 @@ const EventList = () => {
         }
     };
     const eventIcons = {
-        "music & concerts": <MusicNoteIcon />,
-        "outdoor & adventure": <LandscapeIcon />,
-        "tech & innovation": <ScienceIcon />,
-        "education": <SchoolIcon />,
-        "children": <ChildCareIcon />,
-        "arts & culture": <PaletteIcon />,
-        "other": <HelpOutlineIcon />,
+        "music & concerts": <MusicNoteIcon/>,
+        "outdoor & adventure": <LandscapeIcon/>,
+        "tech & innovation": <ScienceIcon/>,
+        "education": <SchoolIcon/>,
+        "children": <ChildCareIcon/>,
+        "arts & culture": <PaletteIcon/>,
+        "other": <HelpOutlineIcon/>,
     };
 
     return (
         <div className="event-list">
             <Helmet>
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+                <meta name="robots" content="index, follow"/>
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
             <Header/>
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-                <Button style={{ marginRight: '20px' }}
+            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
+                <Button style={{marginRight: '20px'}}
                         variant="outlined"
                         color="primary"
-                        startIcon={<FilterListIcon />}
+                        startIcon={<FilterListIcon/>}
                         onClick={handleOpenFilterDialog}
                 >
                     Filter
@@ -281,13 +289,13 @@ const EventList = () => {
                 <Button
                     variant="outlined"
                     color="secondary"
-                    startIcon={<MapOutlined />}
+                    startIcon={<MapOutlined/>}
                     onClick={handleOpenMapDialog}
                 >
                     Map
                 </Button>
             </div>
-            <Container sx={{ py: 9 }} maxWidth="xl">
+            <Container sx={{py: 9}} maxWidth="xl">
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
@@ -299,7 +307,7 @@ const EventList = () => {
                     ))}
                 </Stack>
                 <Box display="flex" justifyContent="flex-end" p="5px">
-                    <FormControl sx={{ m: 2, minWidth: 120 }}>
+                    <FormControl sx={{m: 2, minWidth: 120}}>
                         <InputLabel id="autowidth-label">Sort</InputLabel>
                         <Select
                             labelId="autowidth-label"
@@ -317,17 +325,26 @@ const EventList = () => {
                 </Box>
                 <Grid container spacing={4}>
                     {events.map((item) => {
+                        const isAlreadyFavorited = favorites.favoriteEvents?.map(event => event.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
 
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                            <Avatar sx={{ bgcolor: 'darkorange', fontSize: '0.7rem', marginLeft: '8px', marginTop: '15px' }}>
+                                <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+
+                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                       style={{textDecoration: 'none', color: 'inherit'}}>
+                                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                                            <Avatar sx={{
+                                                bgcolor: 'darkorange',
+                                                fontSize: '0.7rem',
+                                                marginLeft: '8px',
+                                                marginTop: '15px'
+                                            }}>
                                                 {eventIcons[item.type.toLowerCase()]}
                                             </Avatar>
+
                                             <CardHeader
-                                                style={{ display: 'top', maxHeight: '65px' }}
+                                                style={{display: 'top', maxHeight: '65px'}}
                                                 title={
                                                     <div style={{
                                                         maxWidth: '100%', // Limit the width to the parent container
@@ -337,57 +354,83 @@ const EventList = () => {
                                                         WebkitBoxOrient: 'vertical', // Set the orientation to vertical
                                                         textOverflow: 'ellipsis' // Add ellipsis to text overflow
                                                     }}>
-                                                        <Typography variant="h3" component="h3" style={{ fontSize: '1.25rem' }}>
+                                                        <Typography variant="h3" component="h3"
+                                                                    style={{fontSize: '1.25rem'}}>
                                                             {item.title}
                                                         </Typography>
                                                     </div>
                                                 }
-                                                titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
+
+                                                titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
                                                 subheader={
                                                     <div>
-                                                        <Typography variant="h4" component="h4" style={{ fontSize: '0.7rem' }}>
+                                                        <Typography variant="h4" component="h4"
+                                                                    style={{fontSize: '0.7rem'}}>
                                                             {item.date} {/* Adjust as needed */}
                                                         </Typography> {/* First line of subheader */}
                                                         <div>
-                                                            <Typography variant="h4" component="h4" style={{ fontSize: '0.7rem' }}>
-                                                                <PinDropIcon style={{ fontSize: '1rem', verticalAlign: 'bottom' }} />
+                                                            <Typography variant="h4" component="h4"
+                                                                        style={{fontSize: '0.7rem'}}>
+                                                                <PinDropIcon style={{
+                                                                    fontSize: '1rem',
+                                                                    verticalAlign: 'bottom'
+                                                                }}/>
                                                                 {item.place}
                                                             </Typography>
                                                         </div>
                                                     </div>
                                                 }
-                                                subheaderTypographyProps={{ component: 'div', style: { fontSize: '11px' } }}
+                                                subheaderTypographyProps={{component: 'div', style: {fontSize: '11px'}}}
                                             />
                                         </div>
                                     </a>
-                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                       style={{textDecoration: 'none', color: 'inherit'}}>
                                         <CardMedia
                                             component="div"
-                                            sx={{ pt: '56.25%', position: 'relative', overflow: 'hidden' }} // Ensure the position is relative to position the image correctly
+                                            sx={{
+                                                pt: '56.25%',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }} // Ensure the position is relative to position the image correctly
                                         >
                                             <img
                                                 src={item.photo}
                                                 alt={item.title}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} // Full cover image
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0
+                                                }} // Full cover image
                                                 onError={(e) => {
                                                     e.target.onerror = null; // Prevents looping
                                                     e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
                                                 }}
                                             />
+
                                         </CardMedia>
                                     </a>
+                                    <IconButton
+                                        aria-label="add to favorites"
+                                        onClick={() => handleFavoriteClick(item.id)}
+                                    >
+                                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                    </IconButton>
                                 </Card>
                             </Grid>
                         );
                     })}
                 </Grid>
                 {hasMore && (
-                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                    <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
                         <Button
                             onClick={loadMoreEvents}
                             variant="contained"
                             color="primary"
-                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
+                            style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
                         >
                             Load More
                         </Button>
@@ -412,7 +455,7 @@ const EventList = () => {
                                 zoom={8}
                                 center={userLocation || center}
                                 onUnmount={() => setIsMapReady(false)}
-                                options={{ gestureHandling: 'greedy' }}
+                                options={{gestureHandling: 'greedy'}}
                                 onLoad={() => {
                                     setTimeout(() => {
                                         setIsMapReady(true);
@@ -435,13 +478,16 @@ const EventList = () => {
                                 )}
                                 {isMapReady && (
                                     <MarkerClusterer
-                                        options={{ imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' }}
+                                        options={{imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}}
                                     >
                                         {(clusterer) =>
                                             markers.map((marker) => (
                                                 <Marker
                                                     key={marker.id} // Use the unique id of the marker
-                                                    position={{ lat: marker.lat, lng: marker.lng }} // Ensure position is an object with lat and lng
+                                                    position={{
+                                                        lat: marker.lat,
+                                                        lng: marker.lng
+                                                    }} // Ensure position is an object with lat and lng
                                                     title={marker.title}
                                                     onClick={() => {
                                                         if (selectedMarker && selectedMarker.id === marker.id) {
@@ -451,7 +497,7 @@ const EventList = () => {
                                                             // Otherwise, open the new InfoWindow
                                                             setSelectedMarker({
                                                                 id: marker.id,
-                                                                position: { lat: marker.lat, lng: marker.lng },
+                                                                position: {lat: marker.lat, lng: marker.lng},
                                                                 title: marker.title,
                                                             });
                                                         }
@@ -479,7 +525,7 @@ const EventList = () => {
                             </GoogleMap>
 
                         </DialogContent>
-                    </SwipeableDrawer> ) : (
+                    </SwipeableDrawer>) : (
                     <div>Loading Maps...</div>
                 )}
             </Container>

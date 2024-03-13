@@ -3,7 +3,7 @@ import {useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForEvent from "./MapForEvent";
-import "./EventDetails.css";
+import "./css/EventDetails.css";
 import {Button} from "@mui/material";
 import {Helmet} from "react-helmet";
 import {
@@ -25,7 +25,6 @@ const EventDetails = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
     const isMobile = window.innerWidth <= 768;
-    const [showConsentModal, setShowConsentModal] = useState(false); // State to control consent modal visibility
 
     const deneme = []
     deneme.push(backgroundImage);

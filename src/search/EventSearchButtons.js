@@ -1,10 +1,8 @@
 import {Button} from "@mui/material";
-import {useEffect, useState} from "react";
-import {getTodayDate} from "@mui/x-date-pickers/internals";
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQuery }) => {
+const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQuery}) => {
     const getTodayDate = () => {
         // Implement the function or import it if defined elsewhere
         return new Date().toISOString().split('T')[0];
@@ -14,10 +12,8 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQue
         const now = new Date();
         const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
         const daysUntilNextSaturday = (6 - dayOfWeek + 7) % 7 || 7; // If today is Saturday, use next Saturday
-
         const nextSaturday = new Date(now);
         nextSaturday.setDate(now.getDate() + daysUntilNextSaturday);
-
         return nextSaturday.toISOString().split('T')[0];
     };
 
@@ -33,23 +29,20 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQue
     };
 
     const handleButtonClick = (term) => {
-
         if (term === 'Today') {
             const today = getTodayDate();
             callFilter(today, today)
-        }
-        else if(term === 'This weekend'){
+        } else if (term === 'This weekend') {
             const startDay = getWeekendStartDay()
             const endDay = getWeekendEndDay()
             callFilter(startDay, endDay)
-        }
-        else {
+        } else {
             setSearchQuery(term);
             handleNewSearch(term);
         }
     };
 
-   const callFilter = (startDay,endDay) => {
+    const callFilter = (startDay, endDay) => {
         if (startDay && endDay) {
             const options = {
                 page: 0,
@@ -78,10 +71,9 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQue
                     console.error('Error fetching filtered events:', error);
                 }
             };
-
             fetchEvents();
         }
-        }
+    }
 
     return (
         <div className="filters">

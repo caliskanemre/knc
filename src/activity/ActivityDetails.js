@@ -4,7 +4,7 @@ import Axios from "axios";
 import Header from "../header/Header";
 import MapForActivity from "./MapForActivity";
 import BackgroundGallery from "../shared/BackgroundGallery";
-import './ActivityDetails.css';
+import './css/ActivityDetails.css';
 import {Button} from "@mui/material";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 import {Helmet} from "react-helmet";
@@ -18,8 +18,8 @@ import {
 } from "react-share";
 
 const ActivityDetails = () => {
-    const { id } = useParams();
-    const { title } = useParams();
+    const {id} = useParams();
+    const {title} = useParams();
     const [activity, setActivity] = useState(null);
     const [isMapOpen, setIsMapOpen] = useState(false);
 
@@ -56,10 +56,11 @@ const ActivityDetails = () => {
 
         if (emailRegex.test(content)) {
             // If content is an email address
-            return <a href={`mailto:${content}`} style={{ textDecoration: 'none' }}>{content}</a>;
+            return <a href={`mailto:${content}`} style={{textDecoration: 'none'}}>{content}</a>;
         } else if (urlRegex.test(content)) {
             // If content is a URL
-            return <a href={content} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>Visit Website</a>;
+            return <a href={content} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'none'}}>Visit
+                Website</a>;
         } else {
             // If content is neither, just display the content
             return <span>{content}</span>;
@@ -70,23 +71,28 @@ const ActivityDetails = () => {
     const shareMessage = `${activity.title} - Check out this event on Activenty!`;
 
     return (
-        <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
+        <div className="event-details" style={{textAlign: 'center', position: 'relative'}}>
             <Helmet>
                 <title>{activity.title} - Activity Details | Activenty</title>
-                <meta name="description" content={`Discover more about ${activity.title} at ${activity.activity_location}. Contact: ${activity.activity_email || 'N/A'} | ${activity.activity_phone || 'N/A'}`} />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
+                <meta name="description"
+                      content={`Discover more about ${activity.title} at ${activity.activity_location}. Contact: ${activity.activity_email || 'N/A'} | ${activity.activity_phone || 'N/A'}`}/>
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
                 {/* Open Graph / Facebook */}
-                <meta property="og:title" content={activity.title} />
-                <meta property="og:description" content={activity.activity_description || 'Learn more about this activity.'} />
-                <meta property="og:image" content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined} />
-                <meta property="og:url" content={`${window.location.origin}${window.location.pathname}`} />
-                <meta property="og:type" content="website" />
-                <meta property="og:site_name" content="Activenty" />
+                <meta property="og:title" content={activity.title}/>
+                <meta property="og:description"
+                      content={activity.activity_description || 'Learn more about this activity.'}/>
+                <meta property="og:image"
+                      content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined}/>
+                <meta property="og:url" content={`${window.location.origin}${window.location.pathname}`}/>
+                <meta property="og:type" content="website"/>
+                <meta property="og:site_name" content="Activenty"/>
                 {/* Twitter Card */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={activity.title} />
-                <meta name="twitter:description" content={activity.activity_description || 'Learn more about this activity.'} />
-                <meta name="twitter:image" content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined} />
+                <meta name="twitter:card" content="summary_large_image"/>
+                <meta name="twitter:title" content={activity.title}/>
+                <meta name="twitter:description"
+                      content={activity.activity_description || 'Learn more about this activity.'}/>
+                <meta name="twitter:image"
+                      content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined}/>
                 {/* Structured Data */}
                 <script type="application/ld+json">
                     {JSON.stringify({
@@ -124,7 +130,7 @@ const ActivityDetails = () => {
             <Header/>
 
             {activity.photos.length > 0 && (
-                <div style={{ position: 'relative' }}>
+                <div style={{position: 'relative'}}>
                     {/* Background overlay */}
                     <div
                         style={{
@@ -140,9 +146,9 @@ const ActivityDetails = () => {
 
                     </div>
                     {isMobile ? (
-                        <BackgroundGallery images={activity.photos.map((photo) => photo.photo)} />
+                        <BackgroundGallery images={activity.photos.map((photo) => photo.photo)}/>
                     ) : (
-                        <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)} />
+                        <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)}/>
                     )}
                 </div>
             )}
@@ -160,7 +166,7 @@ const ActivityDetails = () => {
                     {activity.activity_open_from && <p>Open Time: {activity.activity_open_from}</p>}
                     {activity.activity_phone && (
                         <h4>
-                            <a href={`tel:${activity.activity_phone}`} style={{ textDecoration: 'none' }}>
+                            <a href={`tel:${activity.activity_phone}`} style={{textDecoration: 'none'}}>
                                 {activity.activity_phone}
                             </a>
                         </h4>
@@ -180,19 +186,20 @@ const ActivityDetails = () => {
 
                     <div className="share-buttons">
                         {/* WhatsApp Share Button */}
-                        <WhatsappShareButton url={shareUrl} title={shareMessage} separator=":: "  style={{ marginRight: '10px' }}>
-                            <WhatsappIcon size={32} round />
+                        <WhatsappShareButton url={shareUrl} title={shareMessage} separator=":: "
+                                             style={{marginRight: '10px'}}>
+                            <WhatsappIcon size={32} round/>
                         </WhatsappShareButton>
-                        <TelegramShareButton url={shareUrl} title={shareMessage}   style={{ marginRight: '10px' }}>
-                            <TelegramIcon size={32} round />
+                        <TelegramShareButton url={shareUrl} title={shareMessage} style={{marginRight: '10px'}}>
+                            <TelegramIcon size={32} round/>
                         </TelegramShareButton>
-                        <FacebookShareButton  url={shareUrl} title={shareMessage}  style={{ marginRight: '10px' }}>
-                            <FacebookIcon size={32} round />
+                        <FacebookShareButton url={shareUrl} title={shareMessage} style={{marginRight: '10px'}}>
+                            <FacebookIcon size={32} round/>
                         </FacebookShareButton>
                     </div>
                 </div>
                 <div className={`map ${isMapOpen ? 'show' : ''}`}>
-                    <MapForActivity activity={activity} />
+                    <MapForActivity activity={activity}/>
                 </div>
 
             </div>

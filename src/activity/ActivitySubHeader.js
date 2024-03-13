@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import "./ActivitySubHeader.css";
+import "./css/ActivitySubHeader.css";
 import {ListItemIcon, Menu, MenuItem} from "@mui/material";
 import {NavLink} from "react-router-dom";
 import CampingIcon2 from "../images/camping_summer2.jpg"

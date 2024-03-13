@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {NavLink} from 'react-router-dom';
-import "../activity/ActivitySubHeader.css";
+import "../activity/css/ActivitySubHeader.css";
 import {Menu, MenuItem} from "@mui/material";
 
 function EventSubHeader() {
@@ -24,7 +24,7 @@ function EventSubHeader() {
                 className="nav-link"
                 activeClassName="active"
                 onMouseEnter={handleMouseEnter}
-                style={{ cursor: 'pointer', color: 'black', fontSize: '1.4rem', textDecoration: 'none' }}
+                style={{cursor: 'pointer', color: 'black', fontSize: '1.4rem', textDecoration: 'none'}}
             >
                 Events
             </NavLink>
@@ -35,7 +35,7 @@ function EventSubHeader() {
                 onClose={handleMouseLeave}
                 onMouseLeave={handleMouseLeave}
             >
-                <MenuItem onClick={handleMouseLeave} >
+                <MenuItem onClick={handleMouseLeave}>
                     <NavLink to="/events/music" className="nav-link" activeClassName="active">
                         Music & Concert
                     </NavLink>
