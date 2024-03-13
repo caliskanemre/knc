@@ -29,49 +29,49 @@ function ActivitySubHeaderMobile() {
                         <ListItemIcon>
                             <img src={nature} alt="Nature" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Nature" />
+                        <ListItemText primary="Nature" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/museum">
                         <ListItemIcon>
                             <img src={museumIcon} alt="Museum" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Museum" />
+                        <ListItemText primary="Museum" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/health">
                         <ListItemIcon>
                             <img src={wellness} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Health & Spa" />
+                        <ListItemText primary="Health & Spa" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/winter">
                         <ListItemIcon>
                             <img src={winter} alt="Winter" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Winter" />
+                        <ListItemText primary="Winter" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/summer">
                         <ListItemIcon>
                             <img src={swimming} alt="Summer" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Summer" />
+                        <ListItemText primary="Summer" style={{ marginLeft: '-16px' }} />
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/camping">
                         <ListItemIcon>
                             <img src={CampingIcon2} alt="Camping" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Camping" />
+                        <ListItemText primary="Camping" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/park">
                         <ListItemIcon>
                             <img src={park} alt="Park" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="Park Visits" />
+                        <ListItemText primary="Park Visits" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/activities/national-park">
                         <ListItemIcon>
                             <img src={naturalPark} alt="National Park" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary="National Parks" />
+                        <ListItemText primary="National Parks" style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                 </List>
             </Collapse>

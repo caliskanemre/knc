@@ -276,7 +276,13 @@ const IdealForList = () => {
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
             <Header/>
-            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap', // Allow items to wrap
+                margin: '20px 0',
+                gap: '20px' // This creates space between items, replacing marginRight
+            }}>
                 <Button
                     style={{marginRight: '20px'}}
                     variant={selectedType === 'Single' ? "contained" : "outlined"}

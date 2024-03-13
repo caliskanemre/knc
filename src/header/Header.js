@@ -116,7 +116,7 @@ export default function Header() {
                             <Typography variant="h1" component="h1" style={{
                                 cursor: 'pointer',
                                 color: 'darkorange',
-                                fontSize: isMobile ? '2rem' : '2.5rem',
+                                fontSize: isMobile ? '3rem' : '2.5rem',
                                 fontWeight: 'bold'
                             }} onClick={() => handleNavigation('/')}>
                                 αctiventy
@@ -130,7 +130,7 @@ export default function Header() {
                                 fontSize: '2rem',
                                 fontWeight: 'bold',
                                 textAlign: 'center',
-                                marginRight: isMobile ? '-48px' : '0', // Offset the width of the IconButton
+                                marginRight: isMobile ? '-260px' : '0', // Offset the width of the IconButton
                             }} onClick={() => handleNavigation('/')}>
                                 αctiventy
                             </Typography>
@@ -189,6 +189,16 @@ export default function Header() {
                     {isMobile && (
                         <Drawer anchor="left" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
                             <List>
+                                <Typography variant="h2" component="h2" sx={{
+                                    flexGrow: 1,
+                                    cursor: 'pointer',
+                                    color: 'darkorange',
+                                    fontSize: '1.3rem',
+                                    fontWeight: 'bold',
+                                    textAlign: 'center',
+                                }} onClick={() => handleNavigation('/')}>
+                                    αctiventy
+                                </Typography>
                                 <ListItem button onClick={() => handleNavigation('/search')}>
                                     <Box display="flex" alignItems="center" marg>
                                         <i className="fas fa-search"></i>

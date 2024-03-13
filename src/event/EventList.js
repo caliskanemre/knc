@@ -42,6 +42,9 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { IconButton } from "@mui/material";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
+import Dialog from "@mui/material/Dialog";
 
 const mapContainerStyle = {
     width: '100%',
@@ -69,7 +72,17 @@ const EventList = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
-    const { toggleFavorite, favorites } = useAuth();
+    const { toggleFavorite, favorites, isLoggedIn } = useAuth();
+    const [openDialog, setOpenDialog] = useState(false);
+
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+    };
+
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
     useNavigate();
@@ -77,8 +90,13 @@ const EventList = () => {
     deneme.push(backgroundImage);
 
     const handleFavoriteClick = (eventId) => {
-        toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+        if (isLoggedIn) {
+            toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+        } else {
+            handleOpenDialog();
+        }
     };
+
 
 
     useEffect(() => {
@@ -421,9 +439,23 @@ const EventList = () => {
                                     </IconButton>
                                 </Card>
                             </Grid>
+
                         );
                     })}
                 </Grid>
+                <Dialog open={openDialog} onClose={handleCloseDialog}>
+                    <DialogTitle>{"Just a moment!"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseDialog} color="primary" autoFocus>
+                            Got it, thanks!
+                        </Button>
+                    </DialogActions>
+                </Dialog>
                 {hasMore && (
                     <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
                         <Button
