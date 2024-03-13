@@ -16,6 +16,9 @@ import Register from "./login/Register";
 import {jwtDecode} from 'jwt-decode';
 import Favorites from "./user/Favorites";
 import {AuthProvider} from "./auth/AuthProvider";
+import AboutUs from "./links/AboutUs";
+import PrivacyPolicy from "./links/PrivacyPolicy";
+import ContactUs from "./links/ContactUs";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -92,6 +95,9 @@ function App() {
                             <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
                             <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
+                            <Route path="/about-us" element={<AboutUs />} />
+                            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                            <Route path="/contact-us" element={<ContactUs />} />
                             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess}/>}/>
                             <Route path="/users/favorites" element={<Favorites/>}/>
                             <Route path="/register" element={<Register/>}/>

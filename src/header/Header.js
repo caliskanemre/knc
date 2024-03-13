@@ -147,6 +147,15 @@ export default function Header() {
                                 <NavLink to="/ideal-for" className="nav-link">
                                     AI Assistant
                                 </NavLink>
+                                <NavLink to="/about-us" className="nav-link">
+                                    About Us
+                                </NavLink>
+                                <NavLink to="/privacy-policy" className="nav-link">
+                                    Privacy Policy
+                                </NavLink>
+                                <NavLink to="/contact-us" className="nav-link">
+                                    Contact Us
+                                </NavLink>
                             </>
                         )}
                         <Box flexGrow={1}/>
@@ -240,6 +249,24 @@ export default function Header() {
 
                                 <ActivitySubHeaderMobile />
 
+                                <ListItem button onClick={() => handleNavigation('/about-us')}>
+                                    <ListItemText
+                                        primary="About Us"
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                    />
+                                </ListItem>
+                                <ListItem button onClick={() => handleNavigation('/privacy-policy')}>
+                                    <ListItemText
+                                        primary="Privacy Policy"
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                    />
+                                </ListItem>
+                                <ListItem button onClick={() => handleNavigation('/contact-us')}>
+                                    <ListItemText
+                                        primary="Contact Us"
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                    />
+                                </ListItem>
                                 {/* Add more mobile navigation items as needed */}
                             </List>
                         </Drawer>
