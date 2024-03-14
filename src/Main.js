@@ -11,7 +11,7 @@ import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
 import backgroundImage from './background2.png';
-import {Avatar, CardHeader, IconButton, Tooltip} from "@mui/material";
+import {Avatar, CardHeader, IconButton, Snackbar, Tooltip} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
@@ -57,6 +57,8 @@ export default function Main() {
     const { toggleFavorite, favorites,isLoggedIn } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [openDialog, setOpenDialog] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
@@ -71,10 +73,20 @@ export default function Main() {
         setExpanded(!expanded);
     };
 
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
 
     const handleFavoriteClick = (eventId) => {
         if (isLoggedIn) {
-            toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event");
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
         } else {
             handleOpenDialog();
         }
@@ -248,6 +260,12 @@ export default function Main() {
                     </Dialog>
 
                 </Container>
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={handleSnackbarClose}
+                    message={snackbarMessage}
+                />
             </main>
             {/* Footer */}
             <Box sx={{bgcolor: 'background.paper', p: 6}} component="footer">

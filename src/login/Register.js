@@ -67,6 +67,7 @@ function Register({open, handleClose}) {
                     fullWidth
                     variant="outlined"
                     value={username}
+                    required
                     onChange={(e) => setUsername(e.target.value)}
                 />
                 <TextField
@@ -77,6 +78,7 @@ function Register({open, handleClose}) {
                     fullWidth
                     variant="outlined"
                     value={password}
+                    required
                     onChange={(e) => setPassword(e.target.value)}
                 />
                 <TextField
@@ -88,6 +90,7 @@ function Register({open, handleClose}) {
                     variant="outlined"
                     value={rePassword}
                     onChange={(e) => setRePassword(e.target.value)}
+                    required
                 />
                 <TextField
                     margin="dense"
@@ -98,6 +101,7 @@ function Register({open, handleClose}) {
                     variant="outlined"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    required
                 />
                 {error && <p style={{color: 'red'}}>{error}</p>}
             </DialogContent>

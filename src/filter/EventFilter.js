@@ -40,6 +40,19 @@ export const EventFilter = ({openFilterDialog, handleCloseFilterDialog, type, up
         setEndDate(newValue);
     };
 
+    const resetDialog = () => {
+        // Reset the states
+        setEndDate(null);
+        setStartDate(null);
+        setSelectedType('');
+        setSelectedLocation('');
+
+        // Use the reset values directly
+        fetchFilteredActivities('', '', null, null);
+        handleCloseFilterDialog(); // Close the dialog upon applying filters
+    };
+
+
     const applyFilters = () => {
         applyFilter('location ', selectedLocation);
         applyFilter('type', selectedType);
@@ -152,6 +165,9 @@ export const EventFilter = ({openFilterDialog, handleCloseFilterDialog, type, up
                 />
             </DialogContent>
             <DialogActions>
+                <Button onClick={resetDialog} color="primary">
+                    Reset
+                </Button>
                 <Button onClick={handleCloseFilterDialog} color="primary">
                     Cancel
                 </Button>

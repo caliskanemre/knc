@@ -9,7 +9,7 @@ import {
     CardHeader,
     Chip,
     DialogContent,
-    DialogTitle, IconButton,
+    DialogTitle, IconButton, Snackbar,
     Stack,
     SwipeableDrawer,
     useMediaQuery,
@@ -69,6 +69,8 @@ const ActivityList = () => {
     const listRef = useRef(null);
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
     useNavigate();
     const applyFilter = (filterType, filterValue) => {
@@ -80,17 +82,29 @@ const ActivityList = () => {
         // Trigger activity or event refetch with new filters here
     };
 
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
+
+    const handleFavoriteClick = (eventId) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteActivities.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "activity");
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
+    };
+
     const handleOpenDialog = () => {
         setOpenDialog(true);
     };
 
-    const handleFavoriteClick = (eventId) => {
-        if(isLoggedIn) {
-            toggleFavorite(eventId, favorites.favoriteActivities.map(event => event.id).includes(eventId), "activity");
-        }else {
-            handleOpenDialog();
-        }
-    };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
@@ -510,6 +524,12 @@ const ActivityList = () => {
 
                         </GoogleMap>
                     </DialogContent>
+                    <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={6000}
+                        onClose={handleSnackbarClose}
+                        message={snackbarMessage}
+                    />
                 </SwipeableDrawer>
             ) : (
                 <div>Loading Maps...</div>

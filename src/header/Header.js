@@ -130,7 +130,7 @@ export default function Header() {
                                 fontSize: '2rem',
                                 fontWeight: 'bold',
                                 textAlign: 'center',
-                                marginRight: isMobile ? '-112px' : '0', // Offset the width of the IconButton
+                                marginRight: isMobile ? '-150px' : '0', // Offset the width of the IconButton
                             }} onClick={() => handleNavigation('/')}>
                                 αctiventy
                             </Typography>

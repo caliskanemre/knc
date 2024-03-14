@@ -10,10 +10,10 @@ import {
     Chip,
     DialogContent,
     DialogTitle,
-    FormControl,
+    FormControl, IconButton,
     InputLabel,
     MenuItem,
-    Select,
+    Select, Snackbar,
     Stack,
     SwipeableDrawer,
     useMediaQuery,
@@ -42,6 +42,8 @@ import ChildCareIcon from "@mui/icons-material/ChildCare";
 import PaletteIcon from "@mui/icons-material/Palette";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LocalPlayIcon from "@mui/icons-material/LocalPlay";
+import {useAuth} from "../auth/AuthProvider";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 const mapContainerStyle = {
     width: '100%',
@@ -70,6 +72,10 @@ const IdealForList = () => {
     const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
     const [selectedType, setSelectedType] = useState('Single');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const { toggleFavorite, favorites, isLoggedIn } = useAuth();
+    const [openDialog, setOpenDialog] = useState(false);
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
 
 
@@ -159,6 +165,26 @@ const IdealForList = () => {
         setSelectedType(value);
     };
 
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
+
+    const handleFavoriteClick = (eventId) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event");
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
+    };
+
+
     function askForUserLocation() {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -214,6 +240,9 @@ const IdealForList = () => {
         if (title.length < 10) return "1.6rem";
         if (title.length < 30) return "1.3rem"
         return "1rem"; // Fallback font size
+    };
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
     };
 
     const handleChangeSort = async (event) => {
@@ -394,6 +423,7 @@ const IdealForList = () => {
                 </Box>
                 <Grid container spacing={4}>
                     {events.map((item) => {
+                        const isAlreadyFavorited = favorites.favoriteEvents?.map(event => event.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
 
@@ -457,6 +487,12 @@ const IdealForList = () => {
                                             image={item.photo}
                                         />
                                     </a>
+                                    <IconButton
+                                        aria-label="add to favorites"
+                                        onClick={() => handleFavoriteClick(item.id)}
+                                    >
+                                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                    </IconButton>
                                 </Card>
                             </Grid>
                         );
@@ -563,8 +599,15 @@ const IdealForList = () => {
                             </GoogleMap>
 
                         </DialogContent>
+                        <Snackbar
+                            open={snackbarOpen}
+                            autoHideDuration={6000}
+                            onClose={handleSnackbarClose}
+                            message={snackbarMessage}
+                        />
                     </SwipeableDrawer>) : (
                     <div>Loading Maps...</div>
+
                 )}
             </Container>
             <EventFilter

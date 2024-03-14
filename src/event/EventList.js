@@ -14,7 +14,7 @@ import {
     FormControl,
     InputLabel,
     MenuItem,
-    Select,
+    Select, Snackbar,
     Stack,
     SwipeableDrawer,
     useMediaQuery,
@@ -74,6 +74,8 @@ const EventList = () => {
     const [sort, setSort] = useState('');
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
@@ -89,13 +91,25 @@ const EventList = () => {
     const deneme = []
     deneme.push(backgroundImage);
 
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
+
     const handleFavoriteClick = (eventId) => {
         if (isLoggedIn) {
-            toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event");
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
         } else {
             handleOpenDialog();
         }
     };
+
 
 
 
@@ -314,7 +328,7 @@ const EventList = () => {
                 </Button>
             </div>
             <Container sx={{py: 9}} maxWidth="xl">
-                <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
+                {/*<Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
                             key={filterType}
@@ -323,7 +337,7 @@ const EventList = () => {
                             color="secondary"
                         />
                     ))}
-                </Stack>
+                </Stack>*/}
                 <Box display="flex" justifyContent="flex-end" p="5px">
                     <FormControl sx={{m: 2, minWidth: 120}}>
                         <InputLabel id="autowidth-label">Sort</InputLabel>
@@ -560,6 +574,12 @@ const EventList = () => {
                     </SwipeableDrawer>) : (
                     <div>Loading Maps...</div>
                 )}
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={handleSnackbarClose}
+                    message={snackbarMessage}
+                />
             </Container>
             <EventFilter
                 openFilterDialog={openFilterDialog}
