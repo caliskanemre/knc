@@ -31,6 +31,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import backgroundImage from "../images/background256.png";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -45,6 +46,8 @@ const SearchPage = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const location = useLocation();
     const { toggleFavorite, favorites } = useAuth();
+    const deneme = []
+    deneme.push(backgroundImage);
 
     // Function to navigate to the details page
 
@@ -389,9 +392,30 @@ const SearchPage = () => {
                                                style={{textDecoration: 'none', color: 'inherit'}}>
                                                 <CardMedia
                                                     component="div"
-                                                    sx={{pt: '56.25%'}}
-                                                    image={item.photo}
-                                                />
+                                                    sx={{
+                                                        pt: '56.25%',
+                                                        position: 'relative',
+                                                        overflow: 'hidden'
+                                                    }} // Ensure the position is relative to position the image correctly
+                                                >
+                                                    <img
+                                                        src={item.photo}
+                                                        alt={item.title}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0
+                                                        }} // Full cover image
+                                                        onError={(e) => {
+                                                            e.target.onerror = null; // Prevents looping
+                                                            e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
+                                                        }}
+                                                    />
+
+                                                </CardMedia>
                                             </a>
                                             <IconButton
                                                 aria-label="add to favorites"

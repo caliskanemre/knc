@@ -44,6 +44,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LocalPlayIcon from "@mui/icons-material/LocalPlay";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import backgroundImage from "../background2.png";
 
 const mapContainerStyle = {
     width: '100%',
@@ -77,7 +78,8 @@ const IdealForList = () => {
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
-
+    const deneme = []
+    deneme.push(backgroundImage);
 
     useEffect(() => {
         // Define the page and size for pagination
@@ -483,9 +485,30 @@ const IdealForList = () => {
                                        style={{textDecoration: 'none', color: 'inherit'}}>
                                         <CardMedia
                                             component="div"
-                                            sx={{pt: '56.25%'}}
-                                            image={item.photo}
-                                        />
+                                            sx={{
+                                                pt: '56.25%',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }} // Ensure the position is relative to position the image correctly
+                                        >
+                                            <img
+                                                src={item.photo}
+                                                alt={item.title}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0
+                                                }} // Full cover image
+                                                onError={(e) => {
+                                                    e.target.onerror = null; // Prevents looping
+                                                    e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
+                                                }}
+                                            />
+
+                                        </CardMedia>
                                     </a>
                                     <IconButton
                                         aria-label="add to favorites"
