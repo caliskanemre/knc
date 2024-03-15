@@ -19,6 +19,7 @@ import {AuthProvider} from "./auth/AuthProvider";
 import AboutUs from "./links/AboutUs";
 import PrivacyPolicy from "./links/PrivacyPolicy";
 import ContactUs from "./links/ContactUs";
+import ResetPassword from "./login/ResetPassword";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -101,6 +102,8 @@ function App() {
                             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess}/>}/>
                             <Route path="/users/favorites" element={<Favorites/>}/>
                             <Route path="/register" element={<Register/>}/>
+                            <Route path="/reset-password" element={<ResetPassword />} />
+
                         </Routes>
 
                         <CookieConsent
