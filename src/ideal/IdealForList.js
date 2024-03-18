@@ -9,9 +9,9 @@ import {
     CardHeader,
     Chip,
     DialogContent,
-    DialogTitle,
+    DialogTitle, Divider,
     FormControl, IconButton,
-    InputLabel,
+    InputLabel, Menu,
     MenuItem,
     Select, Snackbar,
     Stack,
@@ -77,9 +77,48 @@ const IdealForList = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
+    const [notificationPref, setNotificationPref] = useState('');
+    const [openMenuEventId, setOpenMenuEventId] = useState(null);
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
     const deneme = []
     deneme.push(backgroundImage);
+
+    const handleClick = (eventId) => {
+        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        if (!isAlreadyFavoritedEvent) {
+            setOpenMenuEventId(eventId); // Open the menu for this event
+        } else {
+            // If it's already a favorite, directly handle unfavoriting
+            handleFavoriteClick(eventId, '');
+        }
+    };
+
+    const handleCloseNotification = (eventId, notificationType) => {
+        setNotificationPref(notificationType); // Set the notification preference based on user selection
+        handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
+        setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
+    };
+
+
+
+    const handleCloseFavoriteDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+    };
+    const handleFavoriteClick = (eventId, notificationType) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event", notificationType);
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
+    };
 
     useEffect(() => {
         // Define the page and size for pagination
@@ -172,18 +211,6 @@ const IdealForList = () => {
             return;
         }
         setSnackbarOpen(false);
-    };
-
-    const handleFavoriteClick = (eventId) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "event");
-            // Set the Snackbar message and open it
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-            setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
-        }
     };
 
 
@@ -511,11 +538,38 @@ const IdealForList = () => {
                                         </CardMedia>
                                     </a>
                                     <IconButton
+                                        id={`favorite-icon-${item.id}`}
                                         aria-label="add to favorites"
-                                        onClick={() => handleFavoriteClick(item.id)}
+                                        onClick={() => handleClick(item.id)}
                                     >
                                         {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                     </IconButton>
+
+                                    <Menu
+                                        id="simple-menu"
+                                        anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
+                                        keepMounted
+                                        open={openMenuEventId === item.id}
+                                        onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
+                                    >
+                                        <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
+                                            Do you want to get any notification?
+                                        </Typography>
+                                        <Divider />
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
+                                            2hrs before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
+                                            24hrs before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
+                                            Week before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
+                                            No need notification
+                                        </MenuItem>
+                                        {/* Add more MenuItem components as needed */}
+                                    </Menu>
                                 </Card>
                             </Grid>
                         );

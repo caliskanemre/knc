@@ -11,7 +11,7 @@ import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
 import backgroundImage from './background2.png';
-import {Avatar, CardHeader, IconButton, Snackbar, Tooltip} from "@mui/material";
+import {Avatar, CardHeader, Divider, IconButton, Menu, MenuItem, Snackbar, Tooltip} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
@@ -59,14 +59,52 @@ export default function Main() {
     const [openDialog, setOpenDialog] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [notificationPref, setNotificationPref] = useState('');
+    const [openMenuEventId, setOpenMenuEventId] = useState(null);
 
-    const handleOpenDialog = () => {
+    const handleClick = (eventId) => {
+        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        if (!isAlreadyFavoritedEvent) {
+            setOpenMenuEventId(eventId); // Open the menu for this event
+        } else {
+            // If it's already a favorite, directly handle unfavoriting
+            handleFavoriteClick(eventId, '');
+        }
+    };
+
+    const handleCloseNotification = (eventId, notificationType) => {
+        setNotificationPref(notificationType); // Set the notification preference based on user selection
+        handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
+        setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
+    };
+
+
+
+    const handleCloseFavoriteDialog = () => {
         setOpenDialog(true);
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
     };
+    const handleFavoriteClick = (eventId, notificationType) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event", notificationType);
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
+    };
+
+
+
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
 
 
     const handleExpandClick = () => {
@@ -78,18 +116,6 @@ export default function Main() {
             return;
         }
         setSnackbarOpen(false);
-    };
-
-    const handleFavoriteClick = (eventId) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "event");
-            // Set the Snackbar message and open it
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-            setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
-        }
     };
 
 
@@ -234,18 +260,45 @@ export default function Main() {
                                             </CardMedia>
                                         </a>
                                         <IconButton
+                                            id={`favorite-icon-${item.id}`}
                                             aria-label="add to favorites"
-                                            onClick={() => handleFavoriteClick(item.id)}
+                                            onClick={() => handleClick(item.id)}
                                         >
                                             {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                         </IconButton>
+
+                                        <Menu
+                                            id="simple-menu"
+                                            anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
+                                            keepMounted
+                                            open={openMenuEventId === item.id}
+                                            onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
+                                        >
+                                            <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
+                                                Do you want to get any notification?
+                                            </Typography>
+                                            <Divider />
+                                            <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
+                                                2hrs before
+                                            </MenuItem>
+                                            <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
+                                                24hrs before
+                                            </MenuItem>
+                                            <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
+                                                Week before
+                                            </MenuItem>
+                                            <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
+                                                No need notification
+                                            </MenuItem>
+                                            {/* Add more MenuItem components as needed */}
+                                        </Menu>
 
                                     </Card>
                                 </Grid>
                             );
                         })}
                     </Grid>
-                    <Dialog open={openDialog} onClose={handleCloseDialog}>
+                    <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
                         <DialogTitle>{"Just a moment!"}</DialogTitle>
                         <DialogContent>
                             <DialogContentText>
@@ -253,7 +306,7 @@ export default function Main() {
                             </DialogContentText>
                         </DialogContent>
                         <DialogActions>
-                            <Button onClick={handleCloseDialog} color="primary" autoFocus>
+                            <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
                                 Got it, thanks!
                             </Button>
                         </DialogActions>

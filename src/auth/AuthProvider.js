@@ -34,16 +34,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const toggleFavorite = async (itemId, isFavorited, itemType) => {
-        const url = `${baseURL}/users/favorites/${itemType}/${itemId}`;
+    const toggleFavorite = async (itemId, isFavorited, itemType, notificationType) => {
+
 
         try {
             // Toggle the favorite status in the backend
             if (isFavorited) {
+                const url = `${baseURL}/users/favorites/${itemType}/${itemId}`;
                 await axios.delete(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else {
+                const url = `${baseURL}/users/favorites/${itemType}/${itemId}/${notificationType}`;
                 await axios.post(url, {}, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

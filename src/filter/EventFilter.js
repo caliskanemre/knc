@@ -118,8 +118,10 @@ export const EventFilter = ({openFilterDialog, handleCloseFilterDialog, type, up
                         <MenuItem value="Music & Concerts">Music & Concerts</MenuItem>
                         <MenuItem value="Outdoor & Adventure">Outdoor & Adventure</MenuItem>
                         <MenuItem value="Tech & Innovation">Tech & Innovation</MenuItem>
-                        <MenuItem value="Education">Education</MenuItem>
-                        <MenuItem value="Arts & Culture">Arts & Culture</MenuItem>
+                        <MenuItem value="Workshops & Education">Workshops & Education</MenuItem>
+                        <MenuItem value="Exhibitions & Art">Exhibitions & Art</MenuItem>
+                        <MenuItem value="Theater & Dance">Theater & Dance</MenuItem>
+                        <MenuItem value="Miscellaneous">Miscellaneous</MenuItem>
 
                     </Select>
 

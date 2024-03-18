@@ -8,14 +8,16 @@ import {
     Avatar,
     Button,
     CardHeader,
-    Chip,
     DialogContent,
     DialogTitle,
+    Divider,
     FormControl,
+    IconButton,
     InputLabel,
+    Menu,
     MenuItem,
-    Select, Snackbar,
-    Stack,
+    Select,
+    Snackbar,
     SwipeableDrawer,
     useMediaQuery,
     useTheme
@@ -34,12 +36,12 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ScienceIcon from '@mui/icons-material/Science';
 import SchoolIcon from '@mui/icons-material/School';
+import DanceIcon from '@mui/icons-material/LocalActivity';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import PaletteIcon from '@mui/icons-material/Palette';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import backgroundImage from "../images/background256.png";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import { IconButton } from "@mui/material";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -76,6 +78,30 @@ const EventList = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [notificationPref, setNotificationPref] = useState('');
+    const [openMenuEventId, setOpenMenuEventId] = useState(null);
+
+
+
+    const handleClick = (eventId) => {
+        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        if (!isAlreadyFavoritedEvent) {
+            setOpenMenuEventId(eventId); // Open the menu for this event
+        } else {
+            // If it's already a favorite, directly handle unfavoriting
+            handleFavoriteClick(eventId, '');
+        }
+    };
+
+
+    const handleCloseNotification = (eventId, notificationType) => {
+        setNotificationPref(notificationType); // Set the notification preference based on user selection
+        handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
+        setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
+    };
+
+
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
@@ -84,6 +110,18 @@ const EventList = () => {
     const handleCloseDialog = () => {
         setOpenDialog(false);
     };
+    const handleFavoriteClick = (eventId, notificationType) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event", notificationType);
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
+    };
+
 
 
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
@@ -98,17 +136,7 @@ const EventList = () => {
         setSnackbarOpen(false);
     };
 
-    const handleFavoriteClick = (eventId) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "event");
-            // Set the Snackbar message and open it
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-            setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
-        }
-    };
+
 
 
 
@@ -295,10 +323,11 @@ const EventList = () => {
         "music & concerts": <MusicNoteIcon/>,
         "outdoor & adventure": <LandscapeIcon/>,
         "tech & innovation": <ScienceIcon/>,
-        "education": <SchoolIcon/>,
+        "workshops & education": <SchoolIcon/>,
         "children": <ChildCareIcon/>,
-        "arts & culture": <PaletteIcon/>,
-        "other": <HelpOutlineIcon/>,
+        "exhibitions & art": <PaletteIcon/>,
+        "miscellaneous": <HelpOutlineIcon/>,
+        "theater & dance": <DanceIcon/>,
     };
 
     return (
@@ -446,11 +475,38 @@ const EventList = () => {
                                         </CardMedia>
                                     </a>
                                     <IconButton
+                                        id={`favorite-icon-${item.id}`}
                                         aria-label="add to favorites"
-                                        onClick={() => handleFavoriteClick(item.id)}
+                                        onClick={() => handleClick(item.id)}
                                     >
                                         {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                     </IconButton>
+
+                                    <Menu
+                                        id="simple-menu"
+                                        anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
+                                        keepMounted
+                                        open={openMenuEventId === item.id}
+                                        onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
+                                    >
+                                        <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
+                                            Do you want to get any notification?
+                                        </Typography>
+                                        <Divider />
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
+                                            2hrs before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
+                                            24hrs before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
+                                            Week before
+                                        </MenuItem>
+                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
+                                            No need notification
+                                        </MenuItem>
+                                        {/* Add more MenuItem components as needed */}
+                                    </Menu>
                                 </Card>
                             </Grid>
 

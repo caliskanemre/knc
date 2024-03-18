@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import "./css/SearchPage.css";
 import Header from "../header/Header";
-import {Avatar, Button, CardHeader, IconButton} from "@mui/material";
+import {Avatar, Button, CardHeader, Divider, IconButton, Menu, MenuItem} from "@mui/material";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
@@ -45,7 +45,12 @@ const SearchPage = () => {
     const [activityPage, setActivityPage] = useState(0);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const location = useLocation();
-    const { toggleFavorite, favorites } = useAuth();
+    const [notificationPref, setNotificationPref] = useState('');
+    const [openMenuEventId, setOpenMenuEventId] = useState(null);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const { toggleFavorite, favorites, isLoggedIn } = useAuth();
+    const [openDialog, setOpenDialog] = useState(false);
     const deneme = []
     deneme.push(backgroundImage);
 
@@ -60,6 +65,46 @@ const SearchPage = () => {
         nature: nature,
         national: naturalPark,
         museum: museumIcon
+    };
+
+    const handleClick = (eventId) => {
+        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        if (!isAlreadyFavoritedEvent) {
+            setOpenMenuEventId(eventId); // Open the menu for this event
+        } else {
+            // If it's already a favorite, directly handle unfavoriting
+            handleFavoriteClick(eventId, '');
+        }
+    };
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseNotification = (eventId, notificationType) => {
+        setNotificationPref(notificationType); // Set the notification preference based on user selection
+        handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
+        setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
+    };
+
+
+
+    const handleCloseFavoriteDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+    };
+    const handleFavoriteClick = (eventId, notificationType) => {
+        if (isLoggedIn) {
+            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            toggleFavorite(eventId, isFavorite, "event", notificationType);
+            // Set the Snackbar message and open it
+            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+            setSnackbarOpen(true);
+        } else {
+            handleOpenDialog();
+        }
     };
 
 
@@ -418,12 +463,38 @@ const SearchPage = () => {
                                                 </CardMedia>
                                             </a>
                                             <IconButton
+                                                id={`favorite-icon-${item.id}`}
                                                 aria-label="add to favorites"
-                                                onClick={() => handleFavoriteEventClick(item.id)}
+                                                onClick={() => handleClick(item.id)}
                                             >
-                                                {isAlreadyFavorited ? <FavoriteIcon color="error"/> :
-                                                    <FavoriteBorderIcon/>}
+                                                {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                             </IconButton>
+
+                                            <Menu
+                                                id="simple-menu"
+                                                anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
+                                                keepMounted
+                                                open={openMenuEventId === item.id}
+                                                onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
+                                            >
+                                                <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
+                                                    Do you want to get any notification?
+                                                </Typography>
+                                                <Divider />
+                                                <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
+                                                    2hrs before
+                                                </MenuItem>
+                                                <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
+                                                    24hrs before
+                                                </MenuItem>
+                                                <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
+                                                    Week before
+                                                </MenuItem>
+                                                <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
+                                                    No need notification
+                                                </MenuItem>
+                                                {/* Add more MenuItem components as needed */}
+                                            </Menu>
                                         </>
                                     )}
                                 </Card>

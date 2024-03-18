@@ -148,7 +148,7 @@ export default function Header() {
                                     AI Assistant
                                 </NavLink>
                                 <NavLink to="/about-us" className="nav-link">
-                                    About Us
+                                    How it works
                                 </NavLink>
                                 <NavLink to="/privacy-policy" className="nav-link">
                                     Privacy Policy
@@ -251,7 +251,7 @@ export default function Header() {
 
                                 <ListItem button onClick={() => handleNavigation('/about-us')}>
                                     <ListItemText
-                                        primary="About Us"
+                                        primary="How it works"
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
