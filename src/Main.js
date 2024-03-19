@@ -63,12 +63,16 @@ export default function Main() {
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
 
     const handleClick = (eventId) => {
-        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-        if (!isAlreadyFavoritedEvent) {
-            setOpenMenuEventId(eventId); // Open the menu for this event
-        } else {
-            // If it's already a favorite, directly handle unfavoriting
-            handleFavoriteClick(eventId, '');
+        if (isLoggedIn) {
+            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            if (!isAlreadyFavoritedEvent) {
+                setOpenMenuEventId(eventId); // Open the menu for this event
+            } else {
+                // If it's already a favorite, directly handle unfavoriting
+                handleFavoriteClick(eventId, '');
+            }
+        }else{
+            handleOpenDialog();
         }
     };
 
@@ -81,34 +85,18 @@ export default function Main() {
 
 
     const handleCloseFavoriteDialog = () => {
-        setOpenDialog(true);
-    };
-
-    const handleCloseDialog = () => {
         setOpenDialog(false);
     };
     const handleFavoriteClick = (eventId, notificationType) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "event", notificationType);
-            // Set the Snackbar message and open it
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-            setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
-        }
+        const isFavorite = favorites.favoriteEvents?.map(event => event.id).includes(eventId);
+        toggleFavorite(eventId, isFavorite, "event", notificationType);
+        // Set the Snackbar message and open it
+        setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+        setSnackbarOpen(true);
     };
-
-
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
-    };
-
-
-
-    const handleExpandClick = () => {
-        setExpanded(!expanded);
     };
 
     const handleSnackbarClose = (event, reason) => {
@@ -302,7 +290,7 @@ export default function Main() {
                         <DialogTitle>{"Just a moment!"}</DialogTitle>
                         <DialogContent>
                             <DialogContentText>
-                                We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!
+                                To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for events and activities and easily manage your favorites. It's quick and straightforward to get started!
                             </DialogContentText>
                         </DialogContent>
                         <DialogActions>

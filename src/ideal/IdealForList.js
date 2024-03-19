@@ -45,6 +45,9 @@ import LocalPlayIcon from "@mui/icons-material/LocalPlay";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import backgroundImage from "../background2.png";
+import Dialog from "@mui/material/Dialog";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
 
 const mapContainerStyle = {
     width: '100%',
@@ -84,12 +87,16 @@ const IdealForList = () => {
     deneme.push(backgroundImage);
 
     const handleClick = (eventId) => {
-        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-        if (!isAlreadyFavoritedEvent) {
-            setOpenMenuEventId(eventId); // Open the menu for this event
-        } else {
-            // If it's already a favorite, directly handle unfavoriting
-            handleFavoriteClick(eventId, '');
+        if (isLoggedIn) {
+            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            if (!isAlreadyFavoritedEvent) {
+                setOpenMenuEventId(eventId); // Open the menu for this event
+            } else {
+                // If it's already a favorite, directly handle unfavoriting
+                handleFavoriteClick(eventId, '');
+            }
+        }else{
+            handleOpenDialog();
         }
     };
 
@@ -102,12 +109,9 @@ const IdealForList = () => {
 
 
     const handleCloseFavoriteDialog = () => {
-        setOpenDialog(true);
+        setOpenDialog(false)
     };
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
-    };
     const handleFavoriteClick = (eventId, notificationType) => {
         if (isLoggedIn) {
             const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
@@ -575,6 +579,19 @@ const IdealForList = () => {
                         );
                     })}
                 </Grid>
+                <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
+                    <DialogTitle>{"Just a moment!"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for events and activities and easily manage your favorites. It's quick and straightforward to get started!
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
+                            Got it, thanks!
+                        </Button>
+                    </DialogActions>
+                </Dialog>
                 {hasMore && (
                     <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
                         <Button

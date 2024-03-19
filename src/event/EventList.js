@@ -85,12 +85,16 @@ const EventList = () => {
 
 
     const handleClick = (eventId) => {
-        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-        if (!isAlreadyFavoritedEvent) {
-            setOpenMenuEventId(eventId); // Open the menu for this event
-        } else {
-            // If it's already a favorite, directly handle unfavoriting
-            handleFavoriteClick(eventId, '');
+        if (isLoggedIn) {
+            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            if (!isAlreadyFavoritedEvent) {
+                setOpenMenuEventId(eventId); // Open the menu for this event
+            } else {
+                // If it's already a favorite, directly handle unfavoriting
+                handleFavoriteClick(eventId, '');
+            }
+        }else{
+            handleOpenDialog();
         }
     };
 
@@ -517,7 +521,7 @@ const EventList = () => {
                     <DialogTitle>{"Just a moment!"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!
+                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for events and activities and easily manage your favorites. It's quick and straightforward to get started!
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>

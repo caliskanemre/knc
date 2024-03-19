@@ -32,6 +32,11 @@ import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import backgroundImage from "../images/background256.png";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -68,12 +73,15 @@ const SearchPage = () => {
     };
 
     const handleClick = (eventId) => {
-        const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-        if (!isAlreadyFavoritedEvent) {
-            setOpenMenuEventId(eventId); // Open the menu for this event
-        } else {
-            // If it's already a favorite, directly handle unfavoriting
-            handleFavoriteClick(eventId, '');
+        if (isLoggedIn) {
+            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            if (!isAlreadyFavoritedEvent) {
+                setOpenMenuEventId(eventId); // Open the menu for this event
+            } else {
+                handleFavoriteClick(eventId, '');
+            }
+        }else{
+            handleOpenDialog();
         }
     };
     const handleOpenDialog = () => {
@@ -89,22 +97,15 @@ const SearchPage = () => {
 
 
     const handleCloseFavoriteDialog = () => {
-        setOpenDialog(true);
-    };
-
-    const handleCloseDialog = () => {
         setOpenDialog(false);
     };
+
     const handleFavoriteClick = (eventId, notificationType) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "event", notificationType);
-            // Set the Snackbar message and open it
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-            setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
-        }
+        const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        toggleFavorite(eventId, isFavorite, "event", notificationType);
+        // Set the Snackbar message and open it
+        setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+        setSnackbarOpen(true);
     };
 
 
@@ -502,6 +503,19 @@ const SearchPage = () => {
                         );
                     })}
                 </Grid>
+                <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
+                    <DialogTitle>{"Just a moment!"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for events and activities and easily manage your favorites. It's quick and straightforward to get started!
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
+                            Got it, thanks!
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Container>
             {hasMoreEvents || hasMoreActivity && (eventPage > 0 || activityPage > 0) && (
                 <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
