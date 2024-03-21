@@ -30,6 +30,11 @@ function Register({open, handleClose}) {
 
         try {
             await axios.post(`${baseURL}/auth/register`, {username, password, email});
+            if (window.gtag) {
+                window.gtag('event', 'conversion', {
+                    'send_to': 'AW-854444729/AzNyCLCa4JMZELmVt5cD'
+                });
+            }
             setSuccess(true);
             setError('');
             setUsername('');
