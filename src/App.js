@@ -27,6 +27,12 @@ function App() {
 
 
     useEffect(() => {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+
         const token = localStorage.getItem('token');
         if (token) {
             try {
@@ -43,6 +49,11 @@ function App() {
                 console.error('Token decoding failed', error);
             }
         }
+
+        return () => {
+            // Clean up the script when the component unmounts
+            document.head.removeChild(script);
+        };
     }, []);
     const handleLoginSuccess = (data) => {
         localStorage.setItem('token', data.accessToken); // Assuming the response contains an accessToken
