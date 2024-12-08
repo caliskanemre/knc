@@ -2,14 +2,14 @@ import React, {useState} from 'react';
 import "./css/ActivitySubHeader.css";
 import {ListItemIcon, Menu, MenuItem} from "@mui/material";
 import {NavLink} from "react-router-dom";
-import CampingIcon2 from "../images/camping_summer2.jpg"
-import wellness from "../images/wellness_green2.png"
-import winter from "../images/winter_green.jpeg"
-import swimming from "../images/summer_green3.jpg"
-import park from "../images/park_green2.png"
-import nature from "../images/nature2.jpg"
-import naturalPark from "../images/park_green.jpg"
-import museumIcon from "../images/green_museum.png"
+import flower from "../images/flower.jpg"
+import tamborine from "../images/tamborine.jpg"
+import ornament from "../images/ornament.jpg"
+import gift from "../images/gift.jpg"
+import veil from "../images/veil.jpg"
+import hennaSet from "../images/hennaset.jpg"
+import souvenir from "../images/souvenir.jpg"
+import handkerchief from "../images/mendil.jpg"
 import {useTranslation} from "react-i18next";
 
 function ActivitySubHeader() {
@@ -45,72 +45,72 @@ function ActivitySubHeader() {
                 >
                     <MenuItem onClick={handleMouseLeave} >
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={nature} alt="Nature" style={{ width: '24px', height: '24px' }} />
+                            <img src={hennaSet} alt="Nature" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/nature" className="nav-link" activeClassName="active">
-                            {t('Kina seti')}
+                            {t('HennaSet')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={museumIcon} alt="Museum" style={{ width: '24px', height: '24px' }} />
+                            <img src={handkerchief} alt="handkerchief" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/museum" className="nav-link" activeClassName="active">
-                            {t('Halay Mendili')}
+                            {t('Handkerchief')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={wellness} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
+                            <img src={tamborine} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/health" className="nav-link" activeClassName="active">
-                            {t('Tef')}
+                            {t('Tamborine')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={winter} alt="Winter" style={{ width: '24px', height: '24px' }} />
+                            <img src={veil} alt="Winter" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/winter" className="nav-link" activeClassName="active">
-                            {t('Damat ortusu')}
+                            {t('Veil')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={swimming} alt="Summer" style={{ width: '24px', height: '24px' }} />
+                            <img src={gift} alt="Summer" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/summer" className="nav-link" activeClassName="active">
-                            {t('Hediyelik esya')}
+                            {t('Gift')}
                         </NavLink>
                     </MenuItem>
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={CampingIcon2} alt="Camping" style={{ width: '24px', height: '24px' }} />
+                            <img src={flower} alt="flower" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/camping" className="nav-link" activeClassName="active">
-                            {t('Cicek')}
+                            {t('Flower')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={park} alt="Park" style={{ width: '24px', height: '24px' }} />
+                            <img src={ornament} alt="ornament" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/park" className="nav-link" activeClassName="active">
-                            {t('Sus esyasi')}
+                            {t('Ornament')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={naturalPark} alt="National Park" style={{ width: '24px', height: '24px' }} />
+                            <img src={souvenir} alt="Henna Souvenir" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/national" className="nav-link" activeClassName="active">
-                            {t('Kina Hatirasi')}
+                            {t('Souvenir')}
                         </NavLink>
                     </MenuItem>
 

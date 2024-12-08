@@ -253,9 +253,9 @@ const SearchPage = () => {
     return (
         <div>
             <Helmet>
-                <title>{searchQuery ? `${searchQuery} - Search Results | Activenty` : 'Search | Activenty'}</title>
+                <title>{searchQuery ? `${searchQuery} - Search Results | Kına Sepeti` : 'Search | Kına Sepeti'}</title>
                 <meta name="description"
-                      content={`Discover events and activities related to ${searchQuery ? searchQuery : 'your interests'} on Activenty.`}/>
+                      content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`}/>
                 <meta name="robots" content="noindex, follow"/>
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
@@ -266,7 +266,7 @@ const SearchPage = () => {
                     <div className="location-input">
                         <input
                             type="text"
-                            placeholder="Search event, activity, city etc"
+                            placeholder="Ürün ara!"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyPress={(e) => {
@@ -280,7 +280,7 @@ const SearchPage = () => {
                             onClick={() => handleNewSearch(searchQuery)} // Pass the current searchQuery state
                             className="search-button" // Add a class for styling
                         >
-                            Search
+                            Ara
                         </Button>
                     </div>
 
@@ -293,21 +293,21 @@ const SearchPage = () => {
                     </div>
 
                     <div className="recent-searches">
-                        <h2>Recent and popular searches</h2>
+                        <h2>Popüler Aramalar</h2>
                         <ul>
-                            <li><h6>Tallinn</h6></li>
-                            <li><h6>Music</h6></li>
-                            <li><h6>Spa</h6></li>
-                            <li><h6>Museum</h6></li>
-                            <li><h6>Concert</h6></li>
-                            <li><h6>Family</h6></li>
+                            <li><h6>Duvak</h6></li>
+                            <li><h6>Halay Mendili</h6></li>
+                            <li><h6>Çiçek</h6></li>
+                            <li><h6>Tef</h6></li>
+                            <li><h6>Sepet</h6></li>
+                            <li><h6>Örtü</h6></li>
                         </ul>
                     </div>
 
                 </div>
                 {searchQuery && (
                     <Typography variant="h6" style={{textAlign: 'center', margin: '20px 0'}}>
-                        {totalResults === 0 ? `No activity or events found in Estonia.` : `Found ${totalResults} results for "${searchQuery}"`}
+                        {totalResults === 0 ? `Ürün bulunamadı` : `"${searchQuery}" ile alakalı ${totalResults} bulundu`}
                     </Typography>
                 )}
 
@@ -525,7 +525,7 @@ const SearchPage = () => {
                         color="primary"
                         style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
                     >
-                        Load More
+                        Daha Fazla
                     </Button>
                 </div>
             )}

@@ -10,7 +10,7 @@ import Container from '@mui/material/Container';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
-import backgroundImage from './background2.png';
+import backgroundImage from './background1.jpg';
 import {Avatar, CardHeader, Divider, IconButton, Menu, MenuItem, Snackbar, Tooltip} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";

@@ -8,38 +8,10 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQue
         return new Date().toISOString().split('T')[0];
     };
 
-    const getWeekendStartDay = () => {
-        const now = new Date();
-        const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
-        const daysUntilNextSaturday = (6 - dayOfWeek + 7) % 7 || 7; // If today is Saturday, use next Saturday
-        const nextSaturday = new Date(now);
-        nextSaturday.setDate(now.getDate() + daysUntilNextSaturday);
-        return nextSaturday.toISOString().split('T')[0];
-    };
-
-    const getWeekendEndDay = () => {
-        const now = new Date();
-        const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
-        const daysUntilNextSunday = (7 - dayOfWeek + 7) % 7 || 7; // If today is Sunday, use next Sunday
-
-        const nextSunday = new Date(now);
-        nextSunday.setDate(now.getDate() + daysUntilNextSunday);
-
-        return nextSunday.toISOString().split('T')[0];
-    };
 
     const handleButtonClick = (term) => {
-        if (term === 'Today') {
-            const today = getTodayDate();
-            callFilter(today, today)
-        } else if (term === 'This weekend') {
-            const startDay = getWeekendStartDay()
-            const endDay = getWeekendEndDay()
-            callFilter(startDay, endDay)
-        } else {
             setSearchQuery(term);
             handleNewSearch(term);
-        }
     };
 
     const callFilter = (startDay, endDay) => {
@@ -74,15 +46,6 @@ const EventSearchButtons = ({handleNewSearch, updateFilteredEvents, setSearchQue
             fetchEvents();
         }
     }
-
-    return (
-        <div className="filters">
-            <Button onClick={() => handleButtonClick('Today')}>Today</Button>
-            <Button onClick={() => handleButtonClick('This weekend')}>This weekend</Button>
-            <Button onClick={() => handleButtonClick('Music')}>Music</Button>
-            <Button onClick={() => handleButtonClick('Children')}>Children</Button>
-        </div>
-    );
 };
 
 export default EventSearchButtons;

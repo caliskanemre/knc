@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {NavLink, useNavigate} from 'react-router-dom';
 import './css/Header.css';
-import SearchImage from "../images/search.png";
+import SearchImage from "../images/urunAra.png";
 import ActivitySubHeader from "../activity/ActivitySubHeader";
 import Login from "../login/Login";
 import {
@@ -112,22 +112,35 @@ export default function Header() {
                     <meta name="keywords" content={keywords}/>
                     <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
                 </Helmet>
-                <AppBar position="relative" style={{backgroundColor: 'white'}}>
+                <AppBar position="relative" style={{ backgroundColor: 'white' }}>
                     <Toolbar>
                         {isMobile && (
-                            <IconButton edge="start" color="black" aria-label="menu"
-                                        onClick={() => setMobileMenuOpen(true)}>
-                                <MenuIcon/>
+                            <IconButton
+                                edge="start"
+                                aria-label="menu"
+                                style={{ color: '#5D4037' }} // Elegant brown tone for the menu icon
+                                onClick={() => setMobileMenuOpen(true)}
+                            >
+                                <MenuIcon />
                             </IconButton>
                         )}
                         {!isMobile && (
-                            <Typography variant="h1" component="h1" style={{
-                                cursor: 'pointer',
-                                color: 'brown',
-                                fontSize: isMobile ? '3rem' : '2.5rem',
-                                fontWeight: 'bold'
-                            }} onClick={() => handleNavigation('/')}>
-                                Kina sepeti
+                            <Typography
+                                variant="h1"
+                                component="h1"
+                                onClick={() => handleNavigation('/')}
+                                style={{
+                                    cursor: 'pointer',
+                                    color: '#8B0000', // Deep maroon color for an elegant, traditional look
+                                    fontFamily: "'Dancing Script', cursive", // Elegant script font
+                                    fontSize: isMobile ? '3rem' : '2.5rem',
+                                    fontWeight: 700, // Ensure boldness for better readability
+                                    letterSpacing: '0.03em',
+                                    lineHeight: 1.2,
+                                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
+                                }}
+                            >
+                                KınaSepeti
                             </Typography>
                         )}
                         {isMobile && (
@@ -177,7 +190,7 @@ export default function Header() {
                                 </IconButton>
                                 <nav>
                                     <Button color="primary" onClick={() => changeLanguage('en')}>EN</Button>
-                                    <Button color="primary" onClick={() => changeLanguage('et')}>ET</Button>
+                                    <Button color="primary" onClick={() => changeLanguage('tr')}>TR</Button>
                                 </nav>
                             </>
                         ) : (
