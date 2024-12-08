@@ -22,13 +22,13 @@ import ContactUs from "./links/ContactUs";
 import ResetPassword from "./login/ResetPassword";
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
 
 
     useEffect(() => {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCAFYU7aExnl8pUD90oe5A36a3dIzQayeA&libraries=places,geometry`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);

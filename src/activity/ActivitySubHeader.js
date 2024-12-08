@@ -10,9 +10,10 @@ import park from "../images/park_green2.png"
 import nature from "../images/nature2.jpg"
 import naturalPark from "../images/park_green.jpg"
 import museumIcon from "../images/green_museum.png"
+import {useTranslation} from "react-i18next";
 
 function ActivitySubHeader() {
-
+    const { t, i18n } = useTranslation();
     const [anchorEl, setAnchorEl] = useState(null);
 
     const handleMouseEnter = (event) => {
@@ -33,7 +34,7 @@ function ActivitySubHeader() {
                      onMouseEnter={handleMouseEnter}
                      style={{ cursor: 'pointer', color: 'black', fontSize: '1.4rem', textDecoration: 'none' }}
                 >
-                     Activities
+                     {t('Activities')}
                 </NavLink>
                 <Menu
                     anchorEl={anchorEl}
@@ -47,7 +48,7 @@ function ActivitySubHeader() {
                             <img src={nature} alt="Nature" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/nature" className="nav-link" activeClassName="active">
-                            Nature
+                            {t('Kina seti')}
                         </NavLink>
                     </MenuItem>
 
@@ -56,7 +57,7 @@ function ActivitySubHeader() {
                             <img src={museumIcon} alt="Museum" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/museum" className="nav-link" activeClassName="active">
-                            Museum
+                            {t('Halay Mendili')}
                         </NavLink>
                     </MenuItem>
 
@@ -65,7 +66,7 @@ function ActivitySubHeader() {
                             <img src={wellness} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/health" className="nav-link" activeClassName="active">
-                            Health
+                            {t('Tef')}
                         </NavLink>
                     </MenuItem>
 
@@ -74,7 +75,7 @@ function ActivitySubHeader() {
                             <img src={winter} alt="Winter" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/winter" className="nav-link" activeClassName="active">
-                            Winter
+                            {t('Damat ortusu')}
                         </NavLink>
                     </MenuItem>
 
@@ -83,7 +84,7 @@ function ActivitySubHeader() {
                             <img src={swimming} alt="Summer" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/summer" className="nav-link" activeClassName="active">
-                            Summer
+                            {t('Hediyelik esya')}
                         </NavLink>
                     </MenuItem>
                     <MenuItem onClick={handleMouseLeave}>
@@ -91,7 +92,7 @@ function ActivitySubHeader() {
                             <img src={CampingIcon2} alt="Camping" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/camping" className="nav-link" activeClassName="active">
-                            Camping
+                            {t('Cicek')}
                         </NavLink>
                     </MenuItem>
 
@@ -100,7 +101,7 @@ function ActivitySubHeader() {
                             <img src={park} alt="Park" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/park" className="nav-link" activeClassName="active">
-                            Park
+                            {t('Sus esyasi')}
                         </NavLink>
                     </MenuItem>
 
@@ -109,7 +110,7 @@ function ActivitySubHeader() {
                             <img src={naturalPark} alt="National Park" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/activities/national" className="nav-link" activeClassName="active">
-                            National Park
+                            {t('Kina Hatirasi')}
                         </NavLink>
                     </MenuItem>
 

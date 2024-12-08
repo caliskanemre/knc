@@ -32,21 +32,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 
-/*
-function Copyright() {
-    return (
-        <Typography variant="body2" color="text.secondary" align="center">
-            {'Copyright © '}
-            <Link color="inherit" href="https://mui.com/">
-                Your Website
-            </Link>{' '}
-            {new Date().getFullYear()}
-            {'.'}
-        </Typography>
-    );
-}
-*/
-
 const defaultTheme = createTheme();
 const deneme = []
 deneme.push(backgroundImage);
@@ -200,22 +185,7 @@ export default function Main() {
                                                         </div>
                                                     }
                                                     titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                    subheader={
-                                                        <div>
-                                                            <div>{item.date}</div>
-                                                            {/* First line of subheader */}
-                                                            <div>
-                                                                <PinDropIcon style={{
-                                                                    fontSize: '0.8rem',
-                                                                    verticalAlign: 'bottom'
-                                                                }}/> {item.place}
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                    subheaderTypographyProps={{
-                                                        component: 'div',
-                                                        style: {fontSize: '0.67rem'}
-                                                    }}
+                                                    
                                                 />
                                             </div>
                                         </a>
@@ -262,23 +232,7 @@ export default function Main() {
                                             open={openMenuEventId === item.id}
                                             onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
                                         >
-                                            <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
-                                                Do you want to get any notification?
-                                            </Typography>
-                                            <Divider />
-                                            <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
-                                                2hrs before
-                                            </MenuItem>
-                                            <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
-                                                24hrs before
-                                            </MenuItem>
-                                            <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
-                                                Week before
-                                            </MenuItem>
-                                            <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
-                                                No need notification
-                                            </MenuItem>
-                                            {/* Add more MenuItem components as needed */}
+                                           
                                         </Menu>
 
                                     </Card>
@@ -311,7 +265,7 @@ export default function Main() {
             {/* Footer */}
             <Box sx={{bgcolor: 'background.paper', p: 6}} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
-                    activenty
+                    Kina Sepeti
                 </Typography>
                 <Typography
                     variant="subtitle1"
@@ -319,7 +273,7 @@ export default function Main() {
                     color="text.secondary"
                     component="p"
                 >
-                    All rights reserved @2024 Activenty
+                    All rights reserved @2024 KNC
                 </Typography>
                 {/*      <Copyright />*/}
             </Box>

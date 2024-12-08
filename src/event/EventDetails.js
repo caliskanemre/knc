@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import MapForEvent from "./MapForEvent";
@@ -18,6 +18,7 @@ import Linkify from 'react-linkify';
 import DOMPurify from 'dompurify';
 import backgroundImage from "../images/background512.png";
 
+
 const EventDetails = () => {
     const { eventName } = useParams(); // Combined the two useParams calls into one
     const { eventId} = useParams(); // Combined the two useParams calls into one
@@ -25,7 +26,7 @@ const EventDetails = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [isMapOpen, setIsMapOpen] = useState(false);
     const isMobile = window.innerWidth <= 768;
-
+    let navigate = useNavigate(); // Hook to get the navigate function
     const deneme = []
     deneme.push(backgroundImage);
 
@@ -69,6 +70,13 @@ const EventDetails = () => {
     const shareMessage = `${event.title} - Check out this event on Activenty!`;
     // Improved alt text for the event photo
     const altText = `${event.title} in ${event.place}`;
+
+
+
+    function handleTicketPage() {
+        // Navigate to the ticket page for a specific event
+        navigate(`/events/ticket/${eventId}/${encodeURIComponent(eventName)}`);
+    }
 
     return (
         <div className="event-details" style={{ textAlign: 'center', position: 'relative' }}>
@@ -152,9 +160,6 @@ const EventDetails = () => {
                             <div dangerouslySetInnerHTML={createMarkup(event.description)} />
                         </Linkify>
                     </div>
-                    <h4>Attendee Suggestions: {event.idealFor}</h4>
-                    {event.contact && <h4>contact: {event.contact}</h4>}
-                    <h4>Place: {event.place}</h4>
                     {event.price && <h5>Price: {event.price}</h5>}
                     <h5><a href={event.externalLink} target="_blank">{event.externalLink}</a></h5>
                     {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
@@ -170,9 +175,12 @@ const EventDetails = () => {
                             <FacebookIcon size={32} round />
                         </FacebookShareButton>
                     </div>
-                </div>
-                <div className={`map ${isMapOpen ? 'show' : ''}`}>
-                    <MapForEvent event={event} />
+                    <Button
+                        onClick={handleTicketPage}
+                    >
+                        Book Ticket
+                    </Button>
+
                 </div>
             </div>
 

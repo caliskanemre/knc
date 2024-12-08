@@ -25,6 +25,7 @@ import {useAuth} from "../auth/AuthProvider";
 import MenuIcon from '@mui/icons-material/Menu';
 import ActivitySubHeaderMobile from "../activity/ActivitySubHeaderMobile";
 import {Helmet} from "react-helmet";
+import {useTranslation} from "react-i18next";
 
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -39,6 +40,13 @@ export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const [authToken, setAuthToken] = useState(null);
+    const { t, i18n } = useTranslation();
+    const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
+    const changeLanguage = (language) => {
+        i18n.changeLanguage(language);
+        setSelectedLanguage(language);
+    };
 
 
     // Function to handle fetching favorites when "Favorites" menu item is clicked
@@ -115,24 +123,24 @@ export default function Header() {
                         {!isMobile && (
                             <Typography variant="h1" component="h1" style={{
                                 cursor: 'pointer',
-                                color: 'darkorange',
+                                color: 'brown',
                                 fontSize: isMobile ? '3rem' : '2.5rem',
                                 fontWeight: 'bold'
                             }} onClick={() => handleNavigation('/')}>
-                                αctiventy
+                                Kina sepeti
                             </Typography>
                         )}
                         {isMobile && (
                             <Typography variant="h1" component="h1" sx={{
                                 flexGrow: 1,
                                 cursor: 'pointer',
-                                color: 'darkorange',
+                                color: 'brown',
                                 fontSize: '2rem',
                                 fontWeight: 'bold',
                                 textAlign: 'center',
                                 marginRight: isMobile ? '-150px' : '0', // Offset the width of the IconButton
                             }} onClick={() => handleNavigation('/')}>
-                                αctiventy
+                                Kina sepeti
                             </Typography>
                         )}
                         {!isMobile && (
@@ -141,20 +149,20 @@ export default function Header() {
                                     <img src={SearchImage} alt="Search events" style={{cursor: 'pointer'}}/>
                                 </NavLink>
                                 <NavLink to="/events" className="nav-link">
-                                    Events
+                                    {t('Events')}
                                 </NavLink>
                                 <ActivitySubHeader/>
                                 <NavLink to="/ideal-for" className="nav-link">
-                                    AI Assistant
+                                    {t('AI Assistant')}
                                 </NavLink>
                                 <NavLink to="/about-us" className="nav-link">
-                                    How it works
+                                    {t('How it works')}
                                 </NavLink>
                                 <NavLink to="/privacy-policy" className="nav-link">
-                                    Privacy Policy
+                                    {t('Privacy Policy')}
                                 </NavLink>
                                 <NavLink to="/contact-us" className="nav-link">
-                                    Contact Us
+                                    {t('Contact Us')}
                                 </NavLink>
                             </>
                         )}
@@ -167,6 +175,10 @@ export default function Header() {
                                 <IconButton aria-label="login" sx={{color: 'black'}} onClick={handleOpenLoginDialog}>
                                     <LoginIcon/>
                                 </IconButton>
+                                <nav>
+                                    <Button color="primary" onClick={() => changeLanguage('en')}>EN</Button>
+                                    <Button color="primary" onClick={() => changeLanguage('et')}>ET</Button>
+                                </nav>
                             </>
                         ) : (
                             <div>
@@ -211,7 +223,7 @@ export default function Header() {
                                     sx={{
                                         flexGrow: 1,
                                         cursor: 'pointer',
-                                        color: 'darkorange',
+                                        color: 'brown',
                                         fontSize: { xs: '2rem', sm: '2rem' }, // Responsive font size
                                         fontWeight: 'bold',
                                         textAlign: 'center',
@@ -219,7 +231,7 @@ export default function Header() {
                                     }}
                                     onClick={() => handleNavigation('/')}
                                 >
-                                    αctiventy
+                                    Kina sepeti
                                 </Typography>
 
                                 {/* ListItem with increased font size for "Search" */}
@@ -227,7 +239,7 @@ export default function Header() {
                                     <Box display="flex" alignItems="center">
                                         <i className="fas fa-search"></i>
                                         <ListItemText
-                                            primary="Search"
+                                            primary={t('Search')}
                                             primaryTypographyProps={{ style: { fontSize: '1.2rem', marginLeft: '10px' } }} // Increase font size
                                         />
                                     </Box>
@@ -236,13 +248,13 @@ export default function Header() {
                                 {/* Continue with other ListItems, adjusting font size similarly */}
                                 <ListItem button onClick={() => handleNavigation('/ideal-for')}>
                                     <ListItemText
-                                        primary="AI Assistant"
+                                        primary={t('AI Assistant')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/events')}>
                                     <ListItemText
-                                        primary="Events"
+                                        primary={t('Events')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
@@ -251,19 +263,19 @@ export default function Header() {
 
                                 <ListItem button onClick={() => handleNavigation('/about-us')}>
                                     <ListItemText
-                                        primary="How it works"
+                                        primary={t('How it works')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/privacy-policy')}>
                                     <ListItemText
-                                        primary="Privacy Policy"
+                                        primary={t('Privacy Policy')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/contact-us')}>
                                     <ListItemText
-                                        primary="Contact Us"
+                                        primary={t('Contact Us')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>

@@ -47,6 +47,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
+import {useTranslation} from "react-i18next";
 
 const mapContainerStyle = {
     width: '100%',
@@ -81,7 +82,7 @@ const EventList = () => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [notificationPref, setNotificationPref] = useState('');
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
-
+    const { t, i18n } = useTranslation();
 
 
     const handleClick = (eventId) => {
@@ -125,10 +126,7 @@ const EventList = () => {
             handleOpenDialog();
         }
     };
-
-
-
-    const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
+    
     useNavigate();
     const deneme = []
     deneme.push(backgroundImage);
@@ -139,10 +137,6 @@ const EventList = () => {
         }
         setSnackbarOpen(false);
     };
-
-
-
-
 
 
     useEffect(() => {
@@ -185,65 +179,9 @@ const EventList = () => {
         setOpenFilterDialog(false);
     };
 
-    const fetchPins = async () => {
-        try {
-            const response = await Axios.get(`${baseURL}/events/pins`);
-            const pinsData = response.data;
-            prepareMarkers(pinsData);
-        } catch (error) {
-            console.error('Error fetching pins:', error);
-        }
-    };
+    
 
-    const prepareMarkers = (pins) => {
-        if (!isGoogleMapsApiLoaded()) {
-            console.error('Google Maps API is not loaded');
-            return;
-        }
-
-        const tempMarkers = pins.map(pin => ({
-            title: pin.title,
-            id: pin.id,
-            lat: parseFloat(pin.lat),
-            lng: parseFloat(pin.lon)
-        }));
-
-        setMarkers(tempMarkers);
-    };
-
-    const handleInfoWindowClick = (event) => {
-        if (event && event.id) {
-            const fullUrl = window.location.origin + `/events/${event.id}/${event.title}`;
-            window.open(fullUrl, '_blank');
-        }
-    };
-    const handleOpenMapDialog = async () => {
-        await fetchPins();
-        setMapOpen(true);
-        await askForUserLocation();
-    };
-
-    const handleCloseMapDialog = () => {
-        setMapOpen(false);
-    };
-
-    function askForUserLocation() {
-        return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    resolve(userLocation); // Resolve the promise with the location
-                },
-                (error) => {
-                    reject(error);
-                }
-            );
-        });
-    }
-
+ 
     const loadMoreEvents = async () => {
         try {
             let nextPage = page + 1;
@@ -264,19 +202,6 @@ const EventList = () => {
         }
     };
 
-    const handleOpenFilterDialog = () => {
-        setOpenFilterDialog(true);
-    };
-    const removeFilter = (filterType) => {
-        setFilters(currentFilters => {
-            const newFilters = {...currentFilters};
-            delete newFilters[filterType];
-            //fetchInitialActivities()
-            return newFilters;
-        });
-        // Trigger activity or event refetch with updated filters here
-    };
-
     const getDynamicFontSize = (title) => {
         if (title.length < 10) return "1.6rem";
         if (title.length < 30) return "1.3rem"
@@ -291,27 +216,6 @@ const EventList = () => {
         const sort = event.target.value; // This sorts the events by 'interest' in descending order
         let url = `${baseURL}/events/all?page=${page}&size=${size}`;
 
-        if (sort === "near") {
-            askForUserLocation().then((userLocation) => {
-                // This code now waits for the user location to be fetched
-                if (userLocation) {
-                    url += `&lat=${encodeURIComponent(userLocation.lat)}&lon=${encodeURIComponent(userLocation.lng)}`;
-                    // Make the HTTP GET request here using the updated URL
-                    Axios.get(url)
-                        .then((response) => {
-                            setEvents(response.data.content);
-                        })
-                        .catch((error) => {
-                            console.error('Error fetching events:', error);
-                        });
-                } else {
-                    console.error('User location is not available.');
-                }
-            }).catch((error) => {
-                console.error('Error getting user location:', error);
-                // Handle the error (e.g., user denied location access)
-            });
-        } else {
             url += `&sort=${encodeURIComponent(sort)}`;
             // Make the HTTP GET request here using the URL without location
             Axios.get(url)
@@ -321,7 +225,7 @@ const EventList = () => {
                 .catch((error) => {
                     console.error('Error fetching events:', error);
                 });
-        }
+        
     };
     const eventIcons = {
         "music & concerts": <MusicNoteIcon/>,
@@ -341,53 +245,7 @@ const EventList = () => {
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
             <Header/>
-            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
-                <Button style={{marginRight: '20px'}}
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<FilterListIcon/>}
-                        onClick={handleOpenFilterDialog}
-                >
-                    Filter
-                </Button>
-
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<MapOutlined/>}
-                    onClick={handleOpenMapDialog}
-                >
-                    Map
-                </Button>
-            </div>
             <Container sx={{py: 9}} maxWidth="xl">
-                {/*<Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
-                    {Object.entries(filters).map(([filterType, filterValue]) => (
-                        <Chip
-                            key={filterType}
-                            label={`${filterType}: ${filterValue}`}
-                            onDelete={() => removeFilter(filterType)}
-                            color="secondary"
-                        />
-                    ))}
-                </Stack>*/}
-                <Box display="flex" justifyContent="flex-end" p="5px">
-                    <FormControl sx={{m: 2, minWidth: 120}}>
-                        <InputLabel id="autowidth-label">Sort</InputLabel>
-                        <Select
-                            labelId="autowidth-label"
-                            id="autowidth"
-                            value={sort}
-                            onChange={handleChangeSort}
-                            autoWidth
-                            label="Sort"
-                        >
-                            <MenuItem value={"interested"}>Popularity</MenuItem>
-                            <MenuItem value={"near"}>Nearest</MenuItem>
-                            <MenuItem value={"dateFrom"}>Date/Time</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Box>
                 <Grid container spacing={4}>
                     {events.map((item) => {
                         const isAlreadyFavorited = favorites.favoriteEvents?.map(event => event.id).includes(item.id);
@@ -427,25 +285,7 @@ const EventList = () => {
                                                 }
 
                                                 titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                subheader={
-                                                    <div>
-                                                        <Typography variant="h4" component="h4"
-                                                                    style={{fontSize: '0.7rem'}}>
-                                                            {item.date} {/* Adjust as needed */}
-                                                        </Typography> {/* First line of subheader */}
-                                                        <div>
-                                                            <Typography variant="h4" component="h4"
-                                                                        style={{fontSize: '0.7rem'}}>
-                                                                <PinDropIcon style={{
-                                                                    fontSize: '1rem',
-                                                                    verticalAlign: 'bottom'
-                                                                }}/>
-                                                                {item.place}
-                                                            </Typography>
-                                                        </div>
-                                                    </div>
-                                                }
-                                                subheaderTypographyProps={{component: 'div', style: {fontSize: '11px'}}}
+                                                
                                             />
                                         </div>
                                     </a>
@@ -492,25 +332,8 @@ const EventList = () => {
                                         keepMounted
                                         open={openMenuEventId === item.id}
                                         onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
-                                    >
-                                        <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
-                                            Do you want to get any notification?
-                                        </Typography>
-                                        <Divider />
-                                        <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
-                                            2hrs before
-                                        </MenuItem>
-                                        <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
-                                            24hrs before
-                                        </MenuItem>
-                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
-                                            Week before
-                                        </MenuItem>
-                                        <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
-                                            No need notification
-                                        </MenuItem>
-                                        {/* Add more MenuItem components as needed */}
-                                    </Menu>
+                                    />
+                                      
                                 </Card>
                             </Grid>
 
@@ -541,98 +364,6 @@ const EventList = () => {
                             Load More
                         </Button>
                     </div>
-                )}
-                {isGoogleMapsApiLoaded() ? (
-                    <SwipeableDrawer
-                        anchor="bottom"
-                        open={mapOpen}
-                        onClose={handleCloseMapDialog}
-                        onOpen={handleOpenMapDialog}
-                        fullScreen={fullScreen}
-                        ModalProps={{
-                            keepMounted: true, // Better performance on mobile
-                        }}
-                    >
-                        <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
-                        <DialogContent>
-
-                            <GoogleMap
-                                mapContainerStyle={mapContainerStyle}
-                                zoom={8}
-                                center={userLocation || center}
-                                onUnmount={() => setIsMapReady(false)}
-                                options={{gestureHandling: 'greedy'}}
-                                onLoad={() => {
-                                    setTimeout(() => {
-                                        setIsMapReady(true);
-                                    }, 2000); // 2 seconds delay
-                                }}
-
-                            >
-                                {userLocation && (
-                                    <Marker
-                                        position={userLocation}
-                                        icon={{
-                                            path: "M0-48c-9,0-16,7-16,16s7,16,16,16,16-7,16-16-7-16-16-16z",
-                                            fillColor: '#FF0000',
-                                            fillOpacity: 1.0,
-                                            scale: 0.5,
-                                            strokeColor: '#000000',
-                                            strokeWeight: 2,
-                                        }}
-                                    />
-                                )}
-                                {isMapReady && (
-                                    <MarkerClusterer
-                                        options={{imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}}
-                                    >
-                                        {(clusterer) =>
-                                            markers.map((marker) => (
-                                                <Marker
-                                                    key={marker.id} // Use the unique id of the marker
-                                                    position={{
-                                                        lat: marker.lat,
-                                                        lng: marker.lng
-                                                    }} // Ensure position is an object with lat and lng
-                                                    title={marker.title}
-                                                    onClick={() => {
-                                                        if (selectedMarker && selectedMarker.id === marker.id) {
-                                                            // If the clicked marker's InfoWindow is already open, close it
-                                                            setSelectedMarker(null);
-                                                        } else {
-                                                            // Otherwise, open the new InfoWindow
-                                                            setSelectedMarker({
-                                                                id: marker.id,
-                                                                position: {lat: marker.lat, lng: marker.lng},
-                                                                title: marker.title,
-                                                            });
-                                                        }
-                                                    }}
-                                                    clusterer={clusterer}
-                                                />
-                                            ))
-                                        }
-                                    </MarkerClusterer>
-                                )}
-                                {selectedMarker && (
-                                    <InfoWindow
-                                        position={selectedMarker.position}
-                                        onCloseClick={() => setSelectedMarker(null)}
-                                    >
-                                        <div>
-                                            <h3>{selectedMarker.title}</h3>
-                                            <button onClick={() => handleInfoWindowClick(selectedMarker)}>
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </InfoWindow>
-                                )}
-
-                            </GoogleMap>
-
-                        </DialogContent>
-                    </SwipeableDrawer>) : (
-                    <div>Loading Maps...</div>
                 )}
                 <Snackbar
                     open={snackbarOpen}

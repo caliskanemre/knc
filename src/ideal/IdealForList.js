@@ -48,6 +48,7 @@ import backgroundImage from "../background2.png";
 import Dialog from "@mui/material/Dialog";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
+import {useTranslation} from "react-i18next";
 
 const mapContainerStyle = {
     width: '100%',
@@ -85,6 +86,7 @@ const IdealForList = () => {
     const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
     const deneme = []
     deneme.push(backgroundImage);
+    const { t, i18n } = useTranslation();
 
     const handleClick = (eventId) => {
         if (isLoggedIn) {
@@ -189,6 +191,21 @@ const IdealForList = () => {
         }));
 
         setMarkers(tempMarkers);
+    };
+
+    const getTranslationKey = (type) => {
+        switch (type) {
+            case 'Single':
+                return 'bestSingleEventsInEstonia';
+            case 'Couple':
+                return 'bestCoupleEventsInEstonia';
+            case 'Family':
+                return 'bestFamilyEventsInEstonia';
+            case 'Friends':
+                return 'bestFriendsEventsInEstonia';
+            default:
+                return 'defaultKey'; // You should define a default key in your translations
+        }
     };
 
     const handleInfoWindowClick = (event) => {
@@ -345,47 +362,11 @@ const IdealForList = () => {
                 margin: '20px 0',
                 gap: '20px' // This creates space between items, replacing marginRight
             }}>
-                <Button
-                    style={{marginRight: '20px'}}
-                    variant={selectedType === 'Single' ? "contained" : "outlined"}
-                    startIcon={<PersonIcon/>}
-                    onClick={() => handleButtonSelect('Single')}
-                >
-                    Single
-                </Button>
 
-                <Button
-                    style={{marginRight: '20px'}}
-                    variant={selectedType === 'couple' ? "contained" : "outlined"}
-                    color="secondary"
-                    startIcon={<FavoriteIcon/>}
-                    onClick={() => handleButtonSelect('Couple')}
-                >
-                    Couple
-                </Button>
-                <Button
-                    style={{
-                        marginRight: '20px',
-                    }}
-                    variant={selectedType === 'friends' ? "contained" : "outlined"}
-                    startIcon={<GroupIcon/>}
-                    color="warning"
-                    onClick={() => handleButtonSelect('Friends')}
-                >
-                    Friends
-                </Button>
-                <Button
-                    variant={selectedType === 'family' ? "contained" : "outlined"}
-                    color="success"
-                    startIcon={<FamilyRestroomIcon/>}
-                    onClick={() => handleButtonSelect('Family')}
-                >
-                    Family
-                </Button>
             </div>
             <Container sx={{py: 9}} maxWidth="xl">
                 <Typography variant="h2" component="div" style={{fontSize: '2rem', marginBottom: '20px'}}>
-                    Best {selectedType} events in {Object.keys(filters).length > 0 ?
+                    {t(getTranslationKey(selectedType))} {Object.keys(filters).length > 0 ?
                     Object.entries(filters).map(([filterType, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
                             // Assuming 'filterValue' is an object and has a 'name' property you want to display
@@ -394,7 +375,7 @@ const IdealForList = () => {
                             // If 'filterValue' is not an object, render it directly
                             return filterValue;
                         }
-                    }).join(', ') : 'Estonia'}
+                    }).join(', ') : '' }
                 </Typography>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
@@ -417,41 +398,8 @@ const IdealForList = () => {
                             Filter
                         </Button>
 
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            startIcon={<MapOutlined/>}
-                            onClick={handleOpenMapDialog}
-                        >
-                            Map
-                        </Button>
                     </div>
-                    <FormControl sx={{m: 2, minWidth: 120}}>
-                        <InputLabel id="autowidth-label">Sort by</InputLabel>
-                        <Select
-                            labelId="autowidth-label"
-                            id="autowidth"
-                            value={sort}
-                            onChange={handleChangeSort}
-                            autoWidth
-                            label="Sort by"
-                            sx={{
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                }
-                            }}
-                        >
-                            <MenuItem value={"interested"}>Popularity</MenuItem>
-                            <MenuItem value={"near"}>Nearest</MenuItem>
-                            <MenuItem value={"dateFrom"}>Date/Time</MenuItem>
-                        </Select>
-                    </FormControl>
+
 
                 </Box>
                 <Grid container spacing={4}>
@@ -600,117 +548,11 @@ const IdealForList = () => {
                             color="primary"
                             style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
                         >
-                            Load More
+                            {t('Load More')}
                         </Button>
                     </div>
                 )}
-                {isGoogleMapsApiLoaded() ? (
-                    <SwipeableDrawer
-                        anchor="bottom"
-                        open={mapOpen}
-                        onClose={handleCloseMapDialog}
-                        onOpen={handleOpenMapDialog}
-                        fullScreen={fullScreen}
-                        ModalProps={{
-                            keepMounted: true, // Better performance on mobile
-                        }}
-                    >
-                        <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
-                        <DialogContent>
-
-                            <GoogleMap
-                                mapContainerStyle={mapContainerStyle}
-                                zoom={8}
-                                center={userLocation || center}
-                                onUnmount={() => setIsMapReady(false)}
-                                options={{gestureHandling: 'greedy'}}
-                                onLoad={() => {
-                                    setTimeout(() => {
-                                        setIsMapReady(true);
-                                    }, 2000); // 2 seconds delay
-                                }}
-
-                            >
-                                {userLocation && (
-                                    <Marker
-                                        position={userLocation}
-                                        icon={{
-                                            path: "M0-48c-9,0-16,7-16,16s7,16,16,16,16-7,16-16-7-16-16-16z",
-                                            fillColor: '#FF0000',
-                                            fillOpacity: 1.0,
-                                            scale: 0.5,
-                                            strokeColor: '#000000',
-                                            strokeWeight: 2,
-                                        }}
-                                    />
-                                )}
-                                {isMapReady && (
-                                    <MarkerClusterer
-                                        options={{imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}}
-                                    >
-                                        {(clusterer) =>
-                                            markers.map((marker) => (
-                                                <Marker
-                                                    key={marker.id} // Use the unique id of the marker
-                                                    position={{
-                                                        lat: marker.lat,
-                                                        lng: marker.lng
-                                                    }} // Ensure position is an object with lat and lng
-                                                    title={marker.title}
-                                                    onClick={() => {
-                                                        if (selectedMarker && selectedMarker.id === marker.id) {
-                                                            // If the clicked marker's InfoWindow is already open, close it
-                                                            setSelectedMarker(null);
-                                                        } else {
-                                                            // Otherwise, open the new InfoWindow
-                                                            setSelectedMarker({
-                                                                id: marker.id,
-                                                                position: {lat: marker.lat, lng: marker.lng},
-                                                                title: marker.title,
-                                                            });
-                                                        }
-                                                    }}
-                                                    clusterer={clusterer}
-                                                />
-                                            ))
-                                        }
-                                    </MarkerClusterer>
-                                )}
-                                {selectedMarker && (
-                                    <InfoWindow
-                                        position={selectedMarker.position}
-                                        onCloseClick={() => setSelectedMarker(null)}
-                                    >
-                                        <div>
-                                            <h3>{selectedMarker.title}</h3>
-                                            <button onClick={() => handleInfoWindowClick(selectedMarker)}>
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </InfoWindow>
-                                )}
-
-                            </GoogleMap>
-
-                        </DialogContent>
-                        <Snackbar
-                            open={snackbarOpen}
-                            autoHideDuration={6000}
-                            onClose={handleSnackbarClose}
-                            message={snackbarMessage}
-                        />
-                    </SwipeableDrawer>) : (
-                    <div>Loading Maps...</div>
-
-                )}
             </Container>
-            <EventFilter
-                openFilterDialog={openFilterDialog}
-                handleCloseFilterDialog={handleCloseFilterDialog}
-                type={type}
-                applyFilter={applyFilter}
-                updateFilteredEvents={updateFilteredEvents}
-            />
         </div>
     );
 };

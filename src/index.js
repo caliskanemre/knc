@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from "axios";
+import './i18n'; // Path to your i18n config file
 
 axios.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
