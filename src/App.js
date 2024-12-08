@@ -20,6 +20,8 @@ import AboutUs from "./links/AboutUs";
 import PrivacyPolicy from "./links/PrivacyPolicy";
 import ContactUs from "./links/ContactUs";
 import ResetPassword from "./login/ResetPassword";
+import Cart from "./cart/Cart";
+import Payment from "./cart/Payment";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -28,7 +30,6 @@ function App() {
 
     useEffect(() => {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCAFYU7aExnl8pUD90oe5A36a3dIzQayeA&libraries=places,geometry`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
@@ -114,7 +115,8 @@ function App() {
                             <Route path="/users/favorites" element={<Favorites/>}/>
                             <Route path="/register" element={<Register/>}/>
                             <Route path="/reset-password" element={<ResetPassword />} />
-
+                            <Route path="/cart" element={<Cart />} />
+                            <Route path="/payment" element={<Payment />} />
                         </Routes>
 
                         <CookieConsent

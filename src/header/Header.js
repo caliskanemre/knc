@@ -26,6 +26,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ActivitySubHeaderMobile from "../activity/ActivitySubHeaderMobile";
 import {Helmet} from "react-helmet";
 import {useTranslation} from "react-i18next";
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -161,10 +162,10 @@ export default function Header() {
                                 <NavLink to="/search" className="nav-link">
                                     <img src={SearchImage} alt="Search events" style={{cursor: 'pointer'}}/>
                                 </NavLink>
-                                <NavLink to="/events" className="nav-link">
-                                    {t('Events')}
-                                </NavLink>
                                 <ActivitySubHeader/>
+                                <NavLink to="/events" className="nav-link">
+                                    {t('Custom product')}
+                                </NavLink>
                                 <NavLink to="/ideal-for" className="nav-link">
                                     {t('AI Assistant')}
                                 </NavLink>
@@ -182,6 +183,17 @@ export default function Header() {
                         <Box flexGrow={1}/>
                         {!isLoggedIn ? (
                             <>
+                                <IconButton
+                                    aria-label="cart"
+                                    sx={{
+                                        color: 'black', // İkon rengi
+                                        marginLeft: '10px', // İkon ve diğer öğeler arasında boşluk
+                                    }}
+                                    onClick={() => handleNavigation('/cart')} // Sepetim sayfasına yönlendirme
+                                >
+                                    <ShoppingCartIcon sx={{ fontSize: 30 }} /> {/* İkon boyutunu ayarlayın */}
+                                </IconButton>
+
                                 <IconButton aria-label="register" sx={{color: 'black'}} onClick={handleOpenRegisterDialog}>
                                     <PersonAddIcon/>
                                 </IconButton>
@@ -292,7 +304,14 @@ export default function Header() {
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
-                                {/* Add more mobile navigation items as needed */}
+
+                                <ListItem button onClick={() => handleNavigation('/cart')}>
+                                    <ShoppingCartIcon sx={{ fontSize: 24, marginRight: 1 }} /> {/* İkon boyutunu ve sağ boşluğu ayarlayın */}
+                                    <ListItemText
+                                        primary={t('My Cart')} // Çok dilli destek için "Sepetim" çevirisi
+                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
+                                    />
+                                </ListItem>
                             </List>
                         </Drawer>
 
