@@ -56,7 +56,7 @@ const BackgroundGallery = ({ images }) => {
             backgroundImage: `url(${images[currentImageIndex]})`,
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover',
+            backgroundSize: '%100 100%',
             width: '100%',
             height: '40vh',
             zIndex: 2,

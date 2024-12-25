@@ -2,12 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
-import MapForActivity from "./MapForActivity";
 import BackgroundGallery from "../shared/BackgroundGallery";
 import './css/ActivityDetails.css';
 import {Button} from "@mui/material";
 import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 import {Helmet} from "react-helmet";
+import { jwtDecode } from "jwt-decode";
+
+
 import {
     FacebookIcon,
     FacebookShareButton,
@@ -16,12 +18,20 @@ import {
     WhatsappIcon,
     WhatsappShareButton
 } from "react-share";
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import axios from "axios";
+import {useAuth} from "../auth/AuthProvider";
 
 const ActivityDetails = () => {
     const {id} = useParams();
     const {title} = useParams();
-    const [activity, setActivity] = useState(null);
+    const [product, setProduct] = useState(null);
     const [isMapOpen, setIsMapOpen] = useState(false);
+    const [cart, setCart] = useState([]); // State to manage cart
+    const [quantity, setQuantity] = useState(1);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [token, setToken] = useState(localStorage.getItem('token') || '');
+    const [username, setUsername] = useState('');
 
     const isMobile = window.innerWidth <= 768;
 
@@ -35,18 +45,57 @@ const ActivityDetails = () => {
 
     useEffect(() => {
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/activities/detail/${id}/${title}`)
+        Axios.get(`${baseURL}/products/detail/${id}`)
             .then((response) => {
-                setActivity(response.data);
+                setProduct(response.data);
             })
             .catch((error) => {
                 console.error('Error fetching events:', error);
             });
     }, [id]); // Include eventId as a dependency in useEffect
 
-    if (activity === null) {
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            const decodedToken = jwtDecode(storedToken);
+            setUsername(decodedToken.sub); // Extract `sub` or equivalent from the token
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+
+    if (product === null) {
         return <div>Loading...</div>;
     }
+
+
+    const addToCart = async (quantity) => {
+        if (!isLoggedIn) {
+            alert("You need to be logged in to add items to the cart.");
+            return;
+        }
+
+        try {
+            const cartItem = {
+                productId: product.id,
+                quantity,
+                price: product.price,
+            };
+
+            const response = await axios.post(`${baseURL}/cart/${username}`, cartItem, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 200) {
+                alert(`${quantity} ${product.title} added to the cart!`);
+            } else {
+                alert("Failed to add item to cart.");
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            alert("There was an error adding the product to your cart.");
+        }
+    };
 
     const renderLink = (content) => {
         // Regex for detecting an email address
@@ -68,52 +117,52 @@ const ActivityDetails = () => {
     };
 
     const shareUrl = window.location.href;
-    const shareMessage = `${activity.title} - Check out this event on Activenty!`;
+    const shareMessage = `${product.title} - Check out this product!`;
 
     return (
         <div className="event-details" style={{textAlign: 'center', position: 'relative'}}>
             <Helmet>
-                <title>{activity.title} - Activity Details | Activenty</title>
+                <title>{product.title} - Product Details | Kina Sepeti</title>
                 <meta name="description"
-                      content={`Discover more about ${activity.title} at ${activity.activity_location}. Contact: ${activity.activity_email || 'N/A'} | ${activity.activity_phone || 'N/A'}`}/>
+                      content={`Discover more about ${product.title} at ${product}. Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}/>
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
                 {/* Open Graph / Facebook */}
-                <meta property="og:title" content={activity.title}/>
+                <meta property="og:title" content={product.title}/>
                 <meta property="og:description"
-                      content={activity.activity_description || 'Learn more about this activity.'}/>
+                      content={product.description || 'Learn more about this product.'}/>
                 <meta property="og:image"
-                      content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined}/>
+                      content={(product.photos.length > 0) ? product.photos[0].photo : undefined}/>
                 <meta property="og:url" content={`${window.location.origin}${window.location.pathname}`}/>
                 <meta property="og:type" content="website"/>
                 <meta property="og:site_name" content="Activenty"/>
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image"/>
-                <meta name="twitter:title" content={activity.title}/>
+                <meta name="twitter:title" content={product.title}/>
                 <meta name="twitter:description"
-                      content={activity.activity_description || 'Learn more about this activity.'}/>
+                      content={product.description || 'Learn more about this product.'}/>
                 <meta name="twitter:image"
-                      content={(activity.photos.length > 0) ? activity.photos[0].photo : undefined}/>
+                      content={(product.photos.length > 0) ? product.photos[0].photo : undefined}/>
                 {/* Structured Data */}
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "http://schema.org",
-                        "@type": "TouristAttraction", // Adjust based on the activity type
-                        "name": activity.title,
-                        "description": activity.activity_description,
-                        "image": activity.photos.map(photo => photo.photo),
+                        "@type": "TouristAttraction", // Adjust based on the product type
+                        "name": product.title,
+                        "description": product.description,
+                        "image": product.photos.map(photo => photo.photo),
                         "location": {
                             "@type": "Place",
-                            "name": activity.activity_location,
+                            "name": product.location,
                             // Additional location details if available
                         },
                         "offers": {
                             "@type": "Offer",
-                            "price": activity.activity_price,
+                            "price": product.price,
                             // Additional offer details if available
                         },
-                        "telephone": activity.activity_phone,
-                        "email": activity.activity_email,
-                        "url": activity.activity_website,
+                        "telephone": product.product_phone,
+                        "email": product.product_email,
+                        "url": product.product_website,
                         "publisher": {
                             "@type": "Organization",
                             "name": "Activenty",
@@ -122,14 +171,14 @@ const ActivityDetails = () => {
                                 "url": "https://activenty.com/logo.png"
                             }
                         }
-                        // Additional activity details if available
+                        // Additional product details if available
                     })}
                 </script>
             </Helmet>
 
             <Header/>
 
-            {activity.photos.length > 0 && (
+            {product.photos.length > 0 && (
                 <div style={{position: 'relative'}}>
                     {/* Background overlay */}
                     <div
@@ -146,43 +195,97 @@ const ActivityDetails = () => {
 
                     </div>
                     {isMobile ? (
-                        <BackgroundGallery images={activity.photos.map((photo) => photo.photo)}/>
+                        <BackgroundGallery images={product.photos.map((photo) => photo.photo)}/>
                     ) : (
-                        <BackgroundGalleryDetails images={activity.photos.map((photo) => photo.photo)}/>
+                        <BackgroundGalleryDetails images={product.photos.map((photo) => photo.photo)}/>
                     )}
                 </div>
             )}
-            <div className="activity-container">
-                <div className="activity">
-                    <h1>{activity.title}</h1>
-                    {activity.activity_description && <p>{activity.activity_description}</p>}
-                    {activity.activity_location && (
-                        <>
-                            <h3>Location</h3>
-                            <p>{activity.activity_location}</p>
-                        </>
+            <div className="product-container">
+                <div className="product" style={{maxWidth: '800px', margin: '0 auto', padding: '20px'}}>
+                    {/* Product Title */}
+                    <h1 style={{fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '20px'}}>{product.title}</h1>
+                    {product.description && (
+                        <p style={{fontSize: '1rem', lineHeight: '1.6', color: '#666', marginBottom: '30px'}}>
+                            {product.description}
+                        </p>
                     )}
-                    {activity.activity_type && <p>Type: {activity.activity_type}</p>}
-                    {activity.activity_open_from && <p>Open Time: {activity.activity_open_from}</p>}
-                    {activity.activity_phone && (
-                        <h4>
-                            <a href={`tel:${activity.activity_phone}`} style={{textDecoration: 'none'}}>
-                                {activity.activity_phone}
-                            </a>
-                        </h4>
+
+                    <div
+                        style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px'}}>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => setQuantity(prev => (prev > 1 ? prev - 1 : 1))}
+                            style={{
+                                margin: '0 10px',
+                                padding: '10px',
+                                minWidth: '40px',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold',
+                                borderRadius: '50%',
+                            }}
+                        >
+                            -
+                        </Button>
+                        <span style={{fontSize: '1.5rem', fontWeight: 'bold', margin: '0 20px'}}>{quantity}</span>
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            onClick={() => setQuantity(prev => prev + 1)}
+                            style={{
+                                margin: '0 10px',
+                                padding: '10px',
+                                minWidth: '40px',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold',
+                                borderRadius: '50%',
+                            }}
+                        >
+                            +
+                        </Button>
+                    </div>
+                    {/* Price Section */}
+                    {product.price && (
+                        <div
+                            style={{
+                                fontSize: '1.8rem',
+                                fontWeight: 'bold',
+                                color: '#4caf50',
+                                margin: '10px 0 30px',
+                            }}
+                        >
+                            {product.price} TL
+                        </div>
                     )}
-                    {activity.activity_email && (
-                        <h4>
-                            {renderLink(activity.activity_email)}
-                        </h4>
+
+                    {/* Product Description */}
+
+                    <Button
+                        onClick={() => addToCart(quantity)}
+                        variant="contained"
+                        color="success"
+                        startIcon={<ShoppingCartIcon />}
+                        style={{
+                            marginBottom: '20px',
+                            padding: '12px 25px',
+                            fontSize: '1.2rem',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: '30px',
+                            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+                        }}
+                    >
+                        Add {quantity} to Cart
+                    </Button>
+
+
+                    {product.type && (
+                        <p style={{fontSize: '1rem', color: '#333', marginBottom: '20px'}}>
+                            <strong>Type:</strong> {product.type}
+                        </p>
                     )}
-                    {activity.activity_website && (
-                        <h4>
-                            {renderLink(activity.activity_website)}
-                        </h4>
-                    )}
-                    {activity.activity_price && <h5>Price: {activity.activity_price}</h5>}
-                    {isMobile && <Button onClick={toggleMap} className="toggle-map-button">Show Map</Button>}
+
 
                     <div className="share-buttons">
                         {/* WhatsApp Share Button */}
@@ -197,9 +300,6 @@ const ActivityDetails = () => {
                             <FacebookIcon size={32} round/>
                         </FacebookShareButton>
                     </div>
-                </div>
-                <div className={`map ${isMapOpen ? 'show' : ''}`}>
-                    <MapForActivity activity={activity}/>
                 </div>
 
             </div>

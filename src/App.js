@@ -102,11 +102,11 @@ function App() {
                             <Route path="/" element={<Main/>}/>
                             <Route path="/events" element={<EventList/>}/>
                             <Route path="/ideal-for" element={<IdealForList/>}/>
-                            <Route path="/activities" element={<ActivityList/>}/>
-                            <Route path="/activities/:type" element={<ActivityList/>}/>
+                            <Route path="/products" element={<ActivityList/>}/>
+                            <Route path="/products/:type" element={<ActivityList/>}/>
                             <Route path="/map" element={<Map/>}/>
                             <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
-                            <Route path="/activities/detail/:id/:title" element={<ActivityDetails/>}/>
+                            <Route path="/products/detail/:id" element={<ActivityDetails/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/about-us" element={<AboutUs />} />
                             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

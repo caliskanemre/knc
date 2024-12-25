@@ -181,18 +181,19 @@ export default function Header() {
                             </>
                         )}
                         <Box flexGrow={1}/>
+                        <IconButton
+                            aria-label="cart"
+                            sx={{
+                                color: 'black', // İkon rengi
+                                marginLeft: '10px', // İkon ve diğer öğeler arasında boşluk
+                            }}
+                            onClick={() => handleNavigation('/cart')} // Sepetim sayfasına yönlendirme
+                        >
+                            <ShoppingCartIcon sx={{ fontSize: 30 }} /> {/* İkon boyutunu ayarlayın */}
+                        </IconButton>
                         {!isLoggedIn ? (
                             <>
-                                <IconButton
-                                    aria-label="cart"
-                                    sx={{
-                                        color: 'black', // İkon rengi
-                                        marginLeft: '10px', // İkon ve diğer öğeler arasında boşluk
-                                    }}
-                                    onClick={() => handleNavigation('/cart')} // Sepetim sayfasına yönlendirme
-                                >
-                                    <ShoppingCartIcon sx={{ fontSize: 30 }} /> {/* İkon boyutunu ayarlayın */}
-                                </IconButton>
+
 
                                 <IconButton aria-label="register" sx={{color: 'black'}} onClick={handleOpenRegisterDialog}>
                                     <PersonAddIcon/>

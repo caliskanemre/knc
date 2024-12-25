@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [username, setUsername] = useState('');
     const [favorites, setFavorites] = useState([]); // Initialize favorites state
+    const [cart, setCart] = useState([]);
 
     useEffect(() => {
         // Check for token and update username on component mount
@@ -21,6 +22,37 @@ export const AuthProvider = ({ children }) => {
             setIsLoggedIn(true);
         }
     }, [token, username]);
+
+    const fetchCart = async (authToken) => {
+        try {
+            const response = await axios.get(`${baseURL}/cart/${username}`, {
+                headers: { Authorization: `Bearer ${authToken || token}` },
+            });
+            setCart(response.data || []);
+        } catch (error) {
+            console.error("Error fetching cart items:", error);
+        }
+    };
+
+    const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
+        try {
+            if (isInCart) {
+                // Remove from cart
+                await axios.delete(`${baseURL}/cart/${username}/item/${itemId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            } else {
+                // Add to cart
+                const cartItem = { productId: itemId, quantity, price };
+                await axios.post(`${baseURL}/cart/${username}`, cartItem, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            }
+            fetchCart(); // Refresh the cart
+        } catch (error) {
+            console.error(`Error toggling cart item ${itemId}:`, error);
+        }
+    };
 
 
     const fetchFavorites = async (token) => {
@@ -59,7 +91,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
     return (
-        <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn, token, setToken, username, setUsername, favorites, toggleFavorite }}>
+        <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn, token, setToken, username,cart, setUsername, favorites, toggleFavorite }}>
             {children}
         </AuthContext.Provider>
     );

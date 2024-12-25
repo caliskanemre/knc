@@ -12,19 +12,37 @@ import {
 import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 
 const Cart = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [username, setUsername] = useState(''); // To store the username dynamically
 
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+    // Step 1: Extract the username from the token
     useEffect(() => {
-        fetchCartItems();
+        const token = localStorage.getItem('token');
+        if (token) {
+            const decodedToken = jwtDecode(token);
+            setUsername(decodedToken.sub); // Assuming 'sub' contains the username
+        }
     }, []);
+
+    // Step 2: Fetch cart items only when username is available
+    useEffect(() => {
+        if (username) {
+            fetchCartItems();
+        }
+    }, [username]);
 
     const fetchCartItems = async () => {
         try {
-            const response = await axios.get('/cart/1'); // Replace '1' with user ID dynamically
+            const response = await axios.get(`${baseURL}/cart/${username}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
             setCartItems(response.data);
             calculateTotalPrice(response.data);
         } catch (error) {
@@ -39,8 +57,10 @@ const Cart = () => {
 
     const handleRemoveItem = async (id) => {
         try {
-            await axios.delete(`/cart/1/item/${id}`); // Replace '1' with user ID dynamically
-            fetchCartItems(); // Refresh cart items
+            await axios.delete(`${baseURL}/cart/${username}/item/${id}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            fetchCartItems();
         } catch (error) {
             console.error("Error removing item:", error);
         }
@@ -52,7 +72,9 @@ const Cart = () => {
         if (updatedQuantity <= 0) return;
 
         try {
-            await axios.put(`/cart/1/item/${id}`, { quantity: updatedQuantity });
+            await axios.put(`${baseURL}/cart/${username}/item/${id}`, { quantity: updatedQuantity }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
             fetchCartItems();
         } catch (error) {
             console.error("Error updating quantity:", error);
@@ -75,7 +97,7 @@ const Cart = () => {
                 {cartItems.length > 0 ? (
                     <List>
                         {cartItems.map((item) => (
-                            <Card key={item.id} sx={{ marginBottom: 2 }}>
+                            <Card key={item.productId} sx={{ marginBottom: 2 }}>
                                 <CardContent>
                                     <Typography variant="h6">{item.name}</Typography>
                                     <Typography color="textSecondary">
@@ -88,20 +110,20 @@ const Cart = () => {
                                 <CardActions>
                                     <Button
                                         size="small"
-                                        onClick={() => handleUpdateQuantity(item.id, 'decrement')}
+                                        onClick={() => handleUpdateQuantity(item.productId, 'decrement')}
                                     >
                                         -
                                     </Button>
                                     <Button
                                         size="small"
-                                        onClick={() => handleUpdateQuantity(item.id, 'increment')}
+                                        onClick={() => handleUpdateQuantity(item.productId, 'increment')}
                                     >
                                         +
                                     </Button>
                                     <Button
                                         size="small"
                                         color="error"
-                                        onClick={() => handleRemoveItem(item.id)}
+                                        onClick={() => handleRemoveItem(item.productId)}
                                     >
                                         Ürünü Kaldır
                                     </Button>

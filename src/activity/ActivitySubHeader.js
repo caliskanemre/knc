@@ -47,7 +47,7 @@ function ActivitySubHeader() {
                         <ListItemIcon style={{ marginRight: '-40px' }}>
                             <img src={hennaSet} alt="Nature" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/nature" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/hennaset" className="nav-link" activeClassName="active">
                             {t('HennaSet')}
                         </NavLink>
                     </MenuItem>
@@ -56,34 +56,34 @@ function ActivitySubHeader() {
                         <ListItemIcon style={{ marginRight: '-40px' }}>
                             <img src={handkerchief} alt="handkerchief" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/museum" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/handkerchief" className="nav-link" activeClassName="active">
                             {t('Handkerchief')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={tamborine} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
+                            <img src={tamborine} alt="tamborine" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/health" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/tamborine" className="nav-link" activeClassName="active">
                             {t('Tamborine')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={veil} alt="Winter" style={{ width: '24px', height: '24px' }} />
+                            <img src={veil} alt="Veil" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/winter" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/veil" className="nav-link" activeClassName="active">
                             {t('Veil')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={gift} alt="Summer" style={{ width: '24px', height: '24px' }} />
+                            <img src={gift} alt="Gift" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/summer" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/gift" className="nav-link" activeClassName="active">
                             {t('Gift')}
                         </NavLink>
                     </MenuItem>
@@ -91,7 +91,7 @@ function ActivitySubHeader() {
                         <ListItemIcon style={{ marginRight: '-40px' }}>
                             <img src={flower} alt="flower" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/camping" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/flower" className="nav-link" activeClassName="active">
                             {t('Flower')}
                         </NavLink>
                     </MenuItem>
@@ -100,16 +100,16 @@ function ActivitySubHeader() {
                         <ListItemIcon style={{ marginRight: '-40px' }}>
                             <img src={ornament} alt="ornament" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/park" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/ornament" className="nav-link" activeClassName="active">
                             {t('Ornament')}
                         </NavLink>
                     </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={souvenir} alt="Henna Souvenir" style={{ width: '24px', height: '24px' }} />
+                            <img src={souvenir} alt="Souvenir" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <NavLink to="/activities/national" className="nav-link" activeClassName="active">
+                        <NavLink to="/products/souvenir" className="nav-link" activeClassName="active">
                             {t('Souvenir')}
                         </NavLink>
                     </MenuItem>

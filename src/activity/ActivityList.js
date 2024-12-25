@@ -26,12 +26,8 @@ import park from "../images/park_green2.png"
 import nature from "../images/nature2.jpg"
 import naturalPark from "../images/park_green.jpg"
 import museumIcon from "../images/green_museum.png"
-import FilterListIcon from '@mui/icons-material/FilterList';
 import {ActivityFilter} from "../filter/ActivityFilter";
-import {MapOutlined} from "@mui/icons-material";
-import {GoogleMap, InfoWindow, Marker, MarkerClusterer} from "@react-google-maps/api";
 import BackgroundGallery from "../shared/BackgroundGallery";
-import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -45,12 +41,6 @@ const mapContainerStyle = {
     height: '400px',
 };
 
-const center = {
-    lat: 59.47, // Example latitude
-    lng: 25.15, // Example longitude
-};
-
-
 const ActivityList = () => {
     const {type} = useParams();
     const [activities, setActivities] = useState([]);
@@ -58,11 +48,7 @@ const ActivityList = () => {
     const [hasMore, setHasMore] = useState(true);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
-    const [mapOpen, setMapOpen] = useState(false);
-    const [userLocation, setUserLocation] = useState(null);
-    const [markers, setMarkers] = useState([]);
-    const [isMapReady, setIsMapReady] = useState(false);
-    const [selectedMarker, setSelectedMarker] = useState(null);
+
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [filters, setFilters] = useState([]);
@@ -71,7 +57,6 @@ const ActivityList = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const isGoogleMapsApiLoaded = () => window.google && window.google.maps;
     useNavigate();
     const applyFilter = (filterType, filterValue) => {
         // Add a new filter or update the existing one
@@ -128,8 +113,8 @@ const ActivityList = () => {
         try {
             // Fetching the initial list of activities
             let fetchUrl = type === undefined
-                ? `${baseURL}/activities/all?page=0&size=20`
-                : `${baseURL}/activities/${type}?page=0&size=20`;
+                ? `${baseURL}/products/all?page=0&size=20`
+                : `${baseURL}/products/${type}?page=0&size=20`;
 
             const response = await Axios.get(fetchUrl);
             const fetchedActivities = response.data.content;
@@ -174,63 +159,12 @@ const ActivityList = () => {
             // Clean up other event listeners or actions if added.
         };
     }, []); // No dependencies, runs on mount and unmount
-
-
-    const fetchPins = async (activityType) => {
-        try {
-            const response = await Axios.get(`${baseURL}/activities/pins/${activityType}`);
-            const pinsData = response.data;
-            prepareMarkers(pinsData);
-        } catch (error) {
-            console.error('Error fetching pins:', error);
-        }
-    };
-
-    const prepareMarkers = (pins) => {
-        if (!isGoogleMapsApiLoaded()) {
-            console.error('Google Maps API is not loaded');
-            return;
-        }
-
-        const tempMarkers = pins.map(pin => ({
-            title: pin.title,
-            id: pin.id,
-            lat: parseFloat(pin.lat),
-            lng: parseFloat(pin.lon)
-        }));
-
-        setMarkers(tempMarkers);
-    };
-
-    const handleMarkerClick = (activity) => {
-        // Assuming each activity has lat and lng properties
-        setSelectedMarker({
-            ...activity,
-            position: {
-                lat: parseFloat(activity.lat),
-                lng: parseFloat(activity.lon)
-            }
-        });
-    };
-
+    
     const handleInfoWindowClick = (activity) => {
         if (activity && activity.id) {
-            const fullUrl = window.location.origin + `/activities/detail/${activity.id}/${activity.title}`;
+            const fullUrl = window.location.origin + `/products/detail/${activity.id}/${activity.title}`;
             window.open(fullUrl, '_blank');
         }
-    };
-    const handleOpenMapDialog = async () => {
-        await fetchPins(type);
-        setMapOpen(true);
-        askForUserLocation();
-    };
-
-    const handleCloseMapDialog = () => {
-        setMapOpen(false);
-    };
-
-    const handleOpenFilterDialog = () => {
-        setOpenFilterDialog(true);
     };
 
     const handleCloseFilterDialog = () => {
@@ -240,8 +174,8 @@ const ActivityList = () => {
         try {
             let nextPage = page + 1;
             let fetchUrl = type === undefined
-                ? `${baseURL}/all?page=${nextPage}&size=20`
-                : `${baseURL}/activities/${type}?page=${nextPage}&size=20`;
+                ? `${baseURL}/products/all?page=${nextPage}&size=20`
+                : `${baseURL}/products/${type}?page=${nextPage}&size=20`;
 
             const response = await Axios.get(fetchUrl);
             setActivities(prevActivities => [...prevActivities, ...response.data.content]);
@@ -252,7 +186,7 @@ const ActivityList = () => {
         }
     };
     const activityIcons = {
-        camping: CampingIcon2,
+        veil: CampingIcon2,
         health: wellness,
         winter: winter,
         summer: swimming,
@@ -261,24 +195,7 @@ const ActivityList = () => {
         national: naturalPark,
         museum: museumIcon
     };
-
-    const askForUserLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    });
-                },
-                () => {
-                    console.error('Error: The Geolocation service failed.');
-                }
-            );
-        } else {
-            console.error('Error: Your browser doesn\'t support geolocation.');
-        }
-    };
+    
     const getDynamicFontSize = (title) => {
         if (title.length < 10) return "1.8rem";
         if (title.length < 20) return "1.5rem"
@@ -296,36 +213,17 @@ const ActivityList = () => {
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
             <Header/>
-            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
-                <Button style={{marginRight: '20px'}}
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<FilterListIcon/>}
-                        onClick={handleOpenFilterDialog}
-                >
-                    Filter
-                </Button>
-
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<MapOutlined/>}
-                    onClick={handleOpenMapDialog}
-                >
-                    Map
-                </Button>
-
-            </div>
+            
             <Container sx={{py: 9}} maxWidth="xl">
                 <Typography variant="h2" component="div" style={{fontSize: '2rem', marginBottom: '20px'}}>
-                    {type} activities in {Object.keys(filters).length > 0 ?
+                    {type}  {Object.keys(filters).length > 0 ?
                     Object.entries(filters).map(([filterType, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
                             return filterValue.name;
                         } else {
                             return filterValue;
                         }
-                    }).join(', ') : 'Estonia'}
+                    }).join(', ') : ''}
                 </Typography>
 
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
@@ -345,7 +243,7 @@ const ActivityList = () => {
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                    <a href={`/activities/detail/${item.id}/${item.title}`}
+                                    <a href={`/products/detail/${item.id}`}
                                        style={{textDecoration: 'none', color: 'inherit'}}>
                                         <div style={{display: 'flex', flexDirection: 'row'}}>
                                             <Avatar sx={{
@@ -354,9 +252,9 @@ const ActivityList = () => {
                                                 marginLeft: '8px',
                                                 marginTop: '15px'
                                             }}>
-                                                <img src={activityIcons[item.activity_type.toLocaleLowerCase()]}
+                          {/*                      <img src={activityIcons[item.activity_type.toLocaleLowerCase()]}
                                                      alt={`${item.activity_type} Icon`}
-                                                     style={{width: '100%', height: '100%'}}/>
+                                                     style={{width: '100%', height: '100%'}}/>*/}
                                             </Avatar>
                                             <CardHeader style={{height: '50px'}}
                                                         title={
@@ -367,22 +265,6 @@ const ActivityList = () => {
                                                             >
                                                                 {item.title}
                                                             </Typography>
-                                                        }
-                                                        subheader={
-                                                            <div>
-                                                                <div>
-
-                                                                    <Typography variant="h4" component="h4"
-                                                                                style={{fontSize: '0.8rem'}}>
-                                                                        <PinDropIcon style={{
-                                                                            fontSize: '1rem',
-                                                                            verticalAlign: 'bottom'
-                                                                        }}/>
-                                                                        {item.activity_location}
-                                                                    </Typography>
-
-                                                                </div>
-                                                            </div>
                                                         }
                                                         subheaderTypographyProps={{
                                                             component: 'div',
@@ -437,93 +319,13 @@ const ActivityList = () => {
                 applyFilter={applyFilter}
                 updateFilteredActivities={updateFilteredActivities}
             />
-            {isGoogleMapsApiLoaded() ? (
                 <SwipeableDrawer
                     anchor="bottom"
-                    open={mapOpen}
-                    onClose={handleCloseMapDialog}
-                    onOpen={handleOpenMapDialog}
                     fullScreen={fullScreen}
                     ModalProps={{
                         keepMounted: true, // Better performance on mobile
                     }}
                 >
-                    <DialogTitle id="map-dialog-title">Activities Map</DialogTitle>
-                    <DialogContent>
-                        <GoogleMap
-                            mapContainerStyle={mapContainerStyle}
-                            zoom={8}
-                            center={userLocation || center}
-                            options={{gestureHandling: 'greedy'}}
-                            onUnmount={() => setIsMapReady(false)}
-                            onLoad={() => {
-                                setTimeout(() => {
-                                    setIsMapReady(true);
-                                }, 2000); // 2 seconds delay
-                            }}
-                        >
-                            {userLocation && (
-                                <Marker
-                                    position={userLocation}
-                                    icon={{
-                                        path: "M0-48c-9,0-16,7-16,16s7,16,16,16,16-7,16-16-7-16-16-16z",
-                                        fillColor: '#FF0000',
-                                        fillOpacity: 1.0,
-                                        scale: 0.5,
-                                        strokeColor: '#000000',
-                                        strokeWeight: 2,
-                                    }}
-                                />
-                            )}
-                            {isMapReady && (
-                                <MarkerClusterer
-                                    options={{imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}}
-                                >
-                                    {(clusterer) =>
-                                        markers.map((marker) => (
-                                            <Marker
-                                                key={marker.id} // Use the unique id of the marker
-                                                position={{
-                                                    lat: marker.lat,
-                                                    lng: marker.lng
-                                                }} // Ensure position is an object with lat and lng
-                                                title={marker.title}
-                                                onClick={() => {
-                                                    if (selectedMarker && selectedMarker.id === marker.id) {
-                                                        // If the clicked marker's InfoWindow is already open, close it
-                                                        setSelectedMarker(null);
-                                                    } else {
-                                                        // Otherwise, open the new InfoWindow
-                                                        setSelectedMarker({
-                                                            id: marker.id,
-                                                            position: {lat: marker.lat, lng: marker.lng},
-                                                            title: marker.title,
-                                                        });
-                                                    }
-                                                }}
-                                                clusterer={clusterer}
-                                            />
-                                        ))
-                                    }
-                                </MarkerClusterer>
-                            )}
-                            {selectedMarker && (
-                                <InfoWindow
-                                    position={selectedMarker.position} // Use the position from selectedMarker
-                                    onCloseClick={() => setSelectedMarker(null)} // Reset selectedMarker state to null on close
-                                >
-                                    <div style={{maxWidth: '150px'}}>
-                                        <h4>{selectedMarker.title}</h4>
-                                        <Button style={{display: 'flex', justifyContent: 'center', margin: '10px 0'}}
-                                                onClick={() => handleInfoWindowClick(selectedMarker)}>
-                                            View Details
-                                        </Button>
-                                    </div>
-                                </InfoWindow>
-                            )}
-
-                        </GoogleMap>
-                    </DialogContent>
                     <Snackbar
                         open={snackbarOpen}
                         autoHideDuration={6000}
@@ -531,9 +333,6 @@ const ActivityList = () => {
                         message={snackbarMessage}
                     />
                 </SwipeableDrawer>
-            ) : (
-                <div>Loading Maps...</div>
-            )}
         </div>
     );
 };
