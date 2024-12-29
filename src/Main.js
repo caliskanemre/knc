@@ -262,7 +262,7 @@ export default function Main() {
                     color="text.secondary"
                     component="p"
                 >
-                    All rights reserved @2024 KNC
+                    All rights reserved @2024 HandX OU
                 </Typography>
                 {/*      <Copyright />*/}
             </Box>
