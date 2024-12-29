@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {useSwipeable} from 'react-swipeable';
-import {Button} from "@mui/material";
+import React, { useEffect, useState } from 'react';
+import { useSwipeable } from 'react-swipeable';
+import { Button } from "@mui/material";
 
-const BackgroundGallery = ({images}) => {
+const BackgroundGalleryDetails = ({ images }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isFading, setIsFading] = useState(false);
 
@@ -21,64 +21,47 @@ const BackgroundGallery = ({images}) => {
         trackMouse: true
     });
 
-
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIsFading(true); // Begin fade-out
-            setTimeout(() => {
-                setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-                setIsFading(false); // Begin fade-in
-            }, 500); // Delay for fade-out, should match CSS transition time
-        }, 100000);
+        if (images && Array.isArray(images)) {
+            const interval = setInterval(() => {
+                setIsFading(true);
+                setTimeout(() => {
+                    setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
+                    setIsFading(false);
+                }, 500);
+            }, 5000);
 
-        return () => clearInterval(interval);
-    }, [images.length]);
-    const goToNextImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    };
+            return () => clearInterval(interval);
+        }
+    }, [images]);
 
-    const goToPreviousImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-    };
 
+    // Render nothing if images is undefined, not an array, or empty
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        return null;
+    }
 
     return (
         <div {...handlers} style={{
             position: 'relative',
             overflow: 'hidden',
             width: '100%',
-            height: '40vh',
+            height: '250px', // Adjust height for better layout in cards
             zIndex: 2,
-            opacity: isFading ? 0 : 1,
-            transition: 'opacity 0.5s ease-in-out'
         }}>
-            {/* Blurred background pseudo-element */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundImage: `url(${images[currentImageIndex]})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'blur(10px)',
-                zIndex: -1,
-            }}></div>
-
-            {/* Foreground sharp image */}
-            <img src={images[currentImageIndex]} alt="Foreground Content" style={{
-                position: 'relative',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                maxWidth: '1500px',
-                maxHeight: '600px',
-                backgroundPosition: 'center',
-                zIndex: 1,
-            }}/>
-            <Button onClick={goToPreviousImage} style={{
+            <div
+                style={{
+                    backgroundImage: `url(${images[currentImageIndex]})`,
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: 'cover', // Ensure the image covers the card space
+                    width: '100%',
+                    height: '100%',
+                    opacity: isFading ? 0 : 1,
+                    transition: 'opacity 0.5s ease-in-out',
+                }}
+            />
+            <Button onClick={() => setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length)} style={{
                 position: 'absolute',
                 left: '10px',  // Adjust for better positioning
                 top: '50%',
@@ -87,7 +70,7 @@ const BackgroundGallery = ({images}) => {
             }}>
                 {"<"} {/* Replace with styled arrow */}
             </Button>
-            <Button onClick={goToNextImage} style={{
+            <Button onClick={() => setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length)} style={{
                 position: 'absolute',
                 right: '10px',  // Adjust for better positioning
                 top: '50%',
@@ -104,7 +87,7 @@ const BackgroundGallery = ({images}) => {
                 display: 'flex',
                 zIndex: 2 // Ensure it's above the background
             }}>
-                {images.map((image, index) => (
+                {images.map((_, index) => (
                     <div
                         key={index}
                         style={{
@@ -122,4 +105,5 @@ const BackgroundGallery = ({images}) => {
         </div>
     );
 };
-export default BackgroundGallery
+
+export default BackgroundGalleryDetails;

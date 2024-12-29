@@ -6,86 +6,75 @@ const AboutUs = () => {
     return (
         <div>
             <Header/>
-            <Container > {/* Centers the content and sets a max-width */}
+            <Container>
                 <Box sx={{
                     padding: '20px',
-                    fontFamily: '"Roboto Slab", serif', // Custom font
+                    fontFamily: '"Roboto Slab", serif',
                     '& h1, & h2': {
-                        fontFamily: '"Roboto Slab", serif', // Ensures headers use the custom font
+                        fontFamily: '"Roboto Slab", serif',
                     },
                 }}>
                     <Typography variant="h2" component="h1" gutterBottom>
-                        How it works
+                        About KınaSepeti
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Welcome to Activenty, your ultimate guide to discovering the best events and activities tailored just for you. Whether you're a thrill-seeker, a tech enthusiast, a music lover, or looking for family-friendly fun, Activenty brings the world of events to your fingertips, uniquely personalized to suit your interests and lifestyle.
+                        Welcome to KınaSepeti, your ultimate destination for personalized wedding and henna night products. Whether you're looking for customized gifts, decorative items, or unique keepsakes for the bride and groom, KınaSepeti ensures every product is crafted to make your special moments unforgettable.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        Discover Your Personalized World of Events with Activenty
+                        What We Offer
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        At Activenty, we harness the power of advanced AI to revolutionize how you discover and engage with events and activities.
-                        Our platform is designed not just to connect you with events but to tailor these connections to your unique preferences and interests, ensuring a personalized experience every time.
+                        At KınaSepeti, we specialize in personalized products tailored for weddings and henna nights. From customized candles and handkerchiefs to beautifully designed trays and gift boxes, our items are crafted to add elegance and individuality to your celebrations.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        AI-Driven Personalization
+                        Personalized Products for Every Occasion
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        From the moment you start using Activenty, our AI begins to understand your interests and preferences based on your interactions and selections.
-                        Whether you're marking events as favorites, searching for specific types of activities, or simply browsing, our intelligent system is at work, learning what makes your ideal event experience.
+                        Add a personal touch to your wedding or henna night with our customizable options. You can include names, dates, or special messages to create unique and memorable gifts and decorations that reflect your love story.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        Curated Events Just for You
+                        For Brides
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        As Activenty gets to know you better, the events and activities you'll see will become increasingly aligned with your personal tastes.
-                        This means that the more you use Activenty, the more relevant and exciting your event recommendations will become. Whether you're a music enthusiast eager for the next concert or an adventure seeker looking for your next thrill, Activenty ensures that the most relevant events are always at your fingertips.
+                        Celebrate your journey to the big day with our exclusive collection designed for brides. From personalized sashes to elegant accessories, we have everything you need to make your day truly yours.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        For Singles
+                        For Grooms
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Solo adventurers rejoice! Activenty curates events that cater specifically to singles, offering a mix of social gatherings, workshops, and adventure activities designed to foster connections and personal growth. Discover your next favorite hobby or meet like-minded individuals in a welcoming environment.
+                        Grooms can find a range of custom products to complement their big day. Our personalized items ensure that every detail is as special and unique as your love story.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        For Couples
+                        For Guests
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Create unforgettable memories with your partner through Activenty's handpicked experiences. From romantic dinners under the stars to thrilling couple’s escapades, our platform ensures you find the perfect activities to deepen your bond and add excitement to your relationship.
+                        Show appreciation to your guests with our beautiful and thoughtful party favors. From custom-engraved keepsakes to delightful gift boxes, our products make your guests feel truly special.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        For Families
+                        Traditional Meets Modern
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Family time is precious, and Activenty makes it more meaningful with activities that are enjoyable for all ages. Explore family-friendly festivals, educational workshops, and outdoor adventures that promise fun and learning in equal measure. Make every family outing memorable with Activenty.
+                        KınaSepeti blends traditional henna night customs with modern design to create products that honor your heritage while embracing contemporary elegance. Our collections are inspired by timeless traditions, ensuring that your celebration is both meaningful and stylish.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        For Friends
+                        Join Us in Making Memories
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Gather your crew and dive into a world of shared experiences with Activenty. Whether it's hitting the latest music festivals, participating in group challenges, or embarking on outdoor adventures, our platform brings you events that are better experienced together. Strengthen your friendships with shared adventures that you'll talk about for years to come.
+                        Let KınaSepeti be a part of your journey to create unforgettable memories. Explore our wide range of personalized products and discover how we can help make your wedding or henna night truly extraordinary.
                     </Typography>
 
                     <Typography variant="h6" component="h2">
-                        Events Categorized for Your Interest
+                        Get Started Today
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        Activenty's AI-powered platform doesn't just personalize; it categorizes events to align with your passions. Whether you're an outdoor enthusiast, a tech geek, a music aficionado, an art lover, or seeking children-friendly activities, our intelligent categorization ensures you find events that resonate with your interests.
-                    </Typography>
-
-
-                    <Typography variant="h6" component="h2">
-                        Join Us on a Journey of Discovery
-                    </Typography>
-                    <Typography variant="body1" paragraph>
-                        With Activenty, every day is an opportunity for a new adventure. Our mission is to connect you with experiences that bring joy, foster connections, and create lasting memories through the power of shared events. Join our community and let Activenty's AI guide you to your next unforgettable experience.
+                        Visit KınaSepeti.com to start personalizing your products and planning your perfect celebration. With KınaSepeti, every detail is tailored to you, ensuring a magical and memorable experience for you and your loved ones.
                     </Typography>
                 </Box>
             </Container>

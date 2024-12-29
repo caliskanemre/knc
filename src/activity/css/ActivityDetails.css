@@ -42,3 +42,235 @@
         max-height: none;
     }
 }
+
+/* ActivityDetails.css */
+
+
+/* Type styling */
+.product-type {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Share buttons container */
+.share-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Each share button wrapper */
+.share-btn {
+    cursor: pointer;
+}
+
+/* Responsive layout for mobile */
+@media screen and (max-width: 768px) {
+    .activity-details-wrapper {
+        flex-direction: column;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .left-section, .right-section {
+        width: 100%;
+        padding: 16px;
+        margin: 0;
+    }
+
+    .product-title {
+        font-size: 1.4rem;
+    }
+
+    .product-price {
+        font-size: 1.4rem;
+    }
+
+    .add-cart-btn {
+        font-size: 1rem !important;
+    }
+}
+
+
+.activity-details-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #f7f7f7;
+}
+
+.activity-details-wrapper {
+    display: flex;
+    flex-direction: row;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* LEFT SECTION: Container for main image */
+.left-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* MAIN IMAGE: fixed size, maintain aspect ratio */
+.main-image {
+    width: 400px;         /* or any fixed width you want */
+    height: 600px;        /* or any fixed height you want */
+    object-fit: cover;    /* or 'contain', depending on the effect you prefer */
+    cursor: zoom-in;      /* indicates user can click to zoom */
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+.main-image:hover {
+    transform: scale(1.02);
+}
+
+/* RIGHT SECTION */
+.right-section {
+    flex: 1;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.product-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.product-description {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+.product-price {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #eb3e3e;
+    margin-bottom: 16px;
+}
+
+/* Thumbnails row */
+.thumbnail-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    transition: transform 0.2s;
+}
+.thumbnail:hover {
+    transform: scale(1.05);
+    border-color: #ccc;
+}
+
+/* Quantity control */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.quantity-btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.quantity-display {
+    margin: 0 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Add to cart button */
+.add-cart-btn {
+    padding: 12px 25px;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    border-radius: 30px !important;
+    margin-bottom: 20px;
+    background-color: #f27a1a !important;
+    color: #fff !important;
+}
+
+/* Modal (lightbox) overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* above everything else */
+    cursor: zoom-out; /* indicates user can click to close */
+}
+
+/* Modal content: the full-size image */
+.modal-content {
+    position: relative;
+}
+
+.modal-image {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 6px;
+    cursor: default; /* so user’s cursor doesn’t show zoom-out on image */
+}
+
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+    .activity-details-wrapper {
+        flex-direction: column;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .left-section,
+    .right-section {
+        width: 100%;
+        padding: 16px;
+        margin: 0;
+    }
+
+    .main-image {
+        width: 300px;
+        height: 300px;
+    }
+
+    .product-title {
+        font-size: 1.4rem;
+    }
+
+    .product-price {
+        font-size: 1.4rem;
+    }
+
+    .add-cart-btn {
+        font-size: 1rem !important;
+    }
+}

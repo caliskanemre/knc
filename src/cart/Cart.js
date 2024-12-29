@@ -51,7 +51,7 @@ const Cart = () => {
     };
 
     const calculateTotalPrice = (items) => {
-        const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const total = items.reduce((acc, item) => acc + item.price, 0);
         setTotalPrice(total);
     };
 
@@ -67,7 +67,7 @@ const Cart = () => {
     };
 
     const handleUpdateQuantity = async (id, action) => {
-        const updatedQuantity = cartItems.find(item => item.id === id).quantity +
+        const updatedQuantity = cartItems.find(product => product.productId === id).quantity +
             (action === 'increment' ? 1 : -1);
         if (updatedQuantity <= 0) return;
 
@@ -99,12 +99,16 @@ const Cart = () => {
                         {cartItems.map((item) => (
                             <Card key={item.productId} sx={{ marginBottom: 2 }}>
                                 <CardContent>
-                                    <Typography variant="h6">{item.name}</Typography>
+                                    <img src={item.image} alt={item.title} style={{width: '100px', height: '100px'}}/>
+                                    <Typography variant="h6">{item.title}</Typography>
                                     <Typography color="textSecondary">
-                                        Birim Fiyat: {item.price} TL
+                                        Birim Fiyat: {(item.price / item.quantity).toFixed(2)} TL
                                     </Typography>
                                     <Typography color="textSecondary">
                                         Miktar: {item.quantity}
+                                    </Typography>
+                                    <Typography color="textSecondary">
+                                        Toplam Fiyat: {item.price} TL
                                     </Typography>
                                 </CardContent>
                                 <CardActions>

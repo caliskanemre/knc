@@ -64,23 +64,15 @@ const EventList = () => {
     const {type} = useParams();
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const [mapOpen, setMapOpen] = useState(false);
     const [userLocation] = useState(null);
-    const [markers, setMarkers] = useState([]);
-    const [isMapReady, setIsMapReady] = useState(false);
-    const [selectedMarker, setSelectedMarker] = useState(null);
     const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    const [filters, setFilters] = useState([]);
     const [sort, setSort] = useState('');
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [notificationPref, setNotificationPref] = useState('');
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
     const { t, i18n } = useTranslation();
 
@@ -101,7 +93,6 @@ const EventList = () => {
 
 
     const handleCloseNotification = (eventId, notificationType) => {
-        setNotificationPref(notificationType); // Set the notification preference based on user selection
         handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
         setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
     };
@@ -162,14 +153,6 @@ const EventList = () => {
                 console.error('Error fetching events:', error);
             });
     }, []);
-
-    const applyFilter = (filterType, filterValue) => {
-        // Add a new filter or update the existing one
-        setFilters(currentFilters => ({
-            ...currentFilters,
-            [filterType]: filterValue
-        }));
-    };
 
     const updateFilteredEvents = (filteredEvents) => {
         setEvents(filteredEvents);
@@ -376,7 +359,6 @@ const EventList = () => {
                 openFilterDialog={openFilterDialog}
                 handleCloseFilterDialog={handleCloseFilterDialog}
                 type={type}
-                applyFilter={applyFilter}
                 updateFilteredEvents={updateFilteredEvents}
             />
         </div>

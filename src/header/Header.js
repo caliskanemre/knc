@@ -35,7 +35,7 @@ export default function Header() {
     const { isLoggedIn, setIsLoggedIn, username, setUsername } = useAuth();
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const navigate = useNavigate();
-    const keywords = "event, activity, tallinn, concert, museums, nearest, spa";
+    const keywords = "kına, wedding, personalized gifts, bride, groom, henna night, kına setleri";
     const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
     const [openLoginDialog, setOpenLoginDialog] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -107,19 +107,19 @@ export default function Header() {
         return (
             <>
                 <Helmet>
-                    <title>Activenty - Discover Local Events and Activities</title>
+                    <title>KınaSepeti - Personalized Wedding and Henna Gifts</title>
                     <meta name="description"
-                          content="Discover local events and activities with Activenty! Explore concerts, outdoor adventures, and cultural experiences. Start your next adventure today."/>
+                          content="Find unique and personalized products for weddings and henna nights at KınaSepeti! Add names, dates, and custom designs to create unforgettable memories."/>
                     <meta name="keywords" content={keywords}/>
                     <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
                 </Helmet>
-                <AppBar position="relative" style={{ backgroundColor: 'white' }}>
+                <AppBar position="relative" style={{backgroundColor: 'white'}}>
                     <Toolbar>
                         {isMobile && (
                             <IconButton
                                 edge="start"
                                 aria-label="menu"
-                                style={{ color: '#5D4037' }} // Elegant brown tone for the menu icon
+                                style={{color: '#5D4037' }} // Elegant brown tone for the menu icon
                                 onClick={() => setMobileMenuOpen(true)}
                             >
                                 <MenuIcon />
@@ -145,16 +145,22 @@ export default function Header() {
                             </Typography>
                         )}
                         {isMobile && (
-                            <Typography variant="h1" component="h1" sx={{
-                                flexGrow: 1,
-                                cursor: 'pointer',
-                                color: 'brown',
-                                fontSize: '2rem',
-                                fontWeight: 'bold',
-                                textAlign: 'center',
-                                marginRight: isMobile ? '-150px' : '0', // Offset the width of the IconButton
-                            }} onClick={() => handleNavigation('/')}>
-                                Kina sepeti
+                            <Typography
+                                variant="h1"
+                                component="h1"
+                                onClick={() => handleNavigation('/')}
+                                style={{
+                                    cursor: 'pointer',
+                                    color: '#8B0000', // Deep maroon color for an elegant, traditional look
+                                    fontFamily: "'Dancing Script', cursive", // Elegant script font
+                                    fontSize: isMobile ? '3rem' : '2.5rem',
+                                    fontWeight: 700, // Ensure boldness for better readability
+                                    letterSpacing: '0.03em',
+                                    lineHeight: 1.2,
+                                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
+                                }}
+                            >
+                                KınaSepeti
                             </Typography>
                         )}
                         {!isMobile && (
@@ -163,9 +169,9 @@ export default function Header() {
                                     <img src={SearchImage} alt="Search events" style={{cursor: 'pointer'}}/>
                                 </NavLink>
                                 <ActivitySubHeader/>
-                                <NavLink to="/events" className="nav-link">
+                               {/* <NavLink to="/events" className="nav-link">
                                     {t('Custom product')}
-                                </NavLink>
+                                </NavLink>*/}
                                 <NavLink to="/ideal-for" className="nav-link">
                                     {t('AI Assistant')}
                                 </NavLink>
@@ -189,7 +195,7 @@ export default function Header() {
                             }}
                             onClick={() => handleNavigation('/cart')} // Sepetim sayfasına yönlendirme
                         >
-                            <ShoppingCartIcon sx={{ fontSize: 30 }} /> {/* İkon boyutunu ayarlayın */}
+                         {/*   <ShoppingCartIcon sx={{ fontSize: 30 }} /> */}
                         </IconButton>
                         {!isLoggedIn ? (
                             <>

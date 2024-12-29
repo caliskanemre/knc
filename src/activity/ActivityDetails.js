@@ -1,15 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import {useParams} from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useParams } from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
-import BackgroundGallery from "../shared/BackgroundGallery";
 import './css/ActivityDetails.css';
-import {Button} from "@mui/material";
-import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
-import {Helmet} from "react-helmet";
-import { jwtDecode } from "jwt-decode";
-
-
+import {Button, IconButton} from "@mui/material";
+import { Helmet } from "react-helmet";
+import axios from "axios";
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import { jwtDecode } from "jwt-decode";  // ensure you have a correct import
 import {
     FacebookIcon,
     FacebookShareButton,
@@ -18,56 +16,57 @@ import {
     WhatsappIcon,
     WhatsappShareButton
 } from "react-share";
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import axios from "axios";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import {useAuth} from "../auth/AuthProvider";
 
 const ActivityDetails = () => {
-    const {id} = useParams();
-    const {title} = useParams();
-    const [product, setProduct] = useState(null);
-    const [isMapOpen, setIsMapOpen] = useState(false);
-    const [cart, setCart] = useState([]); // State to manage cart
-    const [quantity, setQuantity] = useState(1);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [username, setUsername] = useState('');
+  const { id } = useParams();
+  const { title } = useParams();
+  const [product, setProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [username, setUsername] = useState('');
+  const [selectedImage, setSelectedImage] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
+    const {type} = useParams();
+    const { favorites, toggleFavorite } = useAuth()
 
     const isMobile = window.innerWidth <= 768;
-
-    const toggleMap = () => {
-        setIsMapOpen(!isMapOpen);
-        console.log("Map Open State:", !isMapOpen); // This should log true/false alternately on each click
-    };
-
-
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    useEffect(() => {
-        // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/products/detail/${id}`)
-            .then((response) => {
-                setProduct(response.data);
-            })
-            .catch((error) => {
-                console.error('Error fetching events:', error);
-            });
-    }, [id]); // Include eventId as a dependency in useEffect
+  // Fetch product details
+  useEffect(() => {
+    Axios.get(`${baseURL}/products/detail/${id}`)
+      .then((response) => {
+        setProduct(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching product:', error);
+      });
+  }, [id, baseURL]);
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-            const decodedToken = jwtDecode(storedToken);
-            setUsername(decodedToken.sub); // Extract `sub` or equivalent from the token
-            setIsLoggedIn(true);
-        }
-    }, []);
+  // Once product is loaded, set the default selectedImage
+  useEffect(() => {
+    if (product && product.photos && product.photos.length > 0) {
+      setSelectedImage(product.photos[0].photo);
+    }
+  }, [product]);
 
+  // Check if user is logged in
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      const decodedToken = jwtDecode(storedToken);
+      setUsername(decodedToken.sub);
+      setIsLoggedIn(true);
+    }
+  }, []);
 
     if (product === null) {
         return <div>Loading...</div>;
     }
-
 
     const addToCart = async (quantity) => {
         if (!isLoggedIn) {
@@ -97,212 +96,226 @@ const ActivityDetails = () => {
         }
     };
 
-    const renderLink = (content) => {
-        // Regex for detecting an email address
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // Regex for detecting a URL (basic version for demonstration, can be expanded)
-        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-
-        if (emailRegex.test(content)) {
-            // If content is an email address
-            return <a href={`mailto:${content}`} style={{textDecoration: 'none'}}>{content}</a>;
-        } else if (urlRegex.test(content)) {
-            // If content is a URL
-            return <a href={content} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'none'}}>Visit
-                Website</a>;
-        } else {
-            // If content is neither, just display the content
-            return <span>{content}</span>;
-        }
-    };
-
     const shareUrl = window.location.href;
     const shareMessage = `${product.title} - Check out this product!`;
 
+    const isAlreadyFavorited = favorites.favoriteActivities?.some(fav => fav.id === product.productId);
+
+    // Modal open/close
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
     return (
-        <div className="event-details" style={{textAlign: 'center', position: 'relative'}}>
+        <div className="activity-details-container">
             <Helmet>
                 <title>{product.title} - Product Details | Kina Sepeti</title>
-                <meta name="description"
-                      content={`Discover more about ${product.title} at ${product}. Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}/>
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
+                <meta
+                    name="description"
+                    content={`Discover more about ${product.title}. 
+                            Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
+                />
+                <link
+                    rel="canonical"
+                    href={`${window.location.origin}${window.location.pathname}`}
+                />
                 {/* Open Graph / Facebook */}
                 <meta property="og:title" content={product.title}/>
-                <meta property="og:description"
-                      content={product.description || 'Learn more about this product.'}/>
-                <meta property="og:image"
-                      content={(product.photos.length > 0) ? product.photos[0].photo : undefined}/>
-                <meta property="og:url" content={`${window.location.origin}${window.location.pathname}`}/>
+                <meta
+                    property="og:description"
+                    content={product.description || 'Learn more about this product.'}
+                />
+                <meta
+                    property="og:image"
+                    content={(product.photos.length > 0) ? product.photos[0].photo : undefined}
+                />
+                <meta
+                    property="og:url"
+                    content={`${window.location.origin}${window.location.pathname}`}
+                />
                 <meta property="og:type" content="website"/>
-                <meta property="og:site_name" content="Activenty"/>
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image"/>
                 <meta name="twitter:title" content={product.title}/>
-                <meta name="twitter:description"
-                      content={product.description || 'Learn more about this product.'}/>
-                <meta name="twitter:image"
-                      content={(product.photos.length > 0) ? product.photos[0].photo : undefined}/>
+                <meta
+                    name="twitter:description"
+                    content={product.description || 'Learn more about this product.'}
+                />
+                <meta
+                    name="twitter:image"
+                    content={(product.photos.length > 0) ? product.photos[0].photo : undefined}
+                />
                 {/* Structured Data */}
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "http://schema.org",
-                        "@type": "TouristAttraction", // Adjust based on the product type
+                        "@type": "TouristAttraction", // or "Product", "Event" – adapt as needed
                         "name": product.title,
                         "description": product.description,
                         "image": product.photos.map(photo => photo.photo),
                         "location": {
                             "@type": "Place",
                             "name": product.location,
-                            // Additional location details if available
                         },
                         "offers": {
                             "@type": "Offer",
                             "price": product.price,
-                            // Additional offer details if available
                         },
                         "telephone": product.product_phone,
                         "email": product.product_email,
                         "url": product.product_website,
                         "publisher": {
                             "@type": "Organization",
-                            "name": "Activenty",
+                            "name": "Kina Sepeti",
                             "logo": {
                                 "@type": "ImageObject",
                                 "url": "https://activenty.com/logo.png"
                             }
                         }
-                        // Additional product details if available
                     })}
                 </script>
             </Helmet>
 
+            {/* Header */}
             <Header/>
-
-            {product.photos.length > 0 && (
-                <div style={{position: 'relative'}}>
-                    {/* Background overlay */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%', // Cover 100% on mobile
-                            height: '100%',
-                            zIndex: 1, // Make sure it's above the images
-                        }}
-
-                    >
-
-                    </div>
-                    {isMobile ? (
-                        <BackgroundGallery images={product.photos.map((photo) => photo.photo)}/>
-                    ) : (
-                        <BackgroundGalleryDetails images={product.photos.map((photo) => photo.photo)}/>
+            <h2>{type ? `${type}` : 'All Products'} - KINA SEPETI</h2>
+            <div className="activity-details-wrapper">
+                {/* Left Section: single main image */}
+                <div className="left-section">
+                    {selectedImage && (
+                        <img
+                            src={selectedImage}
+                            alt="Selected"
+                            className="main-image"
+                            onClick={openModal}
+                        />
                     )}
                 </div>
-            )}
-            <div className="product-container">
-                <div className="product" style={{maxWidth: '800px', margin: '0 auto', padding: '20px'}}>
-                    {/* Product Title */}
-                    <h1 style={{fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '20px'}}>{product.title}</h1>
-                    {product.description && (
-                        <p style={{fontSize: '1rem', lineHeight: '1.6', color: '#666', marginBottom: '30px'}}>
-                            {product.description}
-                        </p>
+
+                {/* Right Section: Product Info */}
+                <div className="right-section">
+                    <h1 className="product-title">{product.title}</h1>
+
+
+
+                    {/* Thumbnail Row (New) */}
+                    {product.photos.length > 0 && (
+                        <div className="thumbnail-container">
+                            {product.photos.map((photo, index) => (
+                                <img
+                                    key={index}
+                                    src={photo.photo}
+                                    alt={`Thumbnail ${index}`}
+                                    className="thumbnail"
+                                    onClick={() => setSelectedImage(photo.photo)}
+                                />
+                            ))}
+                        </div>
                     )}
 
-                    <div
-                        style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px'}}>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => setQuantity(prev => (prev > 1 ? prev - 1 : 1))}
-                            style={{
-                                margin: '0 10px',
-                                padding: '10px',
-                                minWidth: '40px',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                borderRadius: '50%',
-                            }}
-                        >
-                            -
-                        </Button>
-                        <span style={{fontSize: '1.5rem', fontWeight: 'bold', margin: '0 20px'}}>{quantity}</span>
-                        <Button
-                            variant="outlined"
-                            color="success"
-                            onClick={() => setQuantity(prev => prev + 1)}
-                            style={{
-                                margin: '0 10px',
-                                padding: '10px',
-                                minWidth: '40px',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                borderRadius: '50%',
-                            }}
-                        >
-                            +
-                        </Button>
-                    </div>
-                    {/* Price Section */}
+                    {/* Price */}
                     {product.price && (
-                        <div
-                            style={{
-                                fontSize: '1.8rem',
-                                fontWeight: 'bold',
-                                color: '#4caf50',
-                                margin: '10px 0 30px',
-                            }}
-                        >
+                        <div className="product-price">
                             {product.price} TL
                         </div>
                     )}
 
-                    {/* Product Description */}
+                    {/* Quantity Controls */}
+                    <div className="quantity-control">
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => setQuantity(prev => (prev > 1 ? prev - 1 : 1))}
+                            className="quantity-btn"
+                        >
+                            -
+                        </Button>
+                        <span className="quantity-display">{quantity}</span>
+                        <Button
+                            variant="outlined"
+                            color="success"
+                            onClick={() => setQuantity(prev => prev + 1)}
+                            className="quantity-btn"
+                        >
+                            +
+                        </Button>
+                    </div>
 
+                    {/* Add to Cart Button */}
                     <Button
                         onClick={() => addToCart(quantity)}
                         variant="contained"
                         color="success"
-                        startIcon={<ShoppingCartIcon />}
-                        style={{
-                            marginBottom: '20px',
-                            padding: '12px 25px',
-                            fontSize: '1.2rem',
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            borderRadius: '30px',
-                            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                        }}
+                        startIcon={<ShoppingCartIcon/>}
+                        className="add-cart-btn"
                     >
                         Add {quantity} to Cart
                     </Button>
 
-
+                    {/* Type (if exists) */}
                     {product.type && (
-                        <p style={{fontSize: '1rem', color: '#333', marginBottom: '20px'}}>
+                        <p className="product-type">
                             <strong>Type:</strong> {product.type}
                         </p>
                     )}
 
-
-                    <div className="share-buttons">
-                        {/* WhatsApp Share Button */}
-                        <WhatsappShareButton url={shareUrl} title={shareMessage} separator=":: "
-                                             style={{marginRight: '10px'}}>
+                    <div className="share-buttons"  style={{ marginTop: '10px', marginLeft: '25px' }}>
+                        <WhatsappShareButton
+                            url={shareUrl}
+                            title={shareMessage}
+                            separator=":: "
+                            className="share-btn"
+                        >
                             <WhatsappIcon size={32} round/>
                         </WhatsappShareButton>
-                        <TelegramShareButton url={shareUrl} title={shareMessage} style={{marginRight: '10px'}}>
+                        <TelegramShareButton
+                            url={shareUrl}
+                            title={shareMessage}
+                            className="share-btn"
+                        >
                             <TelegramIcon size={32} round/>
                         </TelegramShareButton>
-                        <FacebookShareButton url={shareUrl} title={shareMessage} style={{marginRight: '10px'}}>
+                        <FacebookShareButton
+                            url={shareUrl}
+                            quote={shareMessage}
+                            className="share-btn"
+                        >
                             <FacebookIcon size={32} round/>
                         </FacebookShareButton>
                     </div>
+                    {/* Favorite Button */}
+                    <IconButton
+                        aria-label="add to favorites"
+                        onClick={() => toggleFavorite(product.productId, isAlreadyFavorited, "product")}
+                        style={{ marginTop: '20px' }}
+                    >
+                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                    </IconButton>
                 </div>
-
             </div>
+            <div style={{ marginTop: '10px' }}>
+                {product.description && (
+                    <p className="product-description">
+                        {product.description}
+                    </p>
+                )}
+            </div>
+            {/* IMAGE MODAL (lightbox) when clicked */}
+            {isModalOpen && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content">
+                        <img
+                            src={selectedImage}
+                            alt="Full Size"
+                            className="modal-image"
+                            onClick={(e) => e.stopPropagation()}
+                            /* stopPropagation so clicking the image won't close modal immediately */
+                        />
+                    </div>
+                </div>
+            )}
+
+
+
         </div>
     );
 };

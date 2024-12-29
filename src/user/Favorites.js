@@ -74,82 +74,12 @@ const Favorites = () => {
 
             <Container sx={{py: 9}} maxWidth="xl">
                 <Grid container spacing={4}>
-                    {Array.isArray(favorites.favoriteEvents) && favorites.favoriteEvents.map((item, index) => {
-                        const isAlreadyFavorited = favorites.favoriteEvents.map(event => event.id).includes(item.id);
-                        return (
-                        <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                            <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                <>
-                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
-                                       style={{textDecoration: 'none', color: 'inherit'}}>
-                                        <div style={{display: 'flex', flexDirection: 'row'}}>
-                                            <Avatar sx={{
-                                                bgcolor: 'darkorange',
-                                                fontSize: '0.7rem',
-                                                marginLeft: '8px',
-                                                marginTop: '15px'
-                                            }}>
-                                                {item.type && eventIcons[item.type.toLowerCase()]}
-                                            </Avatar>
-                                            <CardHeader
-                                                style={{display: 'top', maxHeight: '65px'}}
-                                                title={
-                                                    <div style={{
-                                                        maxWidth: '100%', // Limit the width to the parent container
-                                                        overflow: 'hidden', // Hide overflow
-                                                        display: '-webkit-box', // Use webkit box model for line clamp
-                                                        WebkitLineClamp: 2, // Limit to two lines
-                                                        WebkitBoxOrient: 'vertical', // Set the orientation to vertical
-                                                        textOverflow: 'ellipsis' // Add ellipsis to text overflow
-                                                    }}>
-                                                        {item.title}
-                                                    </div>
-                                                }
-                                                titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                subheader={
-                                                    <div>
-                                                        <div>{item.date}</div>
-                                                        <div>
-                                                            <PinDropIcon style={{
-                                                                fontSize: '1rem',
-                                                                verticalAlign: 'bottom'
-                                                            }}/> {item.place}
-                                                        </div>
-                                                    </div>
-                                                }
-                                                subheaderTypographyProps={{
-                                                    component: 'div',
-                                                    style: {fontSize: '11px'}
-                                                }}
-                                            />
-                                        </div>
-                                    </a>
-                                    <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
-                                       style={{textDecoration: 'none', color: 'inherit'}}>
-                                        <CardMedia
-                                            component="div"
-                                            sx={{pt: '56.25%'}}
-                                            image={item.photo}
-                                        />
-                                    </a>
-                                </>
-                                <IconButton
-                                    aria-label="add to favorites"
-                                    sx={{ zIndex: 1 }} // Ensure the button is above other elements
-                                    onClick={() => toggleFavorite(item.id, isAlreadyFavorited, "event")}
-                                >
-                                    {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                </IconButton>
-                            </Card>
-                        </Grid>
-                    );
-                    })}
-                    {Array.isArray(favorites.favoriteActivities) && favorites.favoriteActivities.map((item, index) => {
-                        const isAlreadyFavorited = favorites.favoriteActivities.map(activity => activity.id).includes(item.id);
+                    {Array.isArray(favorites.favoriteProducts) && favorites.favoriteProducts.map((item, index) => {
+                        const isAlreadyFavorited = favorites.favoriteActivities.map(product => product.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                        <a href={`/activities/detail/${item.id}/${item.title}`}
+                                        <a href={`/products/detail/${item.id}/${item.title}`}
                                            style={{textDecoration: 'none', color: 'inherit'}}>
                                             <div style={{textDecoration: 'none', color: 'inherit', cursor: 'pointer'}}>
                                                 <div style={{display: 'flex', flexDirection: 'row'}}>

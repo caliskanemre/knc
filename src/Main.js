@@ -15,13 +15,7 @@ import {Avatar, CardHeader, Divider, IconButton, Menu, MenuItem, Snackbar, Toolt
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import LandscapeIcon from "@mui/icons-material/Landscape";
-import ScienceIcon from "@mui/icons-material/Science";
-import SchoolIcon from "@mui/icons-material/School";
-import ChildCareIcon from "@mui/icons-material/ChildCare";
-import PaletteIcon from "@mui/icons-material/Palette";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import {useAuth} from "./auth/AuthProvider";
@@ -31,12 +25,21 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
+import BackgroundGalleryDetails from "./shared/BackgroundGalleryDetails";
+import veil from "./images/veil.jpg";
+import tamborine from "./images/tamborine.jpg";
+import winter from "./images/winter_green.jpeg";
+import swimming from "./images/summer_green3.jpg";
+import park from "./images/park_green2.png";
+import nature from "./images/nature2.jpg";
+import naturalPark from "./images/park_green.jpg";
+import museumIcon from "./images/green_museum.png";
 
 const defaultTheme = createTheme();
 const deneme = []
 deneme.push(backgroundImage);
 export default function Main() {
-    const [events, setEvents] = useState([]);
+    const [products, setProducts] = useState([]);
 
     const [expanded, setExpanded] = React.useState(false);
     const { toggleFavorite, favorites,isLoggedIn } = useAuth();
@@ -49,7 +52,7 @@ export default function Main() {
 
     const handleClick = (eventId) => {
         if (isLoggedIn) {
-            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            const isAlreadyFavoritedEvent = favorites.favoriteProducts.map(event => event.id).includes(eventId);
             if (!isAlreadyFavoritedEvent) {
                 setOpenMenuEventId(eventId); // Open the menu for this event
             } else {
@@ -73,7 +76,7 @@ export default function Main() {
         setOpenDialog(false);
     };
     const handleFavoriteClick = (eventId, notificationType) => {
-        const isFavorite = favorites.favoriteEvents?.map(event => event.id).includes(eventId);
+        const isFavorite = favorites.favoriteProducts?.map(event => event.id).includes(eventId);
         toggleFavorite(eventId, isFavorite, "event", notificationType);
         // Set the Snackbar message and open it
         setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
@@ -101,7 +104,7 @@ export default function Main() {
         const sort = 'interested,desc'; // This sorts the events by 'interest' in descending order
 
         // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/events/all`, {
+        Axios.get(`${baseURL}/products/all`, {
             params: {
                 page: page,
                 size: size,
@@ -109,10 +112,10 @@ export default function Main() {
             }
         })
             .then((response) => {
-                setEvents(response.data.content);
+                setProducts(response.data);
             })
             .catch((error) => {
-                console.error('Error fetching events:', error);
+                console.error('Error fetching products:', error);
             });
     }, []);
 
@@ -123,16 +126,16 @@ export default function Main() {
         return "0.85rem"; // Fallback font size
     };
 
-    const eventIcons = {
-        "music & concerts": <MusicNoteIcon/>,
-        "outdoor & adventure": <LandscapeIcon/>,
-        "tech & innovation": <ScienceIcon/>,
-        "education": <SchoolIcon/>,
-        "children": <ChildCareIcon/>,
-        "arts & culture": <PaletteIcon/>,
-        "other": <HelpOutlineIcon/>,
+    const activityIcons = {
+        veil: veil,
+        tamborine: tamborine,
+        winter: winter,
+        summer: swimming,
+        park: park,
+        nature: nature,
+        national: naturalPark,
+        museum: museumIcon
     };
-
 
 
 
@@ -154,24 +157,26 @@ export default function Main() {
 
                 <Container sx={{py: 9}} maxWidth="xl">
                     <Grid container spacing={4}>
-                        {events.map((item) => {
-                            const isAlreadyFavorited = favorites.favoriteEvents?.map(event => event.id).includes(item.id) ?? false;
+                        {products.map((item) => {
+                            const isAlreadyFavorited = favorites.favoriteProducts?.map(event => event.id).includes(item.id) ?? false;
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                     <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                        <a href={`/products/detail/${item.id}`}
                                            style={{textDecoration: 'none', color: 'inherit'}}>
                                             <div style={{display: 'flex', flexDirection: 'row'}}>
                                                 <Avatar sx={{
-                                                    bgcolor: 'darkorange',
+                                                    bgcolor: 'primary.main',
                                                     fontSize: '0.7rem',
                                                     marginLeft: '8px',
                                                     marginTop: '15px'
                                                 }}>
-                                                    {eventIcons[item.type.toLowerCase()]}
+                                                    <img src={activityIcons[item.category.toLocaleLowerCase()]}
+                                                         alt={`${item.category} Icon`}
+                                                         style={{width: '100%', height: '100%'}}/>
                                                 </Avatar>
                                                 <CardHeader
-                                                    style={{display: 'top', height: '100px'}}
+                                                    style={{display: 'top', height: '50px'}}
                                                     title={
                                                         <div style={{
                                                             maxWidth: '100%', // Limit the width to the parent container
@@ -185,36 +190,20 @@ export default function Main() {
                                                         </div>
                                                     }
                                                     titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                    
+
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
+                                        <a href={`/products/detail/${item.id}`}
                                            style={{textDecoration: 'none', color: 'inherit'}}>
                                             <CardMedia
                                                 component="div"
                                                 sx={{
-                                                    pt: '56.25%',
                                                     position: 'relative',
                                                     overflow: 'hidden'
                                                 }} // Ensure the position is relative to position the image correctly
                                             >
-                                                <img
-                                                    src={item.photo}
-                                                    alt={item.title}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0
-                                                    }} // Full cover image
-                                                    onError={(e) => {
-                                                        e.target.onerror = null; // Prevents looping
-                                                        e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
-                                                    }}
-                                                />
+                                                <BackgroundGalleryDetails images={item.photos.map((photo) => photo.photo)}/>
                                             </CardMedia>
                                         </a>
                                         <IconButton

@@ -18,8 +18,8 @@ import {
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import {useNavigate, useParams} from "react-router-dom";
-import CampingIcon2 from "../images/camping_summer2.jpg"
-import wellness from "../images/wellness_green2.png"
+import veil from "../images/veil.jpg"
+import tamborine from "../images/tamborine.jpg"
 import winter from "../images/winter_green.jpeg"
 import swimming from "../images/summer_green3.jpg"
 import park from "../images/park_green2.png"
@@ -27,7 +27,6 @@ import nature from "../images/nature2.jpg"
 import naturalPark from "../images/park_green.jpg"
 import museumIcon from "../images/green_museum.png"
 import {ActivityFilter} from "../filter/ActivityFilter";
-import BackgroundGallery from "../shared/BackgroundGallery";
 import {Helmet} from "react-helmet";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -35,11 +34,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import Dialog from "@mui/material/Dialog";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
-
-const mapContainerStyle = {
-    width: '100%',
-    height: '400px',
-};
+import BackgroundGalleryDetails from "../shared/BackgroundGalleryDetails";
 
 const ActivityList = () => {
     const {type} = useParams();
@@ -74,10 +69,10 @@ const ActivityList = () => {
         setSnackbarOpen(false);
     };
 
-    const handleFavoriteClick = (eventId) => {
+    const handleFavoriteClick = (productId) => {
         if (isLoggedIn) {
-            const isFavorite = favorites.favoriteActivities.map(event => event.id).includes(eventId);
-            toggleFavorite(eventId, isFavorite, "activity");
+            const isFavorite = favorites.favoriteProducts?.map(product => product.id).includes(productId) || false;
+            toggleFavorite(productId, isFavorite, "activity");
             // Set the Snackbar message and open it
             setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
             setSnackbarOpen(true);
@@ -85,6 +80,7 @@ const ActivityList = () => {
             handleOpenDialog();
         }
     };
+
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
@@ -186,8 +182,8 @@ const ActivityList = () => {
         }
     };
     const activityIcons = {
-        veil: CampingIcon2,
-        health: wellness,
+        veil: veil,
+        tamborine: tamborine,
         winter: winter,
         summer: swimming,
         park: park,
@@ -239,7 +235,7 @@ const ActivityList = () => {
                 <Grid container spacing={4}>
 
                     {activities.map((item) => {
-                        const isAlreadyFavorited = favorites.favoriteActivities?.map(event => event.id).includes(item.id);
+                        const isAlreadyFavorited = favorites.favoriteProducts?.map(product => product.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
@@ -252,9 +248,9 @@ const ActivityList = () => {
                                                 marginLeft: '8px',
                                                 marginTop: '15px'
                                             }}>
-                          {/*                      <img src={activityIcons[item.activity_type.toLocaleLowerCase()]}
-                                                     alt={`${item.activity_type} Icon`}
-                                                     style={{width: '100%', height: '100%'}}/>*/}
+                                              <img src={activityIcons[item.category.toLocaleLowerCase()]}
+                                                     alt={`${item.category} Icon`}
+                                                     style={{width: '100%', height: '100%'}}/>
                                             </Avatar>
                                             <CardHeader style={{height: '50px'}}
                                                         title={
@@ -273,7 +269,7 @@ const ActivityList = () => {
                                             />
 
                                         </div>
-                                        <BackgroundGallery images={item.photos.map((photo) => photo.photo)}/>
+                                        <BackgroundGalleryDetails images={item.photos.map((photo) => photo.photo)}/>
                                     </a>
                                     <IconButton
                                         aria-label="add to favorites"
@@ -317,7 +313,6 @@ const ActivityList = () => {
                 handleCloseFilterDialog={handleCloseFilterDialog}
                 type={type}
                 applyFilter={applyFilter}
-                updateFilteredActivities={updateFilteredActivities}
             />
                 <SwipeableDrawer
                     anchor="bottom"
