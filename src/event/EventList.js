@@ -40,7 +40,6 @@ import DanceIcon from '@mui/icons-material/LocalActivity';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import PaletteIcon from '@mui/icons-material/Palette';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import backgroundImage from "../images/background256.png";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";

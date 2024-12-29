@@ -31,7 +31,6 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import backgroundImage from "../images/background256.png";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
