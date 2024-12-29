@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Main from "./Main";
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
-import EventList from "./event/EventList";
 import ActivityList from "./activity/ActivityList";
 import Map from "./header/Map";
 import EventDetails from "./event/EventDetails";
@@ -100,7 +99,6 @@ function App() {
                     <div className="App">
                         <Routes>
                             <Route path="/" element={<Main/>}/>
-                            <Route path="/events" element={<EventList/>}/>
                             <Route path="/ideal-for" element={<IdealForList/>}/>
                             <Route path="/products" element={<ActivityList/>}/>
                             <Route path="/products/:type" element={<ActivityList/>}/>

@@ -56,7 +56,6 @@ const SearchPage = () => {
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
     const deneme = []
-    deneme.push(backgroundImage);
 
     // Function to navigate to the details page
 
