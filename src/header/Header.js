@@ -278,19 +278,19 @@ export default function Header() {
                                 </ListItem>
 
                                 {/* Continue with other ListItems, adjusting font size similarly */}
-                                <ListItem button onClick={() => handleNavigation('/ideal-for')}>
+                                {/*<ListItem button onClick={() => handleNavigation('/ideal-for')}>
                                     <ListItemText
                                         primary={t('AI Assistant')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
-                                </ListItem>
-                                <ListItem button onClick={() => handleNavigation('/events')}>
+                                </ListItem>*/}
+                           {/*     <ListItem button onClick={() => handleNavigation('/events')}>
                                     <ListItemText
                                         primary={t('Events')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
-
+*/}
                                 <ActivitySubHeaderMobile />
 
                                 <ListItem button onClick={() => handleNavigation('/about-us')}>
@@ -311,14 +311,14 @@ export default function Header() {
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
-
+{/*
                                 <ListItem button onClick={() => handleNavigation('/cart')}>
-                                    <ShoppingCartIcon sx={{ fontSize: 24, marginRight: 1 }} /> {/* İkon boyutunu ve sağ boşluğu ayarlayın */}
+                                    <ShoppingCartIcon sx={{ fontSize: 24, marginRight: 1 }} />  İkon boyutunu ve sağ boşluğu ayarlayın
                                     <ListItemText
                                         primary={t('My Cart')} // Çok dilli destek için "Sepetim" çevirisi
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
                                     />
-                                </ListItem>
+                                </ListItem>*/}
                             </List>
                         </Drawer>
 

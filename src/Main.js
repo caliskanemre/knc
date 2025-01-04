@@ -10,7 +10,7 @@ import Container from '@mui/material/Container';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Axios from 'axios';
 import Header from "./header/Header";
-import backgroundImage from './background1.jpg';
+import backgroundImage from './background6.jpg';
 import {Avatar, CardHeader, Divider, IconButton, Menu, MenuItem, Snackbar, Tooltip} from "@mui/material";
 import BackgroundGallery from "./shared/BackgroundGallery";
 import PinDropIcon from "@mui/icons-material/PinDrop";
@@ -262,7 +262,7 @@ export default function Main() {
                     color="text.secondary"
                     component="p"
                 >
-                    All rights reserved @2024 HandX OU
+                    All rights reserved @2025 KNC
                 </Typography>
                 {/*      <Copyright />*/}
             </Box>

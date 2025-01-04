@@ -54,11 +54,11 @@ const BackgroundGallery = ({ images }) => {
             position: 'relative',
             overflow: 'hidden',
             backgroundImage: `url(${images[currentImageIndex]})`,
-            backgroundPosition: 'center',
+            backgroundPosition: 'center center',
             backgroundRepeat: 'no-repeat',
             backgroundSize: '%100 100%',
-            width: '100%',
-            height: '40vh',
+            width: '100vw', // Full viewport width
+            height: '45vh',
             zIndex: 2,
             opacity: isFading ? 0 : 1, // Control opacity for fade-in/out
             transition: 'opacity 0.5s ease-in-out', // Smooth transition for fade effect

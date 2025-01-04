@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Collapse, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import "./css/ActivitySubHeader.css";
-import CampingIcon2 from "../images/camping_summer2.jpg";
-import wellness from "../images/wellness_green2.png";
-import winter from "../images/winter_green.jpeg";
-import swimming from "../images/summer_green3.jpg";
-import park from "../images/park_green2.png";
-import nature from "../images/nature2.jpg";
-import naturalPark from "../images/park_green.jpg";
-import museumIcon from "../images/green_museum.png";
+
+import flower from "../images/flower.jpg"
+import tamborine from "../images/tamborine.jpg"
+import ornament from "../images/ornament.jpg"
+import gift from "../images/gift.jpg"
+import veil from "../images/veil.jpg"
+import hennaSet from "../images/hennaset.jpg"
+import souvenir from "../images/souvenir.jpg"
+import handkerchief from "../images/mendil.jpg"
 import {useTranslation} from "react-i18next";
 
 function ActivitySubHeaderMobile() {
@@ -23,58 +24,58 @@ function ActivitySubHeaderMobile() {
     return (
         <List component="nav">
             <ListItem button onClick={handleClick}>
-                <ListItemText primary={t('Activities')}  primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}/>
+                <ListItemText primary={t('Products')}  primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}/>
 
             </ListItem>
             <Collapse in={open} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                    <ListItem button component={NavLink} to="/activities/nature">
+                    <ListItem button component={NavLink} to="/products/hennaSet">
                         <ListItemIcon>
-                            <img src={nature} alt="Nature" style={{ width: '24px', height: '24px' }} />
+                            <img src={hennaSet} alt="hennaSet" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Nature')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Henna Set')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/museum">
+                    <ListItem button component={NavLink} to="/products/handkerchief">
                         <ListItemIcon>
-                            <img src={museumIcon} alt="Museum" style={{ width: '24px', height: '24px' }} />
+                            <img src={handkerchief} alt="handkerchief" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Museum')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Handkerchief')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/health">
+                    <ListItem button component={NavLink} to="/products/tamborine">
                         <ListItemIcon>
-                            <img src={wellness} alt="Health and Spa" style={{ width: '24px', height: '24px' }} />
+                            <img src={tamborine} alt="tamborine" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Health')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Tamborine')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/winter">
+                    <ListItem button component={NavLink} to="/products/ornament">
                         <ListItemIcon>
-                            <img src={winter} alt="Winter" style={{ width: '24px', height: '24px' }} />
+                            <img src={ornament} alt="Ornament" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Winter')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Ornament')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/summer">
+                    <ListItem button component={NavLink} to="/products/gift">
                         <ListItemIcon>
-                            <img src={swimming} alt="Summer" style={{ width: '24px', height: '24px' }} />
+                            <img src={gift} alt="Gift" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Summer')} style={{ marginLeft: '-16px' }} />
+                        <ListItemText primary={t('Gift')} style={{ marginLeft: '-16px' }} />
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/camping">
+                    <ListItem button component={NavLink} to="/products/flower">
                         <ListItemIcon>
-                            <img src={CampingIcon2} alt="Camping" style={{ width: '24px', height: '24px' }} />
+                            <img src={flower} alt="Flower" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Camping')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Flower')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/park">
+                    <ListItem button component={NavLink} to="/products/veil">
                         <ListItemIcon>
-                            <img src={park} alt="Park" style={{ width: '24px', height: '24px' }} />
+                            <img src={veil} alt="Veil" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Park')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Veil')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
-                    <ListItem button component={NavLink} to="/activities/national-park">
+                    <ListItem button component={NavLink} to="/products/souvenir">
                         <ListItemIcon>
-                            <img src={naturalPark} alt="National Park" style={{ width: '24px', height: '24px' }} />
+                            <img src={souvenir} alt="Souvenir" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('National Park')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Souvenir')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                 </List>
             </Collapse>
