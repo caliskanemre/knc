@@ -28,7 +28,7 @@ const BackgroundGalleryDetails = ({ images }) => {
                 setTimeout(() => {
                     setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
                     setIsFading(false);
-                }, 500);
+                }, 5000);
             }, 5000);
 
             return () => clearInterval(interval);

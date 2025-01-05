@@ -28,12 +28,12 @@ import Button from '@mui/material/Button';
 import BackgroundGalleryDetails from "./shared/BackgroundGalleryDetails";
 import veil from "./images/veil.jpg";
 import tamborine from "./images/tamborine.jpg";
-import winter from "./images/winter_green.jpeg";
-import swimming from "./images/summer_green3.jpg";
-import park from "./images/park_green2.png";
-import nature from "./images/nature2.jpg";
-import naturalPark from "./images/park_green.jpg";
-import museumIcon from "./images/green_museum.png";
+import hennaset from "./images/hennaset.jpg";
+import handkerchief from "./images/mendil.jpg";
+import gift from "./images/gift.jpg";
+import ornament from "./images/ornament.jpg";
+import flower from "./images/flower.jpg";
+import souvenir from "./images/souvenir.jpg";
 
 const defaultTheme = createTheme();
 const deneme = []
@@ -129,12 +129,12 @@ export default function Main() {
     const activityIcons = {
         veil: veil,
         tamborine: tamborine,
-        winter: winter,
-        summer: swimming,
-        park: park,
-        nature: nature,
-        national: naturalPark,
-        museum: museumIcon
+        hennaset: hennaset,
+        handkerchief: handkerchief,
+        gift: gift,
+        ornament: ornament,
+        flower: flower,
+        souvenir: souvenir
     };
 
 
@@ -173,7 +173,8 @@ export default function Main() {
                                                 }}>
                                                     <img src={activityIcons[item.category.toLocaleLowerCase()]}
                                                          alt={`${item.category} Icon`}
-                                                         style={{width: '100%', height: '100%'}}/>
+                                                         style={{width: '100%', height: '100%'}}
+                                                         loading="lazy"/>
                                                 </Avatar>
                                                 <CardHeader
                                                     style={{display: 'top', height: '50px'}}
@@ -254,7 +255,7 @@ export default function Main() {
             {/* Footer */}
             <Box sx={{bgcolor: 'background.paper', p: 6}} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
-                    Kina Sepeti
+                    Kına Sepeti
                 </Typography>
                 <Typography
                     variant="subtitle1"
@@ -262,7 +263,7 @@ export default function Main() {
                     color="text.secondary"
                     component="p"
                 >
-                    All rights reserved @2025 KNC
+                    All rights reserved @2025 Kına Sepeti
                 </Typography>
                 {/*      <Copyright />*/}
             </Box>

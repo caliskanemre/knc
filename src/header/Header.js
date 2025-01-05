@@ -207,10 +207,7 @@ export default function Header() {
                                 <IconButton aria-label="login" sx={{color: 'black'}} onClick={handleOpenLoginDialog}>
                                     <LoginIcon/>
                                 </IconButton>
-                                <nav>
-                                    <Button color="primary" onClick={() => changeLanguage('en')}>EN</Button>
-                                    <Button color="primary" onClick={() => changeLanguage('tr')}>TR</Button>
-                                </nav>
+
                             </>
                         ) : (
                             <div>
@@ -250,20 +247,21 @@ export default function Header() {
                         >
                             <List>
                                 <Typography
-                                    variant="h2"
-                                    component="h2"
-                                    sx={{
-                                        flexGrow: 1,
-                                        cursor: 'pointer',
-                                        color: 'brown',
-                                        fontSize: { xs: '2rem', sm: '2rem' }, // Responsive font size
-                                        fontWeight: 'bold',
-                                        textAlign: 'center',
-                                        marginBottom: '20px', // Add some space below the header
-                                    }}
+                                    variant="h1"
+                                    component="h1"
                                     onClick={() => handleNavigation('/')}
+                                    style={{
+                                        cursor: 'pointer',
+                                        color: '#8B0000', // Deep maroon color for an elegant, traditional look
+                                        fontFamily: "'Dancing Script', cursive", // Elegant script font
+                                        fontSize: isMobile ? '3rem' : '2.5rem',
+                                        fontWeight: 700, // Ensure boldness for better readability
+                                        letterSpacing: '0.03em',
+                                        lineHeight: 1.2,
+                                        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
+                                    }}
                                 >
-                                    Kina sepeti
+                                    KınaSepeti
                                 </Typography>
 
                                 {/* ListItem with increased font size for "Search" */}
@@ -272,7 +270,12 @@ export default function Header() {
                                         <i className="fas fa-search"></i>
                                         <ListItemText
                                             primary={t('Search')}
-                                            primaryTypographyProps={{ style: { fontSize: '1.2rem', marginLeft: '10px' } }} // Increase font size
+                                            primaryTypographyProps={{
+                                                style: {
+                                                    fontSize: '1.2rem',
+                                                    marginLeft: '10px'
+                                                }
+                                            }} // Increase font size
                                         />
                                     </Box>
                                 </ListItem>
@@ -284,34 +287,34 @@ export default function Header() {
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>*/}
-                           {/*     <ListItem button onClick={() => handleNavigation('/events')}>
+                                {/*     <ListItem button onClick={() => handleNavigation('/events')}>
                                     <ListItemText
                                         primary={t('Events')}
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
                                     />
                                 </ListItem>
 */}
-                                <ActivitySubHeaderMobile />
+                                <ActivitySubHeaderMobile/>
 
                                 <ListItem button onClick={() => handleNavigation('/about-us')}>
                                     <ListItemText
                                         primary={t('How it works')}
-                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                        primaryTypographyProps={{style: {fontSize: '1.2rem'}}} // Increase font size
                                     />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/privacy-policy')}>
                                     <ListItemText
                                         primary={t('Privacy Policy')}
-                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                        primaryTypographyProps={{style: {fontSize: '1.2rem'}}} // Increase font size
                                     />
                                 </ListItem>
                                 <ListItem button onClick={() => handleNavigation('/contact-us')}>
                                     <ListItemText
                                         primary={t('Contact Us')}
-                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
+                                        primaryTypographyProps={{style: {fontSize: '1.2rem'}}} // Increase font size
                                     />
                                 </ListItem>
-{/*
+                                {/*
                                 <ListItem button onClick={() => handleNavigation('/cart')}>
                                     <ShoppingCartIcon sx={{ fontSize: 24, marginRight: 1 }} />  İkon boyutunu ve sağ boşluğu ayarlayın
                                     <ListItemText
@@ -319,6 +322,11 @@ export default function Header() {
                                         primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
                                     />
                                 </ListItem>*/}
+
+                                <nav>
+                                    <Button color="primary" onClick={() => changeLanguage('en')}>EN</Button>
+                                    <Button color="primary" onClick={() => changeLanguage('tr')}>TR</Button>
+                                </nav>
                             </List>
                         </Drawer>
 

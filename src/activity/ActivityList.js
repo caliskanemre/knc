@@ -20,12 +20,12 @@ import Container from "@mui/material/Container";
 import {useNavigate, useParams} from "react-router-dom";
 import veil from "../images/veil.jpg"
 import tamborine from "../images/tamborine.jpg"
-import winter from "../images/winter_green.jpeg"
-import swimming from "../images/summer_green3.jpg"
-import park from "../images/park_green2.png"
-import nature from "../images/nature2.jpg"
-import naturalPark from "../images/park_green.jpg"
-import museumIcon from "../images/green_museum.png"
+import hennaset from "../images/hennaset.jpg"
+import gift from "../images/gift.jpg"
+import ornament from "../images/ornament.jpg"
+import handkerchief from "../images/mendil.jpg"
+import souvenir from "../images/souvenir.jpg"
+import flower from "../images/flower.jpg"
 import {ActivityFilter} from "../filter/ActivityFilter";
 import {Helmet} from "react-helmet";
 import {useAuth} from "../auth/AuthProvider";
@@ -184,12 +184,12 @@ const ActivityList = () => {
     const activityIcons = {
         veil: veil,
         tamborine: tamborine,
-        winter: winter,
-        summer: swimming,
-        park: park,
-        nature: nature,
-        national: naturalPark,
-        museum: museumIcon
+        hennaset: hennaset,
+        handkerchief: handkerchief,
+        gift: gift,
+        ornament: ornament,
+        flower: flower,
+        souvenir: souvenir
     };
     
     const getDynamicFontSize = (title) => {
