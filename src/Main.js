@@ -38,9 +38,14 @@ import souvenir from "./images/souvenir.jpg";
 const defaultTheme = createTheme();
 const deneme = []
 deneme.push(backgroundImage);
+
+const PAGE_SIZE = 20;
+
 export default function Main() {
     const [products, setProducts] = useState([]);
 
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
     const [expanded, setExpanded] = React.useState(false);
     const { toggleFavorite, favorites,isLoggedIn } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -93,30 +98,35 @@ export default function Main() {
         }
         setSnackbarOpen(false);
     };
+    const handleLoadMore = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchProducts(nextPage);
+    };
 
+    const fetchProducts = async (pageNum) => {
+        try {
+            const response = await Axios.get(`${baseURL}/products/all`, {
+                params: {
+                    page: pageNum,
+                    size: PAGE_SIZE,
+                    sort: 'interested,desc',
+                },
+            });
+
+            if (response.data.length > 0) {
+                setProducts((prevProducts) => [...prevProducts, ...response.data]);
+            }
+
+            // Check if there are more products to fetch
+            setHasMore(response.data.length === PAGE_SIZE);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    };
 
     useEffect(() => {
-        // Define the page and size for pagination
-        const page = 0;
-        const size = 20;
-
-        // Define the sorting criteria
-        const sort = 'interested,desc'; // This sorts the events by 'interest' in descending order
-
-        // Make an HTTP GET request to fetch events from the backend
-        Axios.get(`${baseURL}/products/all`, {
-            params: {
-                page: page,
-                size: size,
-                sort: sort
-            }
-        })
-            .then((response) => {
-                setProducts(response.data);
-            })
-            .catch((error) => {
-                console.error('Error fetching products:', error);
-            });
+        fetchProducts(0); // Initial fetch on component mount
     }, []);
 
     const getDynamicFontSize = (title) => {
@@ -230,6 +240,13 @@ export default function Main() {
                             );
                         })}
                     </Grid>
+                    {hasMore && (
+                        <Box sx={{ textAlign: 'center', mt: 4 }}>
+                            <Button variant="contained" onClick={handleLoadMore}>
+                                Load More
+                            </Button>
+                        </Box>
+                    )}
                     <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
                         <DialogTitle>{"Just a moment!"}</DialogTitle>
                         <DialogContent>

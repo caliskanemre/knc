@@ -202,9 +202,9 @@ const ActivityList = () => {
     return (
         <div className="activity-list" ref={listRef}>
             <Helmet>
-                <title>{type ? `${type} Activities` : 'All Activities'} - Activenty</title>
+                <title>{type ? `${type} Products` : 'All Products'} - Kina Sepeti</title>
                 <meta name="description"
-                      content={`Explore ${type ? type : 'all'} activities on Activenty. Find outdoor adventures, cultural experiences, and more.`}/>
+                      content={`Explore ${type ? type : 'all'} products on Kina Sepeti. Find henna nights, products.`}/>
                 <meta name="robots" content="index, follow"/>
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
             </Helmet>
