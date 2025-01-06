@@ -107,7 +107,7 @@ export default function Header() {
         return (
             <>
                 <Helmet>
-                    <title>KınaSepeti - Personalized Wedding and Henna Gifts</title>
+                    <title>Kına Sepeti - Personalized Wedding and Henna Gifts</title>
                     <meta name="description"
                           content="Find unique and personalized products for weddings and henna nights at KınaSepeti! Add names, dates, and custom designs to create unforgettable memories."/>
                     <meta name="keywords" content={keywords}/>
