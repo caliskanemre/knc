@@ -505,7 +505,7 @@ const SearchPage = () => {
                     <DialogTitle>{"Just a moment!"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for events and activities and easily manage your favorites. It's quick and straightforward to get started!
+                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for products and easily manage your favorites. It's quick and straightforward to get started!
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>

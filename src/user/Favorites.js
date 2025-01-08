@@ -75,7 +75,7 @@ const Favorites = () => {
             <Container sx={{py: 9}} maxWidth="xl">
                 <Grid container spacing={4}>
                     {Array.isArray(favorites.favoriteProducts) && favorites.favoriteProducts.map((item, index) => {
-                        const isAlreadyFavorited = favorites.favoriteActivities.map(product => product.id).includes(item.id);
+                        const isAlreadyFavorited = favorites.favoriteProducts.map(product => product.id).includes(item.id);
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
                                 <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
