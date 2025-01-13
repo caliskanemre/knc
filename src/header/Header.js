@@ -141,7 +141,7 @@ export default function Header() {
                                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
                                 }}
                             >
-                                KınaSepeti
+                                Kınasepeti
                             </Typography>
                         )}
                         {isMobile && (
@@ -153,14 +153,14 @@ export default function Header() {
                                     cursor: 'pointer',
                                     color: '#8B0000', // Deep maroon color for an elegant, traditional look
                                     fontFamily: "'Dancing Script', cursive", // Elegant script font
-                                    fontSize: isMobile ? '3rem' : '2.5rem',
-                                    fontWeight: 700, // Ensure boldness for better readability
+                                    fontSize: isMobile ? '2rem' : '2.5rem',
+                                    fontWeight: 500, // Ensure boldness for better readability
                                     letterSpacing: '0.03em',
                                     lineHeight: 1.2,
                                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
                                 }}
                             >
-                                KınaSepeti
+                                Kınasepeti
                             </Typography>
                         )}
                         {!isMobile && (
@@ -254,14 +254,14 @@ export default function Header() {
                                         cursor: 'pointer',
                                         color: '#8B0000', // Deep maroon color for an elegant, traditional look
                                         fontFamily: "'Dancing Script', cursive", // Elegant script font
-                                        fontSize: isMobile ? '3rem' : '2.5rem',
+                                        fontSize: isMobile ? '2rem' : '2.5rem',
                                         fontWeight: 700, // Ensure boldness for better readability
                                         letterSpacing: '0.03em',
                                         lineHeight: 1.2,
                                         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)' // Subtle shadow for depth
                                     }}
                                 >
-                                    KınaSepeti
+                                    Kınasepeti
                                 </Typography>
 
                                 {/* ListItem with increased font size for "Search" */}

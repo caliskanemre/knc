@@ -29,7 +29,7 @@ const BackgroundGalleryDetails = ({ images }) => {
                     setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
                     setIsFading(false);
                 }, 500);
-            }, 5000);
+            }, 500000);
 
             return () => clearInterval(interval);
         }

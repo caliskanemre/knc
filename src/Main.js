@@ -37,13 +37,13 @@ import souvenir from "./images/souvenir.jpg";
 
 const defaultTheme = createTheme();
 const deneme = []
-deneme.push(backgroundImage);
+deneme.push(backgroundImage)
 
 const PAGE_SIZE = 20;
 
 export default function Main() {
     const [products, setProducts] = useState([]);
-
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [expanded, setExpanded] = React.useState(false);
@@ -54,6 +54,7 @@ export default function Main() {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [notificationPref, setNotificationPref] = useState('');
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const handleClick = (eventId) => {
         if (isLoggedIn) {
@@ -68,6 +69,16 @@ export default function Main() {
             handleOpenDialog();
         }
     };
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleCloseNotification = (eventId, notificationType) => {
         setNotificationPref(notificationType); // Set the notification preference based on user selection
@@ -98,32 +109,43 @@ export default function Main() {
         }
         setSnackbarOpen(false);
     };
+
+
     const handleLoadMore = () => {
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchProducts(nextPage);
+        if (!loading && hasMore) {
+            setLoading(true);
+            fetchProducts(page).finally(() => setLoading(false));
+        }
     };
 
     const fetchProducts = async (pageNum) => {
         try {
             const response = await Axios.get(`${baseURL}/products/all`, {
                 params: {
-                    page: pageNum,
-                    size: PAGE_SIZE,
-                    sort: 'interested,desc',
+                    page: pageNum, // Current page number
+                    size: PAGE_SIZE, // Number of items per page
+                    sort: 'interested,desc', // Sorting criteria
                 },
             });
 
-            if (response.data.length > 0) {
-                setProducts((prevProducts) => [...prevProducts, ...response.data]);
+            // Extract data and pagination metadata
+            const { content, totalPages } = response.data || {};
+            if (content && content.length > 0) {
+                setProducts((prevProducts) => [...prevProducts, ...content]);
+            }
+            if (totalPages != null) {
+                setHasMore(pageNum + 1 < totalPages);
+            } else {
+                console.error("Pagination metadata missing from response.");
             }
 
-            // Check if there are more products to fetch
-            setHasMore(response.data.length === PAGE_SIZE);
+            // Determine if there are more pages to fetch
+            setHasMore(pageNum + 1 < totalPages);
         } catch (error) {
             console.error('Error fetching products:', error);
         }
     };
+
 
     useEffect(() => {
         fetchProducts(0); // Initial fetch on component mount
@@ -159,11 +181,15 @@ export default function Main() {
             <Header/>
             <main>
                 {/* Hero unit */}
-                <Grid container spacing={3}> {/* Maintains the outer grid container */}
-                    <Grid item xs={12}> {/* Allows the grid item to span the full width */}
-                        <BackgroundGallery images={deneme}/>
-                    </Grid>
+                <Grid container spacing={3}>
+                    {/* Conditionally render BackgroundGallery based on isMobile */}
+                    {!isMobile && (
+                        <Grid item xs={12}>
+                            <BackgroundGallery images={[backgroundImage]} />
+                        </Grid>
+                    )}
                 </Grid>
+
 
                 <Container sx={{py: 9}} maxWidth="xl">
                     <Grid container spacing={4}>
@@ -171,82 +197,83 @@ export default function Main() {
                             const isAlreadyFavorited = favorites.favoriteProducts?.map(event => event.id).includes(item.id) ?? false;
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                    <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                        <a href={`/products/detail/${item.id}`}
-                                           style={{textDecoration: 'none', color: 'inherit'}}>
-                                            <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                <Avatar sx={{
-                                                    bgcolor: 'primary.main',
-                                                    fontSize: '0.7rem',
-                                                    marginLeft: '8px',
-                                                    marginTop: '15px'
-                                                }}>
-                                                    <img src={activityIcons[item.category.toLocaleLowerCase()]}
-                                                         alt={`${item.category} Icon`}
-                                                         style={{width: '100%', height: '100%'}}
-                                                         loading="lazy"/>
+                                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                                        <a href={`/products/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                                <Avatar
+                                                    sx={{
+                                                        bgcolor: 'primary.main',
+                                                        fontSize: '0.7rem',
+                                                        marginLeft: '8px',
+                                                        marginTop: '15px',
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={activityIcons[item.category.toLocaleLowerCase()]}
+                                                        alt={`${item.category} Icon`}
+                                                        style={{ width: '100%', height: '100%' }}
+                                                        loading="lazy"
+                                                    />
                                                 </Avatar>
                                                 <CardHeader
-                                                    style={{display: 'top', height: '50px'}}
+                                                    style={{ display: 'top', height: '50px' }}
                                                     title={
-                                                        <div style={{
-                                                            maxWidth: '100%', // Limit the width to the parent container
-                                                            overflow: 'hidden', // Hide overflow
-                                                            display: '-webkit-box', // Use webkit box model for line clamp
-                                                            WebkitLineClamp: 2, // Limit to two lines
-                                                            WebkitBoxOrient: 'vertical', // Set the orientation to vertical
-                                                            textOverflow: 'ellipsis' // Add ellipsis to text overflow
-                                                        }}>
+                                                        <div
+                                                            style={{
+                                                                maxWidth: '100%',
+                                                                overflow: 'hidden',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: 2,
+                                                                WebkitBoxOrient: 'vertical',
+                                                                textOverflow: 'ellipsis',
+                                                            }}
+                                                        >
                                                             {item.title}
                                                         </div>
                                                     }
-                                                    titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-
+                                                    titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                                 />
                                             </div>
                                         </a>
-                                        <a href={`/products/detail/${item.id}`}
-                                           style={{textDecoration: 'none', color: 'inherit'}}>
-                                            <CardMedia
-                                                component="div"
-                                                sx={{
-                                                    position: 'relative',
-                                                    overflow: 'hidden'
-                                                }} // Ensure the position is relative to position the image correctly
-                                            >
-                                                <BackgroundGalleryDetails images={item.photos.map((photo) => photo.photo)}/>
-                                            </CardMedia>
+                                        <a href={`/products/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                            <div style={{ position: 'relative', overflow: 'hidden' }}>
+                                                {/* Image Section */}
+                                                <CardMedia
+                                                    component="div"
+                                                    sx={{
+                                                        position: 'relative',
+                                                        overflow: 'hidden',
+                                                    }}
+                                                >
+                                                    <BackgroundGalleryDetails images={item.photos.map((photo) => photo.photo)} />
+                                                </CardMedia>
+
+                                                {/* Favorite Icon in Upper Right */}
+                                                <IconButton
+                                                    id={`favorite-icon-${item.id}`}
+                                                    aria-label="add to favorites"
+                                                    onClick={() => handleClick(item.id)}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: '8px',
+                                                        right: '8px',
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                        borderRadius: '50%',
+                                                        padding: '6px',
+                                                        zIndex: 2, // Ensure it appears above the image
+                                                    }}
+                                                >
+                                                    {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                                </IconButton>
+                                            </div>
                                         </a>
-                                        <IconButton
-                                            id={`favorite-icon-${item.id}`}
-                                            aria-label="add to favorites"
-                                            onClick={() => handleClick(item.id)}
-                                        >
-                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                        </IconButton>
-
-                                        <Menu
-                                            id="simple-menu"
-                                            anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
-                                            keepMounted
-                                            open={openMenuEventId === item.id}
-                                            onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
-                                        >
-                                           
-                                        </Menu>
-
                                     </Card>
+
                                 </Grid>
                             );
                         })}
                     </Grid>
-                    {hasMore && (
-                        <Box sx={{ textAlign: 'center', mt: 4 }}>
-                            <Button variant="contained" onClick={handleLoadMore}>
-                                Load More
-                            </Button>
-                        </Box>
-                    )}
+
                     <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
                         <DialogTitle>{"Just a moment!"}</DialogTitle>
                         <DialogContent>
