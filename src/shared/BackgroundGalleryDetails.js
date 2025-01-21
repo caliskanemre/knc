@@ -1,92 +1,129 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { Button } from "@mui/material";
 
 const BackgroundGalleryDetails = ({ images }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isFading, setIsFading] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const containerRef = useRef(null);
 
     const handlers = useSwipeable({
         onSwipedLeft: () => {
-            setTimeout(() => {
-                setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
-            }); // Match this delay with the CSS transition time
+            setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
         },
         onSwipedRight: () => {
-            setTimeout(() => {
-                setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length);
-            }); // Match this delay with the CSS transition time
+            setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
         },
         preventDefaultTouchmoveEvent: true,
-        trackMouse: true
+        trackMouse: true,
     });
 
+    // Lazy Loading: Check if the component is visible
     useEffect(() => {
-        if (images && Array.isArray(images)) {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => {
+            if (containerRef.current) {
+                observer.unobserve(containerRef.current);
+            }
+        };
+    }, []);
+
+    // Auto-Slide Images
+    useEffect(() => {
+        if (isVisible && images && Array.isArray(images)) {
             const interval = setInterval(() => {
                 setIsFading(true);
                 setTimeout(() => {
-                    setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
+                    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
                     setIsFading(false);
                 }, 500);
             }, 500000);
 
             return () => clearInterval(interval);
         }
-    }, [images]);
+    }, [images, isVisible]);
 
-
-    // Render nothing if images is undefined, not an array, or empty
     if (!images || !Array.isArray(images) || images.length === 0) {
         return null;
     }
 
     return (
-        <div {...handlers} style={{
-            position: 'relative',
-            overflow: 'hidden',
-            width: '100%',
-            height: '250px', // Adjust height for better layout in cards
-            zIndex: 2,
-        }}>
+        <div
+            {...handlers}
+            ref={containerRef}
+            style={{
+                position: 'relative',
+                overflow: 'hidden',
+                width: '100%',
+                height: '250px',
+                zIndex: 2,
+            }}
+        >
+            {isVisible && (
+                <div
+                    style={{
+                        backgroundImage: `url(${images[currentImageIndex]})`,
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: 'cover',
+                        width: '100%',
+                        height: '100%',
+                        opacity: isFading ? 0 : 1,
+                        transition: 'opacity 0.5s ease-in-out',
+                    }}
+                />
+            )}
+            <Button
+                onClick={() =>
+                    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length)
+                }
+                style={{
+                    position: 'absolute',
+                    left: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 2,
+                }}
+            >
+                {"<"}
+            </Button>
+            <Button
+                onClick={() =>
+                    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length)
+                }
+                style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 2,
+                }}
+            >
+                {">"}
+            </Button>
             <div
                 style={{
-                    backgroundImage: `url(${images[currentImageIndex]})`,
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: 'cover', // Ensure the image covers the card space
-                    width: '100%',
-                    height: '100%',
-                    opacity: isFading ? 0 : 1,
-                    transition: 'opacity 0.5s ease-in-out',
+                    position: 'absolute',
+                    bottom: '10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    zIndex: 2,
                 }}
-            />
-            <Button onClick={() => setCurrentImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length)} style={{
-                position: 'absolute',
-                left: '10px',  // Adjust for better positioning
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 2 // Ensure it's above the background
-            }}>
-                {"<"} {/* Replace with styled arrow */}
-            </Button>
-            <Button onClick={() => setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length)} style={{
-                position: 'absolute',
-                right: '10px',  // Adjust for better positioning
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 2 // Ensure it's above the background
-            }}>
-                {">"} {/* Replace with styled arrow */}
-            </Button>
-            <div style={{
-                position: 'absolute',
-                bottom: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                zIndex: 2 // Ensure it's above the background
-            }}>
+            >
                 {images.map((_, index) => (
                     <div
                         key={index}
@@ -96,7 +133,7 @@ const BackgroundGalleryDetails = ({ images }) => {
                             borderRadius: '50%',
                             backgroundColor: currentImageIndex === index ? 'white' : 'gray',
                             margin: '0 5px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
                         }}
                         onClick={() => setCurrentImageIndex(index)}
                     />

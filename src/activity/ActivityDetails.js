@@ -19,6 +19,7 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import {useAuth} from "../auth/AuthProvider";
+import {useTranslation} from "react-i18next";
 
 const ActivityDetails = () => {
   const { id } = useParams();
@@ -32,7 +33,7 @@ const ActivityDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
     const {type} = useParams();
     const { favorites, toggleFavorite } = useAuth()
-
+    const { t, i18n } = useTranslation();
     const isMobile = window.innerWidth <= 768;
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
@@ -248,7 +249,7 @@ const ActivityDetails = () => {
                         startIcon={<ShoppingCartIcon/>}
                         className="add-cart-btn"
                     >
-                        Add {quantity} to Cart
+                        {t('Add to Cart')}
                     </Button>
 
                     {/* Type (if exists) */}

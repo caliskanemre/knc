@@ -14,7 +14,7 @@ import handkerchief from "../images/mendil.jpg"
 import {useTranslation} from "react-i18next";
 
 function ActivitySubHeaderMobile() {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { t, i18n } = useTranslation();
 
     const handleClick = () => {

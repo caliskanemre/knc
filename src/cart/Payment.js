@@ -42,17 +42,29 @@ const Payment = () => {
 
         const paymentData = {
             paymentMethod,
-            ...formData,
+            amount: 10000, // Example amount in cents
+            currency: 'EUR', // Or your preferred currency
+            cardDetails: {
+                name: formData.name,
+                number: formData.cardNumber,
+                expiry: formData.expiry,
+                cvv: formData.cvv,
+            },
         };
 
         try {
-            const response = await axios.post('/orders/1', paymentData); // Replace '1' with user ID dynamically
-            alert(`Ödeme başarılı! Sipariş ID: ${response.data.id}`);
+            const response = await axios.post('/api/pay', paymentData);
+            if (response.data.success) {
+                alert(`Ödeme başarılı! Sipariş ID: ${response.data.paymentDetails.id}`);
+            } else {
+                alert('Ödeme başarısız. Lütfen tekrar deneyin.');
+            }
         } catch (error) {
             console.error("Error processing payment:", error);
             alert('Ödeme sırasında bir hata oluştu.');
         }
     };
+
 
     return (
         <div>

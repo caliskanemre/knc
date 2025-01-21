@@ -280,20 +280,6 @@ export default function Header() {
                                     </Box>
                                 </ListItem>
 
-                                {/* Continue with other ListItems, adjusting font size similarly */}
-                                {/*<ListItem button onClick={() => handleNavigation('/ideal-for')}>
-                                    <ListItemText
-                                        primary={t('AI Assistant')}
-                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
-                                    />
-                                </ListItem>*/}
-                                {/*     <ListItem button onClick={() => handleNavigation('/events')}>
-                                    <ListItemText
-                                        primary={t('Events')}
-                                        primaryTypographyProps={{ style: { fontSize: '1.2rem' } }} // Increase font size
-                                    />
-                                </ListItem>
-*/}
                                 <ActivitySubHeaderMobile/>
 
                                 <ListItem button onClick={() => handleNavigation('/about-us')}>

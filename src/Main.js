@@ -205,20 +205,19 @@ export default function Main() {
                                                         bgcolor: 'primary.main',
                                                         fontSize: '0.7rem',
                                                         marginLeft: '8px',
-                                                        marginTop: '15px',
+                                                        marginTop: '5px',
                                                     }}
                                                 >
                                                     <img
                                                         src={activityIcons[item.category.toLocaleLowerCase()]}
                                                         alt={`${item.category} Icon`}
                                                         style={{ width: '100%', height: '100%' }}
-                                                        loading="lazy"
                                                     />
                                                 </Avatar>
                                                 <CardHeader
                                                     style={{ display: 'top', height: '50px' }}
                                                     title={
-                                                        <div
+                                                        <Typography
                                                             style={{
                                                                 maxWidth: '100%',
                                                                 overflow: 'hidden',
@@ -226,12 +225,15 @@ export default function Main() {
                                                                 WebkitLineClamp: 2,
                                                                 WebkitBoxOrient: 'vertical',
                                                                 textOverflow: 'ellipsis',
+                                                                fontFamily: "'Great Vibes'", // Matching the header font
+                                                                fontSize: getDynamicFontSize(item.title), // Dynamic font size for responsiveness
+                                                                fontWeight: 700, // Bold for readability
+                                                                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.2)', // Subtle shadow for depth
                                                             }}
                                                         >
                                                             {item.title}
-                                                        </div>
+                                                        </Typography>
                                                     }
-                                                    titleTypographyProps={{ style: { fontSize: getDynamicFontSize(item.title) } }}
                                                 />
                                             </div>
                                         </a>
@@ -246,6 +248,7 @@ export default function Main() {
                                                     }}
                                                 >
                                                     <BackgroundGalleryDetails images={item.photos.map((photo) => photo.photo)} />
+
                                                 </CardMedia>
 
                                                 {/* Favorite Icon in Upper Right */}
