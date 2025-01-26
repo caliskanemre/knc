@@ -10,8 +10,8 @@ import {
     Button,
     Divider,
 } from '@mui/material';
-import Header from "../header/Header";
 import axios from 'axios';
+import Header from "../header/Header";
 
 const Payment = () => {
     const [paymentMethod, setPaymentMethod] = useState('');
@@ -22,49 +22,66 @@ const Payment = () => {
         cvv: '',
         email: '',
     });
+    const [shippingAddress, setShippingAddress] = useState({
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        postalCode: '',
+        country: '',
+    });
 
-    // Ödeme seçimini değiştirme
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [amount] = useState(10000); // in cents (e.g., 100.00)
+    const [currency] = useState('EUR');
+
+    // Handle payment method selection
     const handlePaymentChange = (event) => {
         setPaymentMethod(event.target.value);
     };
 
-    // Form verilerini güncelleme
+    // Handle input changes
     const handleInputChange = (event) => {
         const { name, value } = event.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleShippingAddressChange = (event) => {
+        const { name, value } = event.target;
+        setShippingAddress((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // Submit payment
     const handlePaymentSubmit = async () => {
         if (!paymentMethod) {
             alert('Lütfen bir ödeme yöntemi seçiniz.');
             return;
         }
 
+        // Build the payment payload
         const paymentData = {
+            amount,
+            currency,
             paymentMethod,
-            amount: 10000, // Example amount in cents
-            currency: 'EUR', // Or your preferred currency
-            cardDetails: {
-                name: formData.name,
-                number: formData.cardNumber,
-                expiry: formData.expiry,
-                cvv: formData.cvv,
-            },
+            shippingAddress,
         };
 
         try {
-            const response = await axios.post('/api/pay', paymentData);
-            if (response.data.success) {
-                alert(`Ödeme başarılı! Sipariş ID: ${response.data.paymentDetails.id}`);
-            } else {
-                alert('Ödeme başarısız. Lütfen tekrar deneyin.');
+            const response = await axios.post(`${baseURL}/api/payment`, paymentData);
+
+            if (response.status === 200) {
+                const revolutData = response.data;
+                if (revolutData.checkout_url) {
+                    // Redirect the user to Revolut's checkout page
+                    window.location.href = revolutData.checkout_url;
+                } else {
+                    alert('Ödeme oluşturuldu, ancak checkout_url alınamadı.');
+                }
             }
         } catch (error) {
-            console.error("Error processing payment:", error);
-            alert('Ödeme sırasında bir hata oluştu.');
+            console.error('Error processing payment:', error);
+            alert('Ödeme sırasında bir hata oluştu. ' + (error.response?.data?.error || ''));
         }
     };
-
 
     return (
         <div>
@@ -97,8 +114,7 @@ const Payment = () => {
                         />
                     </RadioGroup>
                 </FormControl>
-    
-                {/* Kredi Kartı Detayları */}
+
                 {paymentMethod === 'credit_card' && (
                     <Box>
                         <Typography variant="h6" gutterBottom>
@@ -110,6 +126,7 @@ const Payment = () => {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
+                            sx={{ mb: 1 }}
                         />
                         <TextField
                             fullWidth
@@ -117,6 +134,7 @@ const Payment = () => {
                             name="cardNumber"
                             value={formData.cardNumber}
                             onChange={handleInputChange}
+                            sx={{ mb: 1 }}
                         />
                         <TextField
                             fullWidth
@@ -124,6 +142,7 @@ const Payment = () => {
                             name="expiry"
                             value={formData.expiry}
                             onChange={handleInputChange}
+                            sx={{ mb: 1 }}
                         />
                         <TextField
                             fullWidth
@@ -135,22 +154,56 @@ const Payment = () => {
                         />
                     </Box>
                 )}
-    
-                {/* PayPal E-posta */}
-                {paymentMethod === 'paypal' && (
-                    <Box>
-                        <Typography variant="h6" gutterBottom>
-                            PayPal Bilgileri
-                        </Typography>
-                        <TextField
-                            fullWidth
-                            label="PayPal E-posta"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                        />
-                    </Box>
-                )}
+
+                <Box sx={{ marginTop: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Teslimat Adresi
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        label="Adres Satırı 1"
+                        name="addressLine1"
+                        value={shippingAddress.addressLine1}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Adres Satırı 2"
+                        name="addressLine2"
+                        value={shippingAddress.addressLine2}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="Şehir"
+                        name="city"
+                        value={shippingAddress.city}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Posta Kodu"
+                        name="postalCode"
+                        value={shippingAddress.postalCode}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Ülke"
+                        name="country"
+                        value={shippingAddress.country}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                </Box>
 
                 <Divider sx={{ marginY: 3 }} />
 

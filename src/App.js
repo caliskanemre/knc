@@ -4,7 +4,7 @@ import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom
 import ActivityList from "./activity/ActivityList";
 import Map from "./header/Map";
 import EventDetails from "./event/EventDetails";
-import ActivityDetails from "./activity/ActivityDetails";
+import ProductDetails from "./activity/ProductDetails";
 import SearchPage from "./search/SearchPage";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFnsV3";
@@ -21,6 +21,8 @@ import ContactUs from "./links/ContactUs";
 import ResetPassword from "./login/ResetPassword";
 import Cart from "./cart/Cart";
 import Payment from "./cart/Payment";
+import PaymentFailure from "./cart/PaymentFailure";
+import PaymentSuccess from "./cart/PaymentSuccess";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -104,7 +106,7 @@ function App() {
                             <Route path="/products/:type" element={<ActivityList/>}/>
                             <Route path="/map" element={<Map/>}/>
                             <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
-                            <Route path="/products/detail/:id" element={<ActivityDetails/>}/>
+                            <Route path="/products/detail/:id" element={<ProductDetails/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/about-us" element={<AboutUs />} />
                             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -115,6 +117,8 @@ function App() {
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/cart" element={<Cart />} />
                             <Route path="/payment" element={<Payment />} />
+                            <Route path="/payment-success" element={<PaymentSuccess />} />
+                            <Route path="/payment-failure" element={<PaymentFailure />} />
                         </Routes>
 
                         <CookieConsent

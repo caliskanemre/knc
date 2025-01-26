@@ -195,7 +195,7 @@ export default function Header() {
                             }}
                             onClick={() => handleNavigation('/cart')} // Sepetim sayfasına yönlendirme
                         >
-                         {/*   <ShoppingCartIcon sx={{ fontSize: 30 }} /> */}
+                            <ShoppingCartIcon sx={{ fontSize: 30 }} />
                         </IconButton>
                         {!isLoggedIn ? (
                             <>
