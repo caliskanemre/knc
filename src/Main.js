@@ -255,7 +255,11 @@ export default function Main() {
                                                 <IconButton
                                                     id={`favorite-icon-${item.id}`}
                                                     aria-label="add to favorites"
-                                                    onClick={() => handleClick(item.id)}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation(); // Prevent click event from propagating to parent elements
+                                                        event.preventDefault(); // Prevent default behavior
+                                                        handleClick(item.id);
+                                                    }}
                                                     sx={{
                                                         position: 'absolute',
                                                         top: '8px',
