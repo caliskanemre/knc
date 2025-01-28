@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import './css/ActivityDetails.css';
-import { Button, IconButton, Card, CardMedia, CardContent, Typography } from "@mui/material";
+import {Button, IconButton, Card, CardMedia, CardContent, Typography, Snackbar} from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -42,6 +42,8 @@ const ProductDetails = () => {
     const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
 
     const [similarProducts, setSimilarProducts] = useState([]); // NEW state
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     const { favorites, toggleFavorite } = useAuth();
     const { t } = useTranslation();
@@ -100,6 +102,15 @@ const ProductDetails = () => {
         }
     };
 
+
+    const handleFavoriteClick = () => {
+        toggleFavorite(product.id, isAlreadyFavorited, "product");
+        setSnackbarMessage(isAlreadyFavorited ? 'Removed from favorites' : 'Added to favorites');
+        setSnackbarOpen(true);
+    };
+
+    const handleSnackbarClose = () => setSnackbarOpen(false);
+
     if (product === null) {
         return <div>Loading...</div>;
     }
@@ -135,8 +146,8 @@ const ProductDetails = () => {
     const shareUrl = window.location.href;
     const shareMessage = `${product.title} - Check out this product!`;
 
-    const isAlreadyFavorited = favorites.favoriteActivities?.some(
-        (fav) => fav.id === product.productId
+    const isAlreadyFavorited = favorites.favoriteProducts?.some(
+        (fav) => fav.id === product.id
     );
 
     // Modal open/close
@@ -346,9 +357,7 @@ const ProductDetails = () => {
                     {/* Favorite Button */}
                     <IconButton
                         aria-label="add to favorites"
-                        onClick={() =>
-                            toggleFavorite(product.productId, isAlreadyFavorited, "product")
-                        }
+                        onClick={handleFavoriteClick}
                         style={{ marginTop: '20px' }}
                     >
                         {isAlreadyFavorited ? (
@@ -357,7 +366,12 @@ const ProductDetails = () => {
                             <FavoriteBorderIcon />
                         )}
                     </IconButton>
-
+                    <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={6000}
+                        onClose={handleSnackbarClose}
+                        message={snackbarMessage}
+                    />
                     {/* Description (Accordion) */}
                     {descriptionLines.length > 0 && (
                         <div
@@ -471,7 +485,14 @@ const ProductDetails = () => {
                                     </Button>
                                 </CardContent>
                             </Card>
+
                         ))}
+                        <Snackbar
+                            open={snackbarOpen}
+                            autoHideDuration={6000}
+                            onClose={handleSnackbarClose}
+                            message={snackbarMessage}
+                        />
                     </div>
                 </div>
             )}
