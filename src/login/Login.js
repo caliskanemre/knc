@@ -1,12 +1,12 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import {Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField} from '@mui/material';
-import {useAuth} from "../auth/AuthProvider";
-import {jwtDecode} from "jwt-decode";
+import { Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField } from '@mui/material';
+import { useAuth } from "../auth/AuthProvider";
+import { jwtDecode } from "jwt-decode";
 import DialogActions from "@mui/material/DialogActions";
 
-function Login({open, handleClose, onLoginSuccess}) {
-    const { setUsername, setToken } = useAuth();
+function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) {
+    const { setUsername } = useAuth();
     const [localUsername, setLocalUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -18,7 +18,7 @@ function Login({open, handleClose, onLoginSuccess}) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${baseURL}/auth/login`, {username: localUsername, password});
+            const response = await axios.post(`${baseURL}/auth/login`, { username: localUsername, password });
             if (response.data && response.data.accessToken) {
                 const { accessToken } = response.data;
                 localStorage.setItem('token', accessToken);
@@ -26,9 +26,9 @@ function Login({open, handleClose, onLoginSuccess}) {
                 const decodedToken = jwtDecode(accessToken);
                 const username = decodedToken.sub;
 
-                onLoginSuccess(response.data); // Handle login success
-                setUsername(username); // Update parent component's username state
-                handleClose(); // Close the login dialog
+                onLoginSuccess(response.data);
+                setUsername(username);
+                handleClose();
                 setError('');
                 setSuccess(true);
             } else {
@@ -38,29 +38,6 @@ function Login({open, handleClose, onLoginSuccess}) {
             console.error('Login error:', error.response || error.message);
             setError('Failed to login');
         }
-    };
-
-    const handleForgotPassword = async () => {
-        try {
-            const response = await axios.post(`${baseURL}/auth/forgot-password`, { email });
-            if (response.data && response.data.message) {
-                // Handle success, perhaps show a Snackbar with the success message
-                setShowForgotPassword(false); // Hide the forgot password form
-                setEmail(''); // Reset the email field
-            } else {
-                setError('Failed to send reset password link');
-            }
-        } catch (error) {
-            console.error('Forgot password error:', error.response || error.message);
-            setError('Failed to send reset password link');
-        }
-    };
-
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-        setSuccess(false);
     };
 
     return (
@@ -89,12 +66,25 @@ function Login({open, handleClose, onLoginSuccess}) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <Button type="submit" color="primary" variant="contained" fullWidth style={{marginTop: '20px'}}>
-                        Login
+                    <Button type="submit" color="primary" variant="contained" fullWidth style={{ marginTop: '20px' }}>
+                        Giriş Yap
                     </Button>
-                    {error && <p style={{color: 'red', marginTop: '10px'}}>{error}</p>}
+                    <p style={{ textAlign: 'center', marginTop: '10px' }}>Üye değil misiniz?</p>
+                    <Button
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                            handleClose(); // Giriş ekranını kapat
+                            handleOpenRegisterDialog(); // Üye Ol ekranını aç
+                        }}
+                    >
+                        üye ol
+                    </Button>
+                    {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
                 </form>
             </DialogContent>
+
             <DialogActions>
                 <Button color="primary" onClick={() => setShowForgotPassword(true)}>
                     Forgot Password?
@@ -102,7 +92,10 @@ function Login({open, handleClose, onLoginSuccess}) {
                 <Button onClick={handleClose} color="primary">
                     Close
                 </Button>
+
             </DialogActions>
+
+            {/* Forgot Password Dialog */}
             <Dialog open={showForgotPassword} onClose={() => setShowForgotPassword(false)}>
                 <DialogTitle>Forgot Password</DialogTitle>
                 <DialogContent>
@@ -119,7 +112,7 @@ function Login({open, handleClose, onLoginSuccess}) {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleForgotPassword} color="primary" variant="contained">
+                    <Button color="primary" variant="contained">
                         Send Reset Link
                     </Button>
                     <Button onClick={() => setShowForgotPassword(false)} color="primary">
@@ -127,13 +120,13 @@ function Login({open, handleClose, onLoginSuccess}) {
                     </Button>
                 </DialogActions>
             </Dialog>
+
             <Snackbar
                 open={success}
                 autoHideDuration={6000}
-                onClose={handleSnackbarClose}
                 message="Login successful!"
                 action={
-                    <Button color="secondary" size="small" onClick={handleSnackbarClose}>
+                    <Button color="secondary" size="small" onClick={() => setSuccess(false)}>
                         Close
                     </Button>
                 }

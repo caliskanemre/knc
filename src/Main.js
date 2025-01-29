@@ -1,43 +1,30 @@
-import * as React from 'react';
-import {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
-import CssBaseline from '@mui/material/CssBaseline';
-import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import {createTheme, ThemeProvider} from '@mui/material/styles';
-import Axios from 'axios';
-import Header from "./header/Header";
-import backgroundImage from './background6.jpg';
-import {Avatar, CardHeader, IconButton, Snackbar} from "@mui/material";
-import BackgroundGallery from "./shared/BackgroundGallery";
-import {Helmet} from "react-helmet";
-
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import {useAuth} from "./auth/AuthProvider";
+import Snackbar from '@mui/material/Snackbar';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
+import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import Button from '@mui/material/Button';
-import BackgroundGalleryDetails from "./shared/BackgroundGalleryDetails";
-import veil from "./images/veil.jpg";
-import tamborine from "./images/tamborine.jpg";
-import hennaset from "./images/hennaset.jpg";
-import handkerchief from "./images/mendil.jpg";
-import gift from "./images/gift.jpg";
-import ornament from "./images/ornament.jpg";
-import flower from "./images/flower.jpg";
-import souvenir from "./images/souvenir.jpg";
+import DialogActions from '@mui/material/DialogActions';
+import { Helmet } from 'react-helmet';
+import Axios from 'axios';
+
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import { useAuth } from './auth/AuthProvider';
+import Header from './header/Header';
+import HeroSection from './shared/HeroSection'; // <--- The new Hero
 
 const defaultTheme = createTheme();
-const deneme = []
-deneme.push(backgroundImage)
-
 const PAGE_SIZE = 20;
 
 export default function Main() {
@@ -49,19 +36,9 @@ export default function Main() {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [openDialog, setOpenDialog] = useState(false);
+
     const { favorites, isLoggedIn, toggleFavorite } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-
-    const activityIcons = {
-        veil: veil,
-        tamborine: tamborine,
-        hennaset: hennaset,
-        handkerchief: handkerchief,
-        gift: gift,
-        ornament: ornament,
-        flower: flower,
-        souvenir: souvenir,
-    };
 
     // Sync local favorites with global favorites
     useEffect(() => {
@@ -108,7 +85,7 @@ export default function Main() {
         }
 
         const isFavorite = localFavorites.includes(productId);
-        toggleFavorite(productId, isFavorite, "product");
+        toggleFavorite(productId, isFavorite, 'product');
         setLocalFavorites((prev) =>
             isFavorite ? prev.filter((id) => id !== productId) : [...prev, productId]
         );
@@ -125,13 +102,6 @@ export default function Main() {
         setOpenDialog(false);
     };
 
-    const getDynamicFontSize = (title) => {
-        if (title.length < 10) return "1.6rem";
-        if (title.length < 30) return "1.3rem";
-        if (title.length < 50) return "1.1rem";
-        return "0.85rem";
-    };
-
     return (
         <ThemeProvider theme={defaultTheme}>
             <Helmet>
@@ -140,19 +110,18 @@ export default function Main() {
             </Helmet>
             <CssBaseline />
             <Header />
+
             <main>
-                <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                        <BackgroundGallery images={[backgroundImage]} />
-                    </Grid>
-                </Grid>
+                {/* 💫 NEW Responsive Hero Section */}
+                <HeroSection/>
+                {/* Product Grid */}
                 <Container sx={{ py: 9 }} maxWidth="xl">
                     <Grid container spacing={4}>
                         {products.map((item) => (
                             <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                 <Card
                                     sx={{
-                                        height: '100%',
+                                        height: { xs: 'auto', md: '350px' },
                                         display: 'flex',
                                         flexDirection: 'column',
                                         position: 'relative',
@@ -162,17 +131,18 @@ export default function Main() {
                                         href={`/products/detail/${item.id}`}
                                         style={{ textDecoration: 'none', color: 'inherit' }}
                                     >
-                                        {/* Image */}
                                         <CardMedia
                                             component="img"
                                             image={item.photos[0]?.photo || ''}
                                             alt={item.title}
-                                            sx={{ width: '100%', height: 140, objectFit: 'cover' }}
+                                            sx={{
+                                                width: '100%',
+                                                height: { xs: 140, md: 200 },
+                                                objectFit: 'cover',
+                                            }}
                                         />
                                     </a>
-                                    {/* Title, Description, and Price */}
-                                    <Box sx={{ padding: 2 }}>
-                                        {/* Title */}
+                                    <Box sx={{ padding: 2, flex: 1 }}>
                                         <Typography
                                             sx={{
                                                 textAlign: 'left',
@@ -185,8 +155,6 @@ export default function Main() {
                                         >
                                             {item.title}
                                         </Typography>
-
-                                        {/* Short Description */}
                                         <Typography
                                             sx={{
                                                 textAlign: 'left',
@@ -199,24 +167,20 @@ export default function Main() {
                                                 WebkitBoxOrient: 'vertical',
                                             }}
                                         >
-                                            {item.description || 'No description available.'}
+                                            {item.shortDescription || 'No description available.'}
                                         </Typography>
-
-                                        {/* Price */}
                                         <Typography
                                             sx={{
                                                 textAlign: 'left',
                                                 fontSize: '1rem',
                                                 fontWeight: 600,
-                                                color: 'gray',
+                                                color: 'primary.main',
                                                 mt: 1,
                                             }}
                                         >
                                             {Math.floor(item.price) || '0'} TL
                                         </Typography>
                                     </Box>
-
-                                    {/* Favorite Icon */}
                                     <IconButton
                                         aria-label="add to favorites"
                                         onClick={() => handleFavoriteClick(item.id)}
@@ -241,7 +205,6 @@ export default function Main() {
                         ))}
                     </Grid>
 
-
                     {hasMore && (
                         <Button
                             onClick={handleLoadMore}
@@ -252,12 +215,14 @@ export default function Main() {
                         </Button>
                     )}
                 </Container>
+
                 <Snackbar
                     open={snackbarOpen}
                     autoHideDuration={6000}
                     onClose={handleSnackbarClose}
                     message={snackbarMessage}
                 />
+
                 <Dialog open={openDialog} onClose={handleCloseDialog}>
                     <DialogTitle>{"Login Required"}</DialogTitle>
                     <DialogContent>
@@ -272,6 +237,8 @@ export default function Main() {
                     </DialogActions>
                 </Dialog>
             </main>
+
+            {/* Footer */}
             <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
                     Kına Sepeti
