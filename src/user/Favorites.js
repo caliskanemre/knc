@@ -1,21 +1,22 @@
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import LandscapeIcon from "@mui/icons-material/Landscape";
-import ScienceIcon from "@mui/icons-material/Science";
-import SchoolIcon from "@mui/icons-material/School";
-import ChildCareIcon from "@mui/icons-material/ChildCare";
-import PaletteIcon from "@mui/icons-material/Palette";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
 import Header from "../header/Header";
-import {Avatar, Button, CardHeader, IconButton} from "@mui/material";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
+import {
+    Avatar,
+    Button,
+    Card,
+    IconButton,
+    Container,
+    Grid,
+    Box,
+    Typography,
+    CardMedia,
+} from "@mui/material";
 import PinDropIcon from "@mui/icons-material/PinDrop";
-import CardMedia from "@mui/material/CardMedia";
-import React, {useEffect, useState} from "react";
-import axios from "axios";
-import {useAuth} from "../auth/AuthProvider";
-import BackgroundGallery from "../shared/BackgroundGallery";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+
+// Import images for activity icons (if needed)
 import CampingIcon2 from "../images/camping_summer2.jpg";
 import wellness from "../images/wellness_green2.png";
 import winter from "../images/winter_green.jpeg";
@@ -24,30 +25,19 @@ import park from "../images/park_green.jpg";
 import nature from "../images/nature2.jpg";
 import naturalPark from "../images/park_green2.png";
 import museumIcon from "../images/green_museum.png";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 
 const Favorites = () => {
-    const { favorites, toggleFavorite, isLoggedIn, username } = useAuth(); // Use global favorites and toggle function
+    const { favorites, toggleFavorite, isLoggedIn } = useAuth();
     const [eventPage, setEventPage] = useState(0);
     const [hasMoreEvents, setHasMoreEvents] = useState(0);
-
-    const [hasMoreActivity, setHasMoreActivity] = useState(0);
     const [activityPage, setActivityPage] = useState(0);
+    const [hasMoreActivity, setHasMoreActivity] = useState(0);
 
     useEffect(() => {
-        // Any additional logic to run on component mount or when favorites change
+        // Additional logic if needed when favorites change
     }, [favorites]);
 
-    const eventIcons = {
-        "music & concerts": <MusicNoteIcon/>,
-        "outdoor & adventure": <LandscapeIcon/>,
-        "tech & innovation": <ScienceIcon/>,
-        "education": <SchoolIcon/>,
-        "children": <ChildCareIcon/>,
-        "arts & culture": <PaletteIcon/>,
-        "other": <HelpOutlineIcon/>,
-    };
+    // (Optional) Map for activity icons if needed in other contexts
     const activityIcons = {
         camping: CampingIcon2,
         health: wellness,
@@ -56,106 +46,156 @@ const Favorites = () => {
         park: park,
         nature: nature,
         national: naturalPark,
-        museum: museumIcon
+        museum: museumIcon,
     };
 
+    // Dynamically adjust font size based on title length
     const getDynamicFontSize = (title) => {
-        // Ensure title is a valid string or provide a default value
-        title = title || ""; // Set title to an empty string if it's undefined or null
+        title = title || "";
         if (title.length < 10) return "1.8rem";
         if (title.length < 20) return "1.5rem";
-        return "1.2rem"; // Fallback font size
+        return "1.2rem";
     };
-
 
     return (
         <div>
-            <Header/>
-
-            <Container sx={{py: 9}} maxWidth="xl">
+            <Header />
+            <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
-                    {Array.isArray(favorites.favoriteProducts) && favorites.favoriteProducts.map((item, index) => {
-                        const isAlreadyFavorited = favorites.favoriteProducts.map(product => product.id).includes(item.id);
-                        return (
-                            <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                        <a href={`/products/detail/${item.id}/${item.title}`}
-                                           style={{textDecoration: 'none', color: 'inherit'}}>
-                                            <div style={{textDecoration: 'none', color: 'inherit', cursor: 'pointer'}}>
-                                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                    <Avatar sx={{
-                                                        bgcolor: 'primary.main',
-                                                        fontSize: '0.7rem',
-                                                        marginLeft: '5px',
-                                                        marginTop: '10px'
-                                                    }}>
-                                                        <img
-                                                            src={item.activity_type?.toLowerCase() ? activityIcons[item.activity_type.toLowerCase()] : ""}
-                                                            alt={`${item.activity_type} Icon`}
-                                                            style={{ width: '100%', height: '100%' }}
-                                                        />
-                                                    </Avatar>
-                                                    <CardHeader
-                                                        style={{display: 'top', height: '45px'}}
-                                                        title={
-                                                            <div style={{
-                                                                maxWidth: '100%', // Limit the width to the parent container
-                                                                overflow: 'hidden', // Hide overflow
-                                                                display: '-webkit-box', // Use webkit box model for line clamp
-                                                                WebkitLineClamp: 2, // Limit to two lines
-                                                                WebkitBoxOrient: 'vertical', // Set the orientation to vertical
-                                                                textOverflow: 'ellipsis' // Add ellipsis to text overflow
-                                                            }}>
-                                                                {item.title}
-                                                            </div>
-                                                        }
-                                                        titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                        subheader={
-                                                            <div>
-                                                                <div>{item.date}</div>
-                                                                {/* First line of subheader */}
-                                                                <div>
-                                                                    <PinDropIcon style={{
-                                                                        fontSize: '1rem',
-                                                                        verticalAlign: 'bottom'
-                                                                    }}/> {item.activity_location}
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                        subheaderTypographyProps={{
-                                                            component: 'div',
-                                                            style: {fontSize: '11px'}
-                                                        }}
-                                                    />
-                                                </div>
-                                                <BackgroundGallery images={item.photos?.map((photo) => photo.photo)}/>
+                    {Array.isArray(favorites.favoriteProducts) &&
+                        favorites.favoriteProducts.map((item) => {
+                            // Check if the item is already favorited
+                            const isAlreadyFavorited = favorites.favoriteProducts
+                                .map((product) => product.id)
+                                .includes(item.id);
 
-                                            </div>
-                                        </a>
-                                    <IconButton
-                                        aria-label="add to favorites"
-                                        sx={{ zIndex: 1 }} // Ensure the button is above other elements
-                                        onClick={() => toggleFavorite(item.id, isAlreadyFavorited, "activity")}
+                            // Pricing and discount logic (adjust as needed)
+                            const discountPercent = 20; // Example: fixed 20% discount
+                            const originalPrice = Math.floor(item.price);
+                            const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
+
+                            return (
+                                <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
+                                    <Card
+                                        sx={{
+                                            height: { xs: "auto", md: "350px" },
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            position: "relative",
+                                        }}
                                     >
-                                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                    </IconButton>
-                                </Card>
-                            </Grid>
-                        );
-                    })}
+                                        <a
+                                            href={`/products/detail/${item.id}/${item.title}`}
+                                            style={{ textDecoration: "none", color: "inherit" }}
+                                        >
+                                            <CardMedia
+                                                component="img"
+                                                image={item.photos && item.photos[0] ? item.photos[0].photo : ""}
+                                                alt={item.title}
+                                                sx={{
+                                                    width: "100%",
+                                                    height: { xs: 140, md: 200 },
+                                                    objectFit: "cover",
+                                                }}
+                                            />
+                                        </a>
+                                        <Box sx={{ p: 2, flex: 1 }}>
+                                            <Typography
+                                                sx={{
+                                                    textAlign: "left",
+                                                    fontSize: getDynamicFontSize(item.title),
+                                                    fontWeight: 500,
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {item.title}
+                                            </Typography>
+                                            {/* Display date and location */}
+                                            <Box sx={{ mt: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {item.date}
+                                                </Typography>
+                                                <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
+                                                    <PinDropIcon sx={{ fontSize: "1rem", verticalAlign: "bottom", mr: 0.5 }} />
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {item.activity_location}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                            {/* Pricing & Discount Section */}
+                                            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                                                <Typography
+                                                    sx={{
+                                                        textDecoration: "line-through",
+                                                        color: "gray",
+                                                        mr: 1,
+                                                        fontSize: "0.9rem",
+                                                    }}
+                                                >
+                                                    {originalPrice} TL
+                                                </Typography>
+                                                <Typography
+                                                    sx={{
+                                                        color: "#1976d2",
+                                                        fontWeight: "bold",
+                                                        fontSize: "0.9rem",
+                                                    }}
+                                                >
+                                                    {discountedPrice} TL
+                                                </Typography>
+                                                {discountPercent >= 20 && (
+                                                    <Box
+                                                        sx={{
+                                                            backgroundColor: "red",
+                                                            color: "white",
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            ml: 1,
+                                                            fontSize: "0.75rem",
+                                                            fontWeight: "bold",
+                                                        }}
+                                                    >
+                                                        {discountPercent}%
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                        <IconButton
+                                            aria-label="add to favorites"
+                                            onClick={() => toggleFavorite(item.id, isAlreadyFavorited, "activity")}
+                                            sx={{
+                                                position: "absolute",
+                                                top: "8px",
+                                                right: "8px",
+                                                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                                                borderRadius: "50%",
+                                                padding: "6px",
+                                                zIndex: 3,
+                                            }}
+                                        >
+                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                        </IconButton>
+                                    </Card>
+                                </Grid>
+                            );
+                        })}
                 </Grid>
             </Container>
-            {(hasMoreEvents || hasMoreActivity) && (eventPage > 0 || activityPage > 0) && (
-                <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
-                    >
-                        Load More
-                    </Button>
-                </div>
-            )}
+            {(hasMoreEvents || hasMoreActivity) &&
+                (eventPage > 0 || activityPage > 0) && (
+                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{ textTransform: "none", fontSize: "16px", px: 3, py: 1 }}
+                        >
+                            Load More
+                        </Button>
+                    </Box>
+                )}
         </div>
     );
 };

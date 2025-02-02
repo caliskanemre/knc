@@ -1,15 +1,32 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import "./css/SearchPage.css";
 import Header from "../header/Header";
-import {Avatar, Button, CardHeader, IconButton, Menu} from "@mui/material";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
-import {useLocation} from "react-router-dom";
-import CardMedia from "@mui/material/CardMedia";
-import Typography from "@mui/material/Typography";
-import BackgroundGallery from "../shared/BackgroundGallery";
+import {
+    Avatar,
+    Button,
+    Card,
+    CardMedia,
+    Container,
+    Grid,
+    IconButton,
+    Menu,
+    Box,
+    Typography,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
+} from "@mui/material";
+import { useLocation } from "react-router-dom";
+import PinDropIcon from "@mui/icons-material/PinDrop";
+import { Helmet } from "react-helmet";
+import { useAuth } from "../auth/AuthProvider";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+
+// Import any images for activity icons
 import CampingIcon2 from "../images/camping_summer2.jpg";
 import wellness from "../images/wellness_green2.png";
 import winter from "../images/winter_green.jpeg";
@@ -18,40 +35,28 @@ import park from "../images/park_green.jpg";
 import nature from "../images/nature2.jpg";
 import naturalPark from "../images/park_green2.png";
 import museumIcon from "../images/green_museum.png";
+
 import EventSearchButtons from "./EventSearchButtons";
-import PinDropIcon from "@mui/icons-material/PinDrop";
-import {Helmet} from "react-helmet";
-import {useAuth} from "../auth/AuthProvider";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchLocation, setSearchLocation] = useState('');
     const [eventResult, setEventResult] = useState([]);
     const [activityResult, setActivityResult] = useState([]);
-    const [allResult, setAllResult] = useState({event: [], activity: []});
+    const [allResult, setAllResult] = useState({ event: [], activity: [] });
     const [eventPage, setEventPage] = useState(0);
-    const [hasMoreEvents, setHasMoreEvents] = useState(0);
-    const [hasMoreActivity, setHasMoreActivity] = useState(0);
+    const [hasMoreEvents, setHasMoreEvents] = useState(false);
+    const [hasMoreActivity, setHasMoreActivity] = useState(false);
     const [activityPage, setActivityPage] = useState(0);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const location = useLocation();
-    const [notificationPref, setNotificationPref] = useState('');
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
-    const deneme = []
 
-    // Function to navigate to the details page
-
+    // Mapping for activity icons (if needed for activity-type labeling)
     const activityIcons = {
         camping: CampingIcon2,
         health: wellness,
@@ -63,137 +68,133 @@ const SearchPage = () => {
         museum: museumIcon
     };
 
+    // Restore search state from navigation if available
+    useEffect(() => {
+        if (location.state && location.state.fromDetails) {
+            const { fromSearch } = location.state.fromDetails;
+            if (fromSearch) {
+                setSearchQuery(fromSearch.searchQuery);
+                setSearchLocation(fromSearch.searchLocation);
+                setAllResult(fromSearch.allResult);
+                // Optionally restore pagination states here
+            }
+        }
+    }, [location]);
+
+    // Favorite action for events: if not favorited, open menu; otherwise, toggle favorite
     const handleClick = (eventId) => {
         if (isLoggedIn) {
-            const isAlreadyFavoritedEvent = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+            const isAlreadyFavoritedEvent = favorites.favoriteEvents
+                .map(event => event.id)
+                .includes(eventId);
             if (!isAlreadyFavoritedEvent) {
-                setOpenMenuEventId(eventId); // Open the menu for this event
+                setOpenMenuEventId(eventId);
             } else {
                 handleFavoriteClick(eventId, '');
             }
-        }else{
+        } else {
             handleOpenDialog();
         }
     };
+
     const handleOpenDialog = () => {
         setOpenDialog(true);
     };
 
     const handleCloseNotification = (eventId, notificationType) => {
-        setNotificationPref(notificationType); // Set the notification preference based on user selection
-        handleFavoriteClick(eventId, notificationType); // Call with the event's ID and selected notification type
-        setOpenMenuEventId(null); // Reset the state controlling the menu's visibility to close the menu
+        // Set the notification preference based on user selection and call favorite toggle
+        handleFavoriteClick(eventId, notificationType);
+        setOpenMenuEventId(null);
     };
-
-
 
     const handleCloseFavoriteDialog = () => {
         setOpenDialog(false);
     };
 
     const handleFavoriteClick = (eventId, notificationType) => {
-        const isFavorite = favorites.favoriteEvents.map(event => event.id).includes(eventId);
+        const isFavorite = favorites.favoriteEvents
+            .map(event => event.id)
+            .includes(eventId);
         toggleFavorite(eventId, isFavorite, "event", notificationType);
-        // Set the Snackbar message and open it
         setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
         setSnackbarOpen(true);
     };
 
-
-    useEffect(() => {
-        // Check if there's state available from navigation
-        if (location.state && location.state.fromDetails) {
-            const {fromSearch} = location.state.fromDetails;
-            if (fromSearch) {
-                // Restore the search state
-                setSearchQuery(fromSearch.searchQuery);
-                setSearchLocation(fromSearch.searchLocation);
-                setAllResult(fromSearch.allResult);
-                // Optionally, restore pagination states if they were part of the state
-            }
-        }
-    }, [location]);
-
-    const handleFavoriteEventClick = (eventId) => {
-        toggleFavorite(eventId, favorites.favoriteEvents.map(event => event.id).includes(eventId), "event");
-    };
-
+    // For activity favorites, use a simpler toggle
     const handleFavoriteActivityClick = (activityId) => {
-        toggleFavorite(activityId, favorites.favoriteActivities.map(activity => activity.id).includes(activityId), "activity");
+        toggleFavorite(activityId, favorites.favoriteActivities
+            .map(activity => activity.id)
+            .includes(activityId), "activity");
     };
 
+    // Start a new search
     const handleNewSearch = (term) => {
-        // Reset states for a new search
-
         setEventPage(0);
         setActivityPage(0);
         setEventResult([]);
         setActivityResult([]);
-        setAllResult({event: [], activity: []});
-
-        setSearchQuery(term)
-        // Then call handleSearch to perform the new search
-        handleSearch({query: term});
+        setAllResult({ event: [], activity: [] });
+        setSearchQuery(term);
+        handleSearch({ query: term });
     };
 
     const getDynamicFontSize = (title) => {
         if (title.length < 10) return "1.8rem";
-        if (title.length < 20) return "1.5rem"
-        return "1.2rem"; // Fallback font size
+        if (title.length < 20) return "1.5rem";
+        return "1.2rem";
     };
 
     const updateFilteredEvents = (filteredEvents) => {
-        setAllResult(prevAllResult => ({
-            ...prevAllResult,
-            event: [...prevAllResult.event, ...filteredEvents]
+        setAllResult(prev => ({
+            ...prev,
+            event: [...prev.event, ...filteredEvents]
         }));
     };
 
     async function extractedEvent(options) {
         const {
-            query = searchQuery, // Fallback to searchQuery if no query is provided in options
-            location = searchLocation, // Fallback to searchLocation if no location is provided in options
-            eventPageNumber = eventPage, // Fallback to eventPage if no eventPageNumber is provided in options
+            query = searchQuery,
+            location: loc = searchLocation,
+            eventPageNumber = eventPage,
         } = options;
-
-
-        const eventSize = 20; // Number of items per page
-
+        const eventSize = 20;
         try {
             const eventResponse = await axios.get(`${baseURL}/products/searchByFts`, {
                 params: {
-                    query: query,
-                    location: location,
+                    query,
+                    location: loc,
                     page: eventPageNumber,
                     size: eventSize
                 }
             });
             const events = eventResponse.data.content;
-            setEventResult(prevEvents => [...prevEvents, ...events]);
-            setAllResult(prevAllResult => ({
-                ...prevAllResult,
-                event: [...prevAllResult.event, ...events]
+            setEventResult(prev => [...prev, ...events]);
+            setAllResult(prev => ({
+                ...prev,
+                event: [...prev.event, ...events]
             }));
             if (events.length === eventSize) {
-                setEventPage(prevPage => prevPage + 1);
+                setEventPage(prev => prev + 1);
                 setHasMoreEvents(true);
             } else {
-                setHasMoreEvents(false); // No more events to load
+                setHasMoreEvents(false);
             }
         } catch (error) {
             console.error('Error loading more events:', error);
         }
-        return {eventSize};
+        return { eventSize };
     }
-
 
     const totalResults = eventResult.length + activityResult.length;
     const handleSearch = async (options = {}) => {
         await extractedEvent(options);
+        // (You can add an analogous extraction for activities if needed)
     };
 
+    // Combine event results into one array and add a type property
     const combinedResults = [
-        ...(Array.isArray(allResult.event) ? allResult.event.map(item => ({...item, type: 'events'})) : []),
+        ...(Array.isArray(allResult.event) ? allResult.event.map(item => ({ ...item, type: 'events' })) : []),
+        ...(Array.isArray(allResult.activity) ? allResult.activity.map(item => ({ ...item, type: 'activities' })) : []),
     ];
 
     return (
@@ -201,11 +202,11 @@ const SearchPage = () => {
             <Helmet>
                 <title>{searchQuery ? `${searchQuery} - Search Results | Kına Sepeti` : 'Search | Kına Sepeti'}</title>
                 <meta name="description"
-                      content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`}/>
-                <meta name="robots" content="noindex, follow"/>
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`}/>
+                      content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`} />
+                <meta name="robots" content="noindex, follow" />
+                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
-            <Header/>
+            <Header />
 
             <div className="parent-container">
                 <div className="search-page">
@@ -222,9 +223,9 @@ const SearchPage = () => {
                             }}
                         />
                         <Button
-                            variant="contained" // Add a background
-                            onClick={() => handleNewSearch(searchQuery)} // Pass the current searchQuery state
-                            className="search-button" // Add a class for styling
+                            variant="contained"
+                            onClick={() => handleNewSearch(searchQuery)}
+                            className="search-button"
                         >
                             Ara
                         </Button>
@@ -249,207 +250,182 @@ const SearchPage = () => {
                             <li><h6>Örtü</h6></li>
                         </ul>
                     </div>
-
                 </div>
                 {searchQuery && (
-                    <Typography variant="h6" style={{textAlign: 'center', margin: '20px 0'}}>
-                        {totalResults === 0 ? `Ürün bulunamadı` : `"${searchQuery}" ile alakalı ${totalResults} bulundu`}
+                    <Typography variant="h6" style={{ textAlign: 'center', margin: '20px 0' }}>
+                        {totalResults === 0 ? `Ürün bulunamadı` : `"${searchQuery}" ile alakalı ${totalResults} sonuç bulundu`}
                     </Typography>
                 )}
-
             </div>
-            <Container sx={{py: 9}} maxWidth="xl">
+
+            <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
-                    {combinedResults.map((item, index) => {
-                        // Determine if the item is already favorited, taking into account the item type
-                        const isAlreadyFavorited = item.type === 'events'
-                            ? favorites.favoriteEvents?.some(event => event.id === item.id)
-                            : favorites.favoriteActivities?.some(activity => activity.id === item.id);
+                    {combinedResults.map((item) => {
+                        // Determine if item is already favorited based on its type
+                        const isAlreadyFavorited =
+                            item.type === 'events'
+                                ? favorites.favoriteEvents?.some(event => event.id === item.id)
+                                : favorites.favoriteActivities?.some(activity => activity.id === item.id);
+
+                        // Use different handlers for events vs. activities
+                        const handleFavClick =
+                            item.type === 'events'
+                                ? () => handleClick(item.id)
+                                : () => handleFavoriteActivityClick(item.id);
+
+                        // Determine link and image source based on type
+                        const detailLink =
+                            item.type === 'activities'
+                                ? `/activities/detail/${item.id}/${item.title}`
+                                : `/events/${item.id}/${encodeURIComponent(item.title)}`;
+
+                        const imageSrc =
+                            item.type === 'activities'
+                                ? (item.photos && item.photos[0] ? item.photos[0].photo : '')
+                                : item.photo;
 
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                    {item.type === 'activities' ? (
-                                        <>
-                                            <a href={`/activities/detail/${item.id}/${item.title}`}
-                                               style={{textDecoration: 'none', color: 'inherit'}}>
-                                                <div style={{
-                                                    textDecoration: 'none',
-                                                    color: 'inherit',
-                                                    cursor: 'pointer'
-                                                }}>
-                                                    <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                        <Avatar sx={{
-                                                            bgcolor: 'primary.main',
-                                                            fontSize: '0.7rem',
-                                                            marginLeft: '5px',
-                                                            marginTop: '10px'
-                                                        }}>
-                                                            <img src={activityIcons[item.activity_type.toLowerCase()]}
-                                                                 alt={`${item.activity_type} Icon`}
-                                                                 style={{width: '100%', height: '100%'}}/>
-                                                        </Avatar>
-                                                        <CardHeader
-                                                            style={{display: 'top', height: '45px'}}
-                                                            title={
-                                                                <div style={{
-                                                                    maxWidth: '100%', // Limit the width to the parent container
-                                                                    overflow: 'hidden', // Hide overflow
-                                                                    display: '-webkit-box', // Use webkit box model for line clamp
-                                                                    WebkitLineClamp: 2, // Limit to two lines
-                                                                    WebkitBoxOrient: 'vertical', // Set the orientation to vertical
-                                                                    textOverflow: 'ellipsis' // Add ellipsis to text overflow
-                                                                }}>
-                                                                    {item.title}
-                                                                </div>
-                                                            }
-                                                            titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                            subheader={
-                                                                <div>
-                                                                    <div>{item.date}</div>
-                                                                    {/* First line of subheader */}
-                                                                    <div>
-                                                                        <PinDropIcon style={{
-                                                                            fontSize: '1rem',
-                                                                            verticalAlign: 'bottom'
-                                                                        }}/> {item.activity_location}
-                                                                    </div>
-                                                                </div>
-                                                            }
-                                                            subheaderTypographyProps={{
-                                                                component: 'div',
-                                                                style: {fontSize: '11px'}
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <BackgroundGallery
-                                                        images={item.photos.map((photo) => photo.photo)}/>
-                                                </div>
-                                            </a>
-                                            <IconButton
-                                                aria-label="add to favorites"
-                                                onClick={() => handleFavoriteActivityClick(item.id)}
-                                            >
-                                                {isAlreadyFavorited ? <FavoriteIcon color="error"/> :
-                                                    <FavoriteBorderIcon/>}
-                                            </IconButton>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
-                                               style={{textDecoration: 'none', color: 'inherit'}}>
-                                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                    <CardHeader
-                                                        style={{display: 'top', maxHeight: '65px'}}
-                                                        title={
-                                                            <div style={{
-                                                                maxWidth: '100%', // Limit the width to the parent container
-                                                                overflow: 'hidden', // Hide overflow
-                                                                display: '-webkit-box', // Use webkit box model for line clamp
-                                                                WebkitLineClamp: 2, // Limit to two lines
-                                                                WebkitBoxOrient: 'vertical', // Set the orientation to vertical
-                                                                textOverflow: 'ellipsis' // Add ellipsis to text overflow
-                                                            }}>
-                                                                {item.title}
-                                                            </div>
-                                                        }
-                                                        titleTypographyProps={{style: {fontSize: getDynamicFontSize(item.title)}}}
-                                                        subheader={
-                                                            <div>
-                                                                <div>{item.date}</div>
-                                                                <div>
-                                                                    <PinDropIcon style={{
-                                                                        fontSize: '1rem',
-                                                                        verticalAlign: 'bottom'
-                                                                    }}/> {item.place}
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                        subheaderTypographyProps={{
-                                                            component: 'div',
-                                                            style: {fontSize: '11px'}
-                                                        }}
-                                                    />
-                                                </div>
-                                            </a>
-                                            <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
-                                               style={{textDecoration: 'none', color: 'inherit'}}>
-                                                <CardMedia
-                                                    component="div"
+                                <Card
+                                    sx={{
+                                        height: { xs: 'auto', md: '350px' },
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <a href={detailLink} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <CardMedia
+                                            component="img"
+                                            image={imageSrc}
+                                            alt={item.title}
+                                            sx={{
+                                                width: '100%',
+                                                height: { xs: 140, md: 200 },
+                                                objectFit: 'cover'
+                                            }}
+                                        />
+                                    </a>
+                                    <Box sx={{ p: 2, flex: 1 }}>
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                fontSize: getDynamicFontSize(item.title),
+                                                fontWeight: 500,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {item.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {item.date}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                            <PinDropIcon sx={{ fontSize: '1rem', verticalAlign: 'bottom', mr: 0.5 }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {item.type === 'activities' ? item.activity_location : item.place}
+                                            </Typography>
+                                        </Box>
+                                        {/* If price is available, show pricing & discount info */}
+                                        {item.price && (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                                <Typography
                                                     sx={{
-                                                        pt: '56.25%',
-                                                        position: 'relative',
-                                                        overflow: 'hidden'
-                                                    }} // Ensure the position is relative to position the image correctly
+                                                        textDecoration: 'line-through',
+                                                        color: 'gray',
+                                                        mr: 1,
+                                                        fontSize: '0.9rem'
+                                                    }}
                                                 >
-                                                    <img
-                                                        src={item.photo}
-                                                        alt={item.title}
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover',
-                                                            position: 'absolute',
-                                                            top: 0,
-                                                            left: 0
-                                                        }} // Full cover image
-                                                        onError={(e) => {
-                                                            e.target.onerror = null; // Prevents looping
-                                                            e.target.src = deneme[0]; // Assuming deneme[0] has the default image URL
-                                                        }}
-                                                    />
-
-                                                </CardMedia>
-                                            </a>
-                                            <IconButton
-                                                id={`favorite-icon-${item.id}`}
-                                                aria-label="add to favorites"
-                                                onClick={() => handleClick(item.id)}
-                                            >
-                                                {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                            </IconButton>
-
-                                            <Menu
-                                                id="simple-menu"
-                                                anchorEl={document.getElementById(`favorite-icon-${item.id}`)} // Use the IconButton's id as the anchor
-                                                keepMounted
-                                                open={openMenuEventId === item.id}
-                                                onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
-                                            >
-                                            </Menu>
-                                        </>
+                                                    {Math.floor(item.price)} TL
+                                                </Typography>
+                                                <Typography
+                                                    sx={{
+                                                        color: '#1976d2',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.9rem'
+                                                    }}
+                                                >
+                                                    {Math.floor(item.price * 0.8)} TL
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        backgroundColor: 'red',
+                                                        color: 'white',
+                                                        px: 1,
+                                                        py: 0.5,
+                                                        borderRadius: 1,
+                                                        ml: 1,
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    20%
+                                                </Box>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                    <IconButton
+                                        id={item.type === 'events' ? `favorite-icon-${item.id}` : undefined}
+                                        aria-label="add to favorites"
+                                        onClick={handleFavClick}
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '8px',
+                                            right: '8px',
+                                            backgroundColor: 'rgba(255,255,255,0.7)',
+                                            borderRadius: '50%',
+                                            padding: '6px',
+                                            zIndex: 3,
+                                        }}
+                                    >
+                                        {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                    </IconButton>
+                                    {/* For events, show the menu if open */}
+                                    {item.type === 'events' && openMenuEventId === item.id && (
+                                        <Menu
+                                            id="simple-menu"
+                                            anchorEl={document.getElementById(`favorite-icon-${item.id}`)}
+                                            keepMounted
+                                            open={true}
+                                            onClose={() => setOpenMenuEventId(null)}
+                                        >
+                                            {/* Add menu items here if needed */}
+                                        </Menu>
                                     )}
                                 </Card>
                             </Grid>
                         );
                     })}
                 </Grid>
-                <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
-                    <DialogTitle>{"Just a moment!"}</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Login pls...
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
-                            Got it, thanks!
+                {(hasMoreEvents || hasMoreActivity) && (eventPage > 0 || activityPage > 0) && (
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                        <Button
+                            onClick={handleSearch}
+                            variant="contained"
+                            color="primary"
+                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
+                        >
+                            Daha Fazla
                         </Button>
-                    </DialogActions>
-                </Dialog>
+                    </div>
+                )}
             </Container>
-            {hasMoreEvents || hasMoreActivity && (eventPage > 0 || activityPage > 0) && (
-                <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
-                    <Button
-                        onClick={handleSearch}
-                        variant="contained"
-                        color="primary"
-                        style={{textTransform: 'none', fontSize: '16px', padding: '10px 20px'}}
-                    >
-                        Daha Fazla
+            <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
+                <DialogTitle>{"Just a moment!"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Login please...
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
+                        Got it, thanks!
                     </Button>
-                </div>
-            )}
+                </DialogActions>
+            </Dialog>
         </div>
     );
 };

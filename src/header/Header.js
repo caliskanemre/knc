@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './css/Header.css';
 import SearchImage from "../images/urunAra.png";
-import ActivitySubHeader from "../activity/ActivitySubHeader";
+import ProductsSubHeader from "../activity/ProductsSubHeader";
 import Login from "../login/Login";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import {
@@ -27,7 +27,7 @@ import Register from "../login/Register";
 import LoginIcon from '@mui/icons-material/Login';
 import { useAuth } from "../auth/AuthProvider";
 import MenuIcon from '@mui/icons-material/Menu';
-import ActivitySubHeaderMobile from "../activity/ActivitySubHeaderMobile";
+import ProductsSubHeaderMobile from "../activity/ProductsSubHeaderMobile";
 import { Helmet } from "react-helmet";
 import { useTranslation } from "react-i18next";
 
@@ -182,7 +182,7 @@ export default function Header() {
                                     style={{ cursor: 'pointer' }}
                                 />
                             </NavLink>
-                            <ActivitySubHeader />
+                            <ProductsSubHeader />
                             {/* NEW Section for Articles */}
                             <NavLink to="/articles" className="nav-link">
                                 {t('Articles')}
@@ -298,7 +298,7 @@ export default function Header() {
                                 </Box>
                             </ListItem>
 
-                            <ActivitySubHeaderMobile />
+                            <ProductsSubHeaderMobile />
                             <ListItem button onClick={() => handleNavigation('/articles')}>
                                 <ListItemText
                                     primary={t('Articles')}

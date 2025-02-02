@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Main from "./Main";
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
-import ActivityList from "./activity/ActivityList";
+import ProductList from "./activity/ProductList";
 import Map from "./header/Map";
 import EventDetails from "./event/EventDetails";
 import ProductDetails from "./activity/ProductDetails";
@@ -9,7 +9,6 @@ import SearchPage from "./search/SearchPage";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFnsV3";
 import {CookieConsent} from "react-cookie-consent";
-import IdealForList from "./ideal/IdealForList";
 import Login from "./login/Login";
 import Register from "./login/Register";
 import {jwtDecode} from 'jwt-decode';
@@ -103,9 +102,8 @@ function App() {
                     <div className="App">
                         <Routes>
                             <Route path="/" element={<Main/>}/>
-                            <Route path="/ideal-for" element={<IdealForList/>}/>
-                            <Route path="/products" element={<ActivityList/>}/>
-                            <Route path="/products/:type" element={<ActivityList/>}/>
+                            <Route path="/products" element={<ProductList/>}/>
+                            <Route path="/products/:type" element={<ProductList/>}/>
                             <Route path="/map" element={<Map/>}/>
                             <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
                             <Route path="/products/detail/:id" element={<ProductDetails/>}/>

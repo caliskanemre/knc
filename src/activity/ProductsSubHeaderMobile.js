@@ -13,7 +13,7 @@ import souvenir from "../images/souvenir.jpg"
 import handkerchief from "../images/mendil.jpg"
 import {useTranslation} from "react-i18next";
 
-function ActivitySubHeaderMobile() {
+function ProductsSubHeaderMobile() {
     const [open, setOpen] = useState(true);
     const { t, i18n } = useTranslation();
 
@@ -83,4 +83,4 @@ function ActivitySubHeaderMobile() {
     );
 }
 
-export default ActivitySubHeaderMobile;
+export default ProductsSubHeaderMobile;

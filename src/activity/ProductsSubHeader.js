@@ -12,7 +12,7 @@ import souvenir from "../images/souvenir.jpg"
 import handkerchief from "../images/mendil.jpg"
 import {useTranslation} from "react-i18next";
 
-function ActivitySubHeader() {
+function ProductsSubHeader() {
     const { t, i18n } = useTranslation();
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -119,6 +119,6 @@ function ActivitySubHeader() {
     );
 }
 
-export default ActivitySubHeader;
+export default ProductsSubHeader;
 
 // CSS in your stylesheet
