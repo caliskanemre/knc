@@ -24,6 +24,7 @@ import Payment from "./cart/Payment";
 import PaymentFailure from "./cart/PaymentFailure";
 import PaymentSuccess from "./cart/PaymentSuccess";
 import ArticlesPage from "./activity/ArticlesPage";
+import ArticleDetailPage from "./activity/ArticleDetailPage";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -121,6 +122,8 @@ function App() {
                             <Route path="/payment-success" element={<PaymentSuccess />} />
                             <Route path="/payment-failure" element={<PaymentFailure />} />
                             <Route path="/articles" element={<ArticlesPage />} />
+                            <Route path="/articles/:id" element={<ArticleDetailPage />} />
+
                         </Routes>
 
                         <CookieConsent

@@ -117,92 +117,129 @@ export default function Main() {
                 {/* Product Grid */}
                 <Container sx={{ py: 9 }} maxWidth="xl">
                     <Grid container spacing={4}>
-                        {products.map((item) => (
-                            <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
-                                <Card
-                                    sx={{
-                                        height: { xs: 'auto', md: '350px' },
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative',
-                                    }}
-                                >
-                                    <a
-                                        href={`/products/detail/${item.id}`}
-                                        style={{ textDecoration: 'none', color: 'inherit' }}
-                                    >
-                                        <CardMedia
-                                            component="img"
-                                            image={item.photos[0]?.photo || ''}
-                                            alt={item.title}
-                                            sx={{
-                                                width: '100%',
-                                                height: { xs: 140, md: 200 },
-                                                objectFit: 'cover',
-                                            }}
-                                        />
-                                    </a>
-                                    <Box sx={{ padding: 2, flex: 1 }}>
-                                        <Typography
-                                            sx={{
-                                                textAlign: 'left',
-                                                fontSize: '1rem',
-                                                fontWeight: 500,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                            }}
-                                        >
-                                            {item.title}
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                textAlign: 'left',
-                                                fontSize: '0.85rem',
-                                                color: 'text.secondary',
-                                                mt: 1,
-                                                overflow: 'hidden',
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical',
-                                            }}
-                                        >
-                                            {item.shortDescription || 'No description available.'}
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                textAlign: 'left',
-                                                fontSize: '1rem',
-                                                fontWeight: 600,
-                                                color: 'primary.main',
-                                                mt: 1,
-                                            }}
-                                        >
-                                            {Math.floor(item.price) || '0'} TL
-                                        </Typography>
-                                    </Box>
-                                    <IconButton
-                                        aria-label="add to favorites"
-                                        onClick={() => handleFavoriteClick(item.id)}
+                        {products.map((item) => {
+                            // Define the discount percentage (you can make this dynamic per product)
+                            const discountPercent = 20; // For example, 20% discount
+
+                            // Calculate prices
+                            const originalPrice = Math.floor(item.price);
+                            const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
+
+                            return (
+                                <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
+                                    <Card
                                         sx={{
-                                            position: 'absolute',
-                                            top: '8px',
-                                            right: '8px',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                            borderRadius: '50%',
-                                            padding: '6px',
-                                            zIndex: 2,
+                                            height: { xs: 'auto', md: '350px' },
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            position: 'relative',
                                         }}
                                     >
-                                        {localFavorites.includes(item.id) ? (
-                                            <FavoriteIcon color="error" />
-                                        ) : (
-                                            <FavoriteBorderIcon />
-                                        )}
-                                    </IconButton>
-                                </Card>
-                            </Grid>
-                        ))}
+                                        <a
+                                            href={`/products/detail/${item.id}`}
+                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                        >
+                                            <CardMedia
+                                                component="img"
+                                                image={item.photos[0]?.photo || ''}
+                                                alt={item.title}
+                                                sx={{
+                                                    width: '100%',
+                                                    height: { xs: 140, md: 200 },
+                                                    objectFit: 'cover',
+                                                }}
+                                            />
+                                        </a>
+                                        <Box sx={{ padding: 2, flex: 1 }}>
+                                            <Typography
+                                                sx={{
+                                                    textAlign: 'left',
+                                                    fontSize: '1rem',
+                                                    fontWeight: 500,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                {item.title}
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    textAlign: 'left',
+                                                    fontSize: '0.85rem',
+                                                    color: 'text.secondary',
+                                                    mt: 1,
+                                                    overflow: 'hidden',
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
+                                                }}
+                                            >
+                                                {item.shortDescription || 'No description available.'}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                                {/* Original Price with Strikethrough */}
+                                                <Typography
+                                                    sx={{
+                                                        textDecoration: 'line-through',
+                                                        color: 'gray',
+                                                        mr: 1,
+                                                    }}
+                                                >
+                                                    {originalPrice} TL
+                                                </Typography>
+                                                {/* Discounted Price */}
+                                                <Typography
+                                                    sx={{
+                                                        color: '#1976d2',
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                >
+                                                    {discountedPrice} TL
+                                                </Typography>
+                                                {/* Discount Badge */}
+                                                {discountPercent >= 20 && (
+                                                    <Box
+                                                        sx={{
+                                                            backgroundColor: 'red',
+                                                            color: 'white',
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            ml: 1,
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    >
+                                                        {discountPercent}%
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                        <IconButton
+                                            aria-label="add to favorites"
+                                            onClick={() => handleFavoriteClick(item.id)}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                borderRadius: '50%',
+                                                padding: '6px',
+                                                zIndex: 3,
+                                            }}
+                                        >
+                                            {localFavorites.includes(item.id) ? (
+                                                <FavoriteIcon color="error" />
+                                            ) : (
+                                                <FavoriteBorderIcon />
+                                            )}
+                                        </IconButton>
+                                    </Card>
+                                </Grid>
+                            );
+                        })}
+
                     </Grid>
 
                     {hasMore && (

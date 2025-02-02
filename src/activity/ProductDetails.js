@@ -3,11 +3,23 @@ import { useParams } from "react-router-dom";
 import Axios from "axios";
 import Header from "../header/Header";
 import './css/ActivityDetails.css';
-import {Button, IconButton, Card, CardMedia, CardContent, Typography, Snackbar} from "@mui/material";
+import {
+    Button,
+    IconButton,
+    Card,
+    CardMedia,
+    CardContent,
+    Typography,
+    Snackbar,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    CircularProgress
+} from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import {
     FacebookIcon,
     FacebookShareButton,
@@ -20,19 +32,11 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "react-i18next";
-
-// MUI Accordion for the description
-import {
-    Accordion,
-    AccordionSummary,
-    AccordionDetails
-} from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 const ProductDetails = () => {
     const { id, title, type } = useParams();
-
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,7 +44,6 @@ const ProductDetails = () => {
     const [username, setUsername] = useState('');
     const [selectedImage, setSelectedImage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
-
     const [similarProducts, setSimilarProducts] = useState([]); // NEW state
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -85,7 +88,6 @@ const ProductDetails = () => {
     }, [product]);
 
     // Example: fetch "similar" items by the same `type` or `category`.
-    // Adjust your endpoint or query parameters as needed.
     const fetchSimilarProducts = async (typeValue) => {
         if (!typeValue) return;
         try {
@@ -102,7 +104,6 @@ const ProductDetails = () => {
         }
     };
 
-
     const handleFavoriteClick = () => {
         toggleFavorite(product.id, isAlreadyFavorited, "product");
         setSnackbarMessage(isAlreadyFavorited ? 'Removed from favorites' : 'Added to favorites');
@@ -112,7 +113,11 @@ const ProductDetails = () => {
     const handleSnackbarClose = () => setSnackbarOpen(false);
 
     if (product === null) {
-        return <div>Loading...</div>;
+        return (
+            <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                <CircularProgress />
+            </div>
+        );
     }
 
     const addToCart = async (quantity) => {
@@ -159,6 +164,14 @@ const ProductDetails = () => {
         ? product.description.split("\n").filter((line) => line.trim() !== "")
         : [];
 
+    // ----------------------
+    // Discount Logic Example
+    // ----------------------
+    // Define a discount rate of 20% (this can be dynamic)
+    const discountPercent = 20;
+    const originalPrice = Math.floor(product.price);
+    const discountedPrice = Math.floor(product.price * (1 - discountPercent / 100));
+
     return (
         <div className="activity-details-container">
             <Helmet>
@@ -166,7 +179,7 @@ const ProductDetails = () => {
                 <meta
                     name="description"
                     content={`Discover more about ${product.title}. 
-              Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
+            Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
                 />
                 <link
                     rel="canonical"
@@ -214,7 +227,7 @@ const ProductDetails = () => {
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "http://schema.org",
-                        "@type": "TouristAttraction", // or "Product", "Event" – adapt as needed
+                        "@type": "TouristAttraction",
                         "name": product.title,
                         "description": product.description,
                         "image": product.photos.map(photo => photo.photo),
@@ -277,10 +290,46 @@ const ProductDetails = () => {
                         </div>
                     )}
 
-                    {/* Price */}
+                    {/* Price with Discount */}
                     {product.price && (
-                        <div className="product-price">
-                            {product.price} TL
+                        <div
+                            className="product-price"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '1.25rem',
+                                margin: '10px 0'
+                            }}
+                        >
+              <span
+                  style={{
+                      textDecoration: 'line-through',
+                      color: 'gray',
+                      marginRight: '8px'
+                  }}
+              >
+                {originalPrice} TL
+              </span>
+                            <span
+                                style={{
+                                    color: '#1976d2',
+                                    fontWeight: 'bold',
+                                    marginRight: '8px'
+                                }}
+                            >
+                {discountedPrice} TL
+              </span>
+                            <span
+                                style={{
+                                    backgroundColor: 'red',
+                                    color: 'white',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                {discountPercent}% OFF
+              </span>
                         </div>
                     )}
 
@@ -372,6 +421,7 @@ const ProductDetails = () => {
                         onClose={handleSnackbarClose}
                         message={snackbarMessage}
                     />
+
                     {/* Description (Accordion) */}
                     {descriptionLines.length > 0 && (
                         <div
@@ -382,16 +432,15 @@ const ProductDetails = () => {
                                 maxWidth: '400px'
                             }}
                         >
-                            <Accordion defaultExpanded>
-                                <AccordionSummary
-                                    expandIcon={<ExpandMoreIcon />}
+                            <div>
+                                <div
                                     aria-controls="description-content"
                                     id="description-header"
                                 >
                                     <Typography variant="h6">
                                         Ürün Açıklaması
                                     </Typography>
-                                </AccordionSummary>
+                                </div>
                                 <AccordionDetails>
                                     {descriptionLines.map((line, index) => (
                                         <div
@@ -412,7 +461,7 @@ const ProductDetails = () => {
                                         </div>
                                     ))}
                                 </AccordionDetails>
-                            </Accordion>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -433,16 +482,15 @@ const ProductDetails = () => {
             )}
 
             {/* SIMILAR PRODUCTS SECTION */}
-            {/* SIMILAR PRODUCTS SECTION */}
             {similarProducts.length > 0 && (
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
                     <h2>Similar Products</h2>
                     <div
                         style={{
                             display: 'flex',
-                            justifyContent: 'center', // Center the cards horizontally
-                            flexWrap: 'wrap', // Wrap the cards to the next row if they exceed the container width
-                            gap: '20px', // Add spacing between cards
+                            justifyContent: 'center',
+                            flexWrap: 'wrap',
+                            gap: '20px',
                             padding: '10px 20px'
                         }}
                     >
@@ -454,10 +502,9 @@ const ProductDetails = () => {
                                     minWidth: '200px',
                                     maxWidth: '300px',
                                     textAlign: 'center',
-                                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Optional: Add a shadow for better visuals
+                                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)'
                                 }}
                             >
-                                {/* Card Media for Image */}
                                 <CardMedia
                                     component="img"
                                     alt={sp.title}
@@ -474,7 +521,6 @@ const ProductDetails = () => {
                                     <Typography variant="body2" color="text.secondary">
                                         {sp.price} TL
                                     </Typography>
-                                    {/* Link to that product’s detail page */}
                                     <Button
                                         variant="contained"
                                         size="small"
@@ -485,7 +531,6 @@ const ProductDetails = () => {
                                     </Button>
                                 </CardContent>
                             </Card>
-
                         ))}
                         <Snackbar
                             open={snackbarOpen}
@@ -496,8 +541,6 @@ const ProductDetails = () => {
                     </div>
                 </div>
             )}
-
-
         </div>
     );
 };

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import "./css/SearchPage.css";
 import Header from "../header/Header";
-import {Avatar, Button, CardHeader, Divider, IconButton, Menu, MenuItem} from "@mui/material";
+import {Avatar, Button, CardHeader, IconButton, Menu} from "@mui/material";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
@@ -21,13 +21,6 @@ import museumIcon from "../images/green_museum.png";
 import EventSearchButtons from "./EventSearchButtons";
 import PinDropIcon from "@mui/icons-material/PinDrop";
 import {Helmet} from "react-helmet";
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import LandscapeIcon from "@mui/icons-material/Landscape";
-import ScienceIcon from "@mui/icons-material/Science";
-import SchoolIcon from "@mui/icons-material/School";
-import ChildCareIcon from "@mui/icons-material/ChildCare";
-import PaletteIcon from "@mui/icons-material/Palette";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {useAuth} from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -167,7 +160,7 @@ const SearchPage = () => {
         const eventSize = 20; // Number of items per page
 
         try {
-            const eventResponse = await axios.get(`${baseURL}/events/search`, {
+            const eventResponse = await axios.get(`${baseURL}/products/searchByFts`, {
                 params: {
                     query: query,
                     location: location,
@@ -193,60 +186,15 @@ const SearchPage = () => {
         return {eventSize};
     }
 
-    async function extractedActivity(options) {
-        const {
-            query = searchQuery, // Fallback to searchQuery if no query is provided in options
-            location = searchLocation, // Fallback to searchLocation if no location is provided in options
-            activityPageNumber = activityPage, // Fallback to eventPage if no eventPageNumber is provided in options
-        } = options;
-
-        try {
-            const activityResponse = await axios.get(`${baseURL}/activities/search`, {
-                params: {
-                    query: query,
-                    location: location,
-                    page: activityPageNumber,
-                    size: 20
-                }
-            });
-
-            setActivityResult(prevActivities => [...prevActivities, ...activityResponse.data.content]);
-            setAllResult(prevAllResult => ({
-                ...prevAllResult,
-                activity: [...prevAllResult.activity, ...activityResponse.data.content]
-            }));
-            if (activityResult.length === 20) {
-                setActivityPage(prevPage => prevPage + 1);
-                setHasMoreActivity(true);
-            } else {
-                setHasMoreActivity(false); // No more events to load
-            }
-        } catch (error) {
-            console.error('Error loading more activities:', error);
-        }
-    }
 
     const totalResults = eventResult.length + activityResult.length;
     const handleSearch = async (options = {}) => {
         await extractedEvent(options);
-        await extractedActivity(options);
     };
 
     const combinedResults = [
         ...(Array.isArray(allResult.event) ? allResult.event.map(item => ({...item, type: 'events'})) : []),
-        ...(Array.isArray(allResult.activity) ? allResult.activity.map(item => ({...item, type: 'activities'})) : [])
     ];
-
-    const eventIcons = {
-        "music & concerts": <MusicNoteIcon/>,
-        "outdoor & adventure": <LandscapeIcon/>,
-        "tech & innovation": <ScienceIcon/>,
-        "education": <SchoolIcon/>,
-        "children": <ChildCareIcon/>,
-        "arts & culture": <PaletteIcon/>,
-        "other": <HelpOutlineIcon/>,
-    };
-
 
     return (
         <div>
@@ -391,14 +339,6 @@ const SearchPage = () => {
                                             <a href={`/events/${item.id}/${encodeURIComponent(item.title)}`}
                                                style={{textDecoration: 'none', color: 'inherit'}}>
                                                 <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                    <Avatar sx={{
-                                                        bgcolor: 'darkorange',
-                                                        fontSize: '0.7rem',
-                                                        marginLeft: '8px',
-                                                        marginTop: '15px'
-                                                    }}>
-                                                        {eventIcons[item.type.toLowerCase()]}
-                                                    </Avatar>
                                                     <CardHeader
                                                         style={{display: 'top', maxHeight: '65px'}}
                                                         title={
@@ -476,23 +416,6 @@ const SearchPage = () => {
                                                 open={openMenuEventId === item.id}
                                                 onClose={() => setOpenMenuEventId(null)} // Close the menu by resetting the state
                                             >
-                                                <Typography style={{ padding: '10px 16px' }} variant="subtitle1" component="div">
-                                                    Do you want to get any notification?
-                                                </Typography>
-                                                <Divider />
-                                                <MenuItem onClick={() => handleCloseNotification(item.id, '2')}>
-                                                    2hrs before
-                                                </MenuItem>
-                                                <MenuItem onClick={() => handleCloseNotification(item.id, '24')}>
-                                                    24hrs before
-                                                </MenuItem>
-                                                <MenuItem onClick={() => handleCloseNotification(item.id, 'Week')}>
-                                                    Week before
-                                                </MenuItem>
-                                                <MenuItem onClick={() => handleCloseNotification(item.id, 'No')}>
-                                                    No need notification
-                                                </MenuItem>
-                                                {/* Add more MenuItem components as needed */}
                                             </Menu>
                                         </>
                                     )}
@@ -505,7 +428,7 @@ const SearchPage = () => {
                     <DialogTitle>{"Just a moment!"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            To start receiving AI-based recommendations tailored to your interests, please log in or sign up first. This way, you can get the best matches for products and easily manage your favorites. It's quick and straightforward to get started!
+                            Login pls...
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
