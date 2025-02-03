@@ -1,11 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Box, Button, Typography} from '@mui/material';
+import {useLocation, useNavigate} from 'react-router-dom';
 import axios from 'axios';
 
 const PaymentSuccess = () => {
