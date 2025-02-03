@@ -3,6 +3,11 @@ import { Box, Typography, Button } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, Button } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+
 const PaymentSuccess = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -30,6 +35,9 @@ const PaymentSuccess = () => {
 
             if (response.data.status === 'completed') {
                 setPaymentStatus('completed');
+                setTimeout(() => {
+                    navigate('/');
+                }, 3000); // ✅ Redirect after 3 seconds
             } else {
                 setPaymentStatus('failed');
             }
