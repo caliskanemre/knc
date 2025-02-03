@@ -1,101 +1,232 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { useState } from 'react';
+import {
+    Box,
+    Typography,
+    FormControl,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+    TextField,
+    Button,
+    Divider,
+} from '@mui/material';
 import axios from 'axios';
-import {jwtDecode} from 'jwt-decode'; // Ensure correct import
+import Header from "../header/Header";
+import { useAuth } from "../auth/AuthProvider"; // ✅ Import useAuth for username
 
-const AuthContext = createContext();
-const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-export const AuthProvider = ({ children }) => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [username, setUsername] = useState('');
-    const [favorites, setFavorites] = useState([]); // Initialize favorites state
-    const [cart, setCart] = useState([]);
+const Payment = () => {
+    const { username } = useAuth(); // ✅ Get username from AuthProvider
 
-    useEffect(() => {
-        // Check for token and update username on component mount
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-            const decoded = jwtDecode(storedToken);
-            setToken(storedToken);
-            setUsername(decoded.sub); // Make sure your token has a 'username' claim
-            fetchFavorites(storedToken); // Fetch favorites upon login
-            setIsLoggedIn(true);
-        }
-    }, [token, username]);
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [formData, setFormData] = useState({
+        name: '',
+        cardNumber: '',
+        expiry: '',
+        cvv: '',
+        email: '',
+    });
+    const [shippingAddress, setShippingAddress] = useState({
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        postalCode: '',
+        country: '',
+    });
 
-    const fetchCart = async (authToken) => {
-        try {
-            const response = await axios.get(`${baseURL}/cart/${username}`, {
-                headers: { Authorization: `Bearer ${authToken || token}` },
-            });
-            setCart(response.data || []);
-        } catch (error) {
-            console.error("Error fetching cart items:", error);
-        }
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const [amount] = useState(10000); // in cents (e.g., 100.00)
+    const [currency] = useState('EUR');
+
+    // Handle payment method selection
+    const handlePaymentChange = (event) => {
+        setPaymentMethod(event.target.value);
     };
 
-    const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
+    // Handle input changes
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleShippingAddressChange = (event) => {
+        const { name, value } = event.target;
+        setShippingAddress((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // Submit payment
+    const handlePaymentSubmit = async () => {
+        if (!paymentMethod) {
+            alert('Lütfen bir ödeme yöntemi seçiniz.');
+            return;
+        }
+
+        if (!username) {
+            alert("Kullanıcı adı bulunamadı. Lütfen giriş yapın.");
+            return;
+        }
+
+        // ✅ Build the payment payload with username
+        const paymentData = {
+            amount,
+            currency,
+            paymentMethod,
+            shippingAddress,
+            username, // ✅ Pass username to backend
+        };
+
         try {
-            if (isInCart) {
-                // Remove from cart
-                await axios.delete(`${baseURL}/cart/${username}/item/${itemId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            } else {
-                // Add to cart
-                const cartItem = { productId: itemId, quantity, price };
-                await axios.post(`${baseURL}/cart/${username}`, cartItem, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+            const response = await axios.post(`${baseURL}/api/payment`, paymentData);
+
+            if (response.status === 200) {
+                const revolutData = response.data;
+                if (revolutData.checkout_url) {
+                    // ✅ Redirect the user to Revolut's checkout page
+                    window.location.href = revolutData.checkout_url;
+                } else {
+                    alert('Ödeme oluşturuldu, ancak checkout_url alınamadı.');
+                }
             }
-            fetchCart(); // Refresh the cart
         } catch (error) {
-            console.error(`Error toggling cart item ${itemId}:`, error);
+            console.error('Error processing payment:', error);
+            alert('Ödeme sırasında bir hata oluştu. ' + (error.response?.data?.error || ''));
         }
     };
 
-
-    const fetchFavorites = async (token) => {
-        try {
-            const response = await axios.get(`${baseURL}/users/favorites`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setFavorites(response.data); // Update favorites state
-        } catch (error) {
-            console.error("Error fetching favorites:", error);
-        }
-    };
-
-    const toggleFavorite = async (itemId, isFavorited, itemType, notificationType) => {
-
-
-        try {
-            // Toggle the favorite status in the backend
-            if (isFavorited) {
-                const url = `${baseURL}/users/favorites/${itemType}/${itemId}`;
-                await axios.delete(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            } else {
-                const url = `${baseURL}/users/favorites/${itemType}/${itemId}/${notificationType}`;
-                await axios.post(url, {}, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            }
-
-            // Refetch the favorites list to update the local state
-            await fetchFavorites(); // Assuming fetchFavorites is a function that fetches the entire favorites list and updates the state
-
-        } catch (error) {
-            console.error(`Error toggling favorite ${itemType}:`, error);
-        }
-    };
     return (
-        <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn, token, setToken, username,cart, setUsername, favorites, toggleFavorite }}>
-            {children}
-        </AuthContext.Provider>
+        <div>
+            <Header />
+            <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    Ödeme Sayfası
+                </Typography>
+                <Divider sx={{ marginBottom: 2 }} />
+
+                <FormControl component="fieldset" sx={{ marginBottom: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Ödeme Yöntemi Seçin
+                    </Typography>
+                    <RadioGroup value={paymentMethod} onChange={handlePaymentChange}>
+                        <FormControlLabel
+                            value="bank_transfer"
+                            control={<Radio />}
+                            label="Havale/EFT"
+                        />
+                        <FormControlLabel
+                            value="paypal"
+                            control={<Radio />}
+                            label="PayPal"
+                        />
+                        <FormControlLabel
+                            value="credit_card"
+                            control={<Radio />}
+                            label="Kredi Kartı"
+                        />
+                    </RadioGroup>
+                </FormControl>
+
+                {paymentMethod === 'credit_card' && (
+                    <Box>
+                        <Typography variant="h6" gutterBottom>
+                            Kredi Kartı Bilgileri
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            label="Kart Üzerindeki İsim"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            sx={{ mb: 1 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Kart Numarası"
+                            name="cardNumber"
+                            value={formData.cardNumber}
+                            onChange={handleInputChange}
+                            sx={{ mb: 1 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Son Kullanma Tarihi (MM/YY)"
+                            name="expiry"
+                            value={formData.expiry}
+                            onChange={handleInputChange}
+                            sx={{ mb: 1 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="CVV"
+                            name="cvv"
+                            type="password"
+                            value={formData.cvv}
+                            onChange={handleInputChange}
+                        />
+                    </Box>
+                )}
+
+                <Box sx={{ marginTop: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Teslimat Adresi
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        label="Adres Satırı 1"
+                        name="addressLine1"
+                        value={shippingAddress.addressLine1}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Adres Satırı 2"
+                        name="addressLine2"
+                        value={shippingAddress.addressLine2}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="Şehir"
+                        name="city"
+                        value={shippingAddress.city}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Posta Kodu"
+                        name="postalCode"
+                        value={shippingAddress.postalCode}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Ülke"
+                        name="country"
+                        value={shippingAddress.country}
+                        onChange={handleShippingAddressChange}
+                        sx={{ mb: 1 }}
+                        required
+                    />
+                </Box>
+
+                <Divider sx={{ marginY: 3 }} />
+
+                <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    onClick={handlePaymentSubmit}
+                >
+                    Ödemeyi Tamamla
+                </Button>
+            </Box>
+        </div>
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
-
+export default Payment;
