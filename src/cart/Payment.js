@@ -12,8 +12,11 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Header from "../header/Header";
+import { useAuth } from "../auth/AuthProvider"; // ✅ Import useAuth for username
 
 const Payment = () => {
+    const { username } = useAuth(); // ✅ Get username from AuthProvider
+
     const [paymentMethod, setPaymentMethod] = useState('');
     const [formData, setFormData] = useState({
         name: '',
@@ -57,12 +60,18 @@ const Payment = () => {
             return;
         }
 
-        // Build the payment payload
+        if (!username) {
+            alert("Kullanıcı adı bulunamadı. Lütfen giriş yapın.");
+            return;
+        }
+
+        // ✅ Build the payment payload with username
         const paymentData = {
             amount,
             currency,
             paymentMethod,
             shippingAddress,
+            username, // ✅ Pass username to backend
         };
 
         try {
@@ -71,7 +80,7 @@ const Payment = () => {
             if (response.status === 200) {
                 const revolutData = response.data;
                 if (revolutData.checkout_url) {
-                    // Redirect the user to Revolut's checkout page
+                    // ✅ Redirect the user to Revolut's checkout page
                     window.location.href = revolutData.checkout_url;
                 } else {
                     alert('Ödeme oluşturuldu, ancak checkout_url alınamadı.');
