@@ -54,7 +54,7 @@ const ProductDetails = () => {
 
     // Fetch product details
     useEffect(() => {
-        Axios.get(`${baseURL}/products/detail/${id}`)
+        Axios.get(`${baseURL}/products/detail/${id}/${title}`)
             .then((response) => {
                 setProduct(response.data);
             })

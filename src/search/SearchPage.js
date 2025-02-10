@@ -274,15 +274,9 @@ const SearchPage = () => {
                                 : () => handleFavoriteActivityClick(item.id);
 
                         // Determine link and image source based on type
-                        const detailLink =
-                            item.type === 'activities'
-                                ? `/activities/detail/${item.id}/${item.title}`
-                                : `/events/${item.id}/${encodeURIComponent(item.title)}`;
+                        const detailLink = `/products/detail/${item.id}/${item.title}`
 
-                        const imageSrc =
-                            item.type === 'activities'
-                                ? (item.photos && item.photos[0] ? item.photos[0].photo : '')
-                                : item.photo;
+                        const imageSrc = (item.photos && item.photos[0] ? item.photos[0].photo : '')
 
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>

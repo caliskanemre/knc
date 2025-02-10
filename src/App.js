@@ -106,6 +106,7 @@ function App() {
                             <Route path="/products/:type" element={<ProductList/>}/>
                             <Route path="/map" element={<Map/>}/>
                             <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
+                            <Route path="/products/detail/:id/:title" element={<ProductDetails/>}/>
                             <Route path="/products/detail/:id" element={<ProductDetails/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/about-us" element={<AboutUs />} />
