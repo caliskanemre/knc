@@ -56,18 +56,6 @@ const SearchPage = () => {
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
 
-    // Mapping for activity icons (if needed for activity-type labeling)
-    const activityIcons = {
-        camping: CampingIcon2,
-        health: wellness,
-        winter: winter,
-        summer: swimming,
-        park: park,
-        nature: nature,
-        national: naturalPark,
-        museum: museumIcon
-    };
-
     // Restore search state from navigation if available
     useEffect(() => {
         if (location.state && location.state.fromDetails) {
@@ -317,7 +305,6 @@ const SearchPage = () => {
                                             {item.date}
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                            <PinDropIcon sx={{ fontSize: '1rem', verticalAlign: 'bottom', mr: 0.5 }} />
                                             <Typography variant="body2" color="text.secondary">
                                                 {item.type === 'activities' ? item.activity_location : item.place}
                                             </Typography>

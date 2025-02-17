@@ -63,6 +63,8 @@ const ProductDetails = () => {
             });
     }, [id, baseURL]);
 
+
+
     // Once product is loaded, set the default selectedImage
     useEffect(() => {
         if (product && product.photos && product.photos.length > 0) {
@@ -105,6 +107,10 @@ const ProductDetails = () => {
     };
 
     const handleFavoriteClick = () => {
+        if (!isLoggedIn) {
+            alert("You need to be logged in to add to favorites.");
+            return;
+        }
         toggleFavorite(product.id, isAlreadyFavorited, "product");
         setSnackbarMessage(isAlreadyFavorited ? 'Removed from favorites' : 'Added to favorites');
         setSnackbarOpen(true);
@@ -122,7 +128,8 @@ const ProductDetails = () => {
 
     const addToCart = async (quantity) => {
         if (!isLoggedIn) {
-            alert("You need to be logged in to add items to the cart.");
+            setSnackbarMessage("You need to be logged in to add items to the cart.");
+            setSnackbarOpen(true);
             return;
         }
 

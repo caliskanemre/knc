@@ -87,14 +87,6 @@ function ProductsSubHeader() {
                             {t('Gift')}
                         </NavLink>
                     </MenuItem>
-                    <MenuItem onClick={handleMouseLeave}>
-                        <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={flower} alt="flower" style={{ width: '24px', height: '24px' }} />
-                        </ListItemIcon>
-                        <NavLink to="/products/flower" className="nav-link" activeClassName="active">
-                            {t('Flower')}
-                        </NavLink>
-                    </MenuItem>
 
                     <MenuItem onClick={handleMouseLeave}>
                         <ListItemIcon style={{ marginRight: '-40px' }}>

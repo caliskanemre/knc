@@ -91,7 +91,7 @@ const ContactUs = () => {
                     </form>
                     <Box sx={{ marginTop: '40px', fontSize: '0.8rem', opacity: 0.8 }}>
                         <Typography variant="body2">
-                            © 2024 HandX OÜ. All rights reserved.
+                            © 2025 Kına Sepeti. All rights reserved.
                         </Typography>
                     </Box>
                 </Box>

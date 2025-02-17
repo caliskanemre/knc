@@ -37,18 +37,6 @@ const Favorites = () => {
         // Additional logic if needed when favorites change
     }, [favorites]);
 
-    // (Optional) Map for activity icons if needed in other contexts
-    const activityIcons = {
-        camping: CampingIcon2,
-        health: wellness,
-        winter: winter,
-        summer: swimming,
-        park: park,
-        nature: nature,
-        national: naturalPark,
-        museum: museumIcon,
-    };
-
     // Dynamically adjust font size based on title length
     const getDynamicFontSize = (title) => {
         title = title || "";
@@ -118,7 +106,6 @@ const Favorites = () => {
                                                     {item.date}
                                                 </Typography>
                                                 <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
-                                                    <PinDropIcon sx={{ fontSize: "1rem", verticalAlign: "bottom", mr: 0.5 }} />
                                                     <Typography variant="body2" color="text.secondary">
                                                         {item.activity_location}
                                                     </Typography>
