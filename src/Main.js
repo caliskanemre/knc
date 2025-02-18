@@ -22,10 +22,16 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
-import HeroSection from './shared/HeroSection'; // <--- The new Hero
+import HeroSection from './shared/HeroSection';
 
 const defaultTheme = createTheme();
 const PAGE_SIZE = 20;
+
+// Helper function to get a prefixed image URL (e.g., "small_", "medium_", "large_")
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 export default function Main() {
     const [products, setProducts] = useState([]);
@@ -113,17 +119,23 @@ export default function Main() {
 
             <main>
                 {/* 💫 NEW Responsive Hero Section */}
-                <HeroSection/>
+                <HeroSection />
                 {/* Product Grid */}
                 <Container sx={{ py: 9 }} maxWidth="xl">
                     <Grid container spacing={4}>
                         {products.map((item) => {
-                            // Define the discount percentage (you can make this dynamic per product)
+                            // Define the discount percentage (can be dynamic per product)
                             const discountPercent = 20; // For example, 20% discount
 
                             // Calculate prices
                             const originalPrice = Math.floor(item.price);
                             const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
+
+                            // Build image URLs using prefixes
+                            const originalPhoto = item.photos[0]?.photo || '';
+                            const smallImageUrl = getPrefixedImage(originalPhoto, 'small');
+                            const mediumImageUrl = getPrefixedImage(originalPhoto, 'medium');
+                            const largeImageUrl = getPrefixedImage(originalPhoto, 'large');
 
                             return (
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
@@ -141,7 +153,13 @@ export default function Main() {
                                         >
                                             <CardMedia
                                                 component="img"
-                                                image={item.photos[0]?.photo || ''}
+                                                image={smallImageUrl}
+                                                srcSet={`
+                          ${smallImageUrl} 400w,
+                          ${mediumImageUrl} 800w,
+                          ${largeImageUrl} 1200w
+                        `}
+                                                sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                                 alt={item.title}
                                                 sx={{
                                                     width: '100%',
@@ -239,15 +257,10 @@ export default function Main() {
                                 </Grid>
                             );
                         })}
-
                     </Grid>
 
                     {hasMore && (
-                        <Button
-                            onClick={handleLoadMore}
-                            variant="contained"
-                            sx={{ marginTop: '20px' }}
-                        >
+                        <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
                             Load More
                         </Button>
                     )}

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import Header from "../header/Header";
 import {
-    Avatar,
     Button,
     Card,
     IconButton,
@@ -12,7 +11,6 @@ import {
     Typography,
     CardMedia,
 } from "@mui/material";
-import PinDropIcon from "@mui/icons-material/PinDrop";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 
@@ -25,6 +23,12 @@ import park from "../images/park_green.jpg";
 import nature from "../images/nature2.jpg";
 import naturalPark from "../images/park_green2.png";
 import museumIcon from "../images/green_museum.png";
+
+// Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 const Favorites = () => {
     const { favorites, toggleFavorite, isLoggedIn } = useAuth();
@@ -60,7 +64,16 @@ const Favorites = () => {
                             // Pricing and discount logic (adjust as needed)
                             const discountPercent = 20; // Example: fixed 20% discount
                             const originalPrice = Math.floor(item.price);
-                            const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
+                            const discountedPrice = Math.floor(
+                                item.price * (1 - discountPercent / 100)
+                            );
+
+                            // Get the original image URL and generate prefixed versions
+                            const originalImage =
+                                item.photos && item.photos[0] ? item.photos[0].photo : "";
+                            const smallImageUrl = getPrefixedImage(originalImage, "small");
+                            const mediumImageUrl = getPrefixedImage(originalImage, "medium");
+                            const largeImageUrl = getPrefixedImage(originalImage, "large");
 
                             return (
                                 <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
@@ -78,7 +91,13 @@ const Favorites = () => {
                                         >
                                             <CardMedia
                                                 component="img"
-                                                image={item.photos && item.photos[0] ? item.photos[0].photo : ""}
+                                                image={smallImageUrl} // Default to small image
+                                                srcSet={`
+                          ${smallImageUrl} 400w,
+                          ${mediumImageUrl} 800w,
+                          ${largeImageUrl} 1200w
+                        `}
+                                                sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                                 alt={item.title}
                                                 sx={{
                                                     width: "100%",

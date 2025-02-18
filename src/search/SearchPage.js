@@ -20,23 +20,17 @@ import {
     DialogActions
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
-import PinDropIcon from "@mui/icons-material/PinDrop";
 import { Helmet } from "react-helmet";
 import { useAuth } from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-
-// Import any images for activity icons
-import CampingIcon2 from "../images/camping_summer2.jpg";
-import wellness from "../images/wellness_green2.png";
-import winter from "../images/winter_green.jpeg";
-import swimming from "../images/summer_green3.jpg";
-import park from "../images/park_green.jpg";
-import nature from "../images/nature2.jpg";
-import naturalPark from "../images/park_green2.png";
-import museumIcon from "../images/green_museum.png";
-
 import EventSearchButtons from "./EventSearchButtons";
+
+// Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 const SearchPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -110,9 +104,11 @@ const SearchPage = () => {
 
     // For activity favorites, use a simpler toggle
     const handleFavoriteActivityClick = (activityId) => {
-        toggleFavorite(activityId, favorites.favoriteActivities
-            .map(activity => activity.id)
-            .includes(activityId), "activity");
+        toggleFavorite(
+            activityId,
+            favorites.favoriteActivities.map(activity => activity.id).includes(activityId),
+            "activity"
+        );
     };
 
     // Start a new search
@@ -179,18 +175,24 @@ const SearchPage = () => {
         // (You can add an analogous extraction for activities if needed)
     };
 
-    // Combine event results into one array and add a type property
+    // Combine event and activity results into one array and add a type property
     const combinedResults = [
-        ...(Array.isArray(allResult.event) ? allResult.event.map(item => ({ ...item, type: 'events' })) : []),
-        ...(Array.isArray(allResult.activity) ? allResult.activity.map(item => ({ ...item, type: 'activities' })) : []),
+        ...(Array.isArray(allResult.event)
+            ? allResult.event.map(item => ({ ...item, type: 'events' }))
+            : []),
+        ...(Array.isArray(allResult.activity)
+            ? allResult.activity.map(item => ({ ...item, type: 'activities' }))
+            : []),
     ];
 
     return (
         <div>
             <Helmet>
                 <title>{searchQuery ? `${searchQuery} - Search Results | Kına Sepeti` : 'Search | Kına Sepeti'}</title>
-                <meta name="description"
-                      content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`} />
+                <meta
+                    name="description"
+                    content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`}
+                />
                 <meta name="robots" content="noindex, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
@@ -262,9 +264,13 @@ const SearchPage = () => {
                                 : () => handleFavoriteActivityClick(item.id);
 
                         // Determine link and image source based on type
-                        const detailLink = `/products/detail/${item.id}/${item.title}`
+                        const detailLink = `/products/detail/${item.id}/${item.title}`;
+                        const originalImage = (item.photos && item.photos[0] ? item.photos[0].photo : '');
 
-                        const imageSrc = (item.photos && item.photos[0] ? item.photos[0].photo : '')
+                        // Generate prefixed image URLs
+                        const smallImageUrl = getPrefixedImage(originalImage, 'small');
+                        const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
+                        const largeImageUrl = getPrefixedImage(originalImage, 'large');
 
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
@@ -279,7 +285,13 @@ const SearchPage = () => {
                                     <a href={detailLink} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
-                                            image={imageSrc}
+                                            image={smallImageUrl}
+                                            srcSet={`
+                                                ${smallImageUrl} 400w,
+                                                ${mediumImageUrl} 800w,
+                                                ${largeImageUrl} 1200w
+                                            `}
+                                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                             alt={item.title}
                                             sx={{
                                                 width: '100%',

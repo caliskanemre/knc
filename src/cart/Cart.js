@@ -8,11 +8,18 @@ import {
     Typography,
     Divider,
     List,
+    CardMedia,
 } from '@mui/material';
 import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
+
+// Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -96,44 +103,63 @@ const Cart = () => {
 
                 {cartItems.length > 0 ? (
                     <List>
-                        {cartItems.map((item) => (
-                            <Card key={item.productId} sx={{ marginBottom: 2 }}>
-                                <CardContent>
-                                    <img src={item.image} alt={item.title} style={{width: '100px', height: '100px'}}/>
-                                    <Typography variant="h6">{item.title}</Typography>
-                                    <Typography color="textSecondary">
-                                        Birim Fiyat: {(item.price / item.quantity).toFixed(2)} TL
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        Miktar: {item.quantity}
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        Toplam Fiyat: {item.price} TL
-                                    </Typography>
-                                </CardContent>
-                                <CardActions>
-                                    <Button
-                                        size="small"
-                                        onClick={() => handleUpdateQuantity(item.productId, 'decrement')}
-                                    >
-                                        -
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        onClick={() => handleUpdateQuantity(item.productId, 'increment')}
-                                    >
-                                        +
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        color="error"
-                                        onClick={() => handleRemoveItem(item.productId)}
-                                    >
-                                        Ürünü Kaldır
-                                    </Button>
-                                </CardActions>
-                            </Card>
-                        ))}
+                        {cartItems.map((item) => {
+                            // Use the helper function to generate optimized image URLs
+                            const originalImage = item.image;
+                            const smallImageUrl = getPrefixedImage(originalImage, 'small');
+                            const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
+                            const largeImageUrl = getPrefixedImage(originalImage, 'large');
+
+                            return (
+                                <Card key={item.productId} sx={{ marginBottom: 2 }}>
+                                    <CardContent>
+                                        <CardMedia
+                                            component="img"
+                                            image={smallImageUrl} // Default to small image
+                                            srcSet={`
+                        ${smallImageUrl} 100w,
+                        ${mediumImageUrl} 200w,
+                        ${largeImageUrl} 300w
+                      `}
+                                            sizes="(max-width: 600px) 100px, 300px"
+                                            alt={item.title}
+                                            sx={{ width: '100px', height: '100px' }}
+                                        />
+                                        <Typography variant="h6">{item.title}</Typography>
+                                        <Typography color="textSecondary">
+                                            Birim Fiyat: {(item.price / item.quantity).toFixed(2)} TL
+                                        </Typography>
+                                        <Typography color="textSecondary">
+                                            Miktar: {item.quantity}
+                                        </Typography>
+                                        <Typography color="textSecondary">
+                                            Toplam Fiyat: {item.price} TL
+                                        </Typography>
+                                    </CardContent>
+                                    <CardActions>
+                                        <Button
+                                            size="small"
+                                            onClick={() => handleUpdateQuantity(item.productId, 'decrement')}
+                                        >
+                                            -
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            onClick={() => handleUpdateQuantity(item.productId, 'increment')}
+                                        >
+                                            +
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            onClick={() => handleRemoveItem(item.productId)}
+                                        >
+                                            Ürünü Kaldır
+                                        </Button>
+                                    </CardActions>
+                                </Card>
+                            );
+                        })}
                     </List>
                 ) : (
                     <Typography>Sepetiniz boş.</Typography>

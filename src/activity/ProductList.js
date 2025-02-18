@@ -215,6 +215,12 @@ const ProductList = () => {
                         const originalPrice = Math.floor(item.price);
                         const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
 
+                        // Build image URLs with prefixes
+                        const originalImageUrl = item.photos[0]?.photo || '';
+                        const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
+                        const mediumImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'medium_$1') : '';
+                        const largeImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'large_$1') : '';
+
                         return (
                             <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                 <Card sx={{
@@ -227,7 +233,13 @@ const ProductList = () => {
                                        style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
-                                            image={item.photos[0]?.photo || ''}
+                                            image={smallImageUrl} // Default to small image
+                                            srcSet={`
+                                                ${smallImageUrl} 400w,
+                                                ${mediumImageUrl} 800w,
+                                                ${largeImageUrl} 1200w
+                                            `}
+                                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                             alt={item.title}
                                             sx={{
                                                 width: '100%',

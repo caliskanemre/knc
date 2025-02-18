@@ -52,6 +52,12 @@ const ProductDetails = () => {
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
+    // Helper to get image URL with prefix (e.g., small_, medium_, large_)
+    const getPrefixedImage = (url, prefix) => {
+        if (!url) return url;
+        return url.replace(/([^/]+)$/, `${prefix}_$1`);
+    };
+
     // Fetch product details
     useEffect(() => {
         Axios.get(`${baseURL}/products/detail/${id}/${title}`)
@@ -61,9 +67,7 @@ const ProductDetails = () => {
             .catch((error) => {
                 console.error('Error fetching product:', error);
             });
-    }, [id, baseURL]);
-
-
+    }, [id, title, baseURL]);
 
     // Once product is loaded, set the default selectedImage
     useEffect(() => {
@@ -196,15 +200,13 @@ const ProductDetails = () => {
                 <meta property="og:title" content={product.title} />
                 <meta
                     property="og:description"
-                    content={
-                        product.description || 'Learn more about this product.'
-                    }
+                    content={product.description || 'Learn more about this product.'}
                 />
                 <meta
                     property="og:image"
                     content={
                         product.photos.length > 0
-                            ? product.photos[0].photo
+                            ? getPrefixedImage(product.photos[0].photo, 'small')
                             : undefined
                     }
                 />
@@ -218,15 +220,13 @@ const ProductDetails = () => {
                 <meta name="twitter:title" content={product.title} />
                 <meta
                     name="twitter:description"
-                    content={
-                        product.description || 'Learn more about this product.'
-                    }
+                    content={product.description || 'Learn more about this product.'}
                 />
                 <meta
                     name="twitter:image"
                     content={
                         product.photos.length > 0
-                            ? product.photos[0].photo
+                            ? getPrefixedImage(product.photos[0].photo, 'small')
                             : undefined
                     }
                 />
@@ -266,11 +266,17 @@ const ProductDetails = () => {
             <h2>{type ? `${type}` : 'All Products'} - {product.category}</h2>
 
             <div className="activity-details-wrapper">
-                {/* Left Section: single main image */}
+                {/* Left Section: single main image with srcSet */}
                 <div className="left-section">
                     {selectedImage && (
                         <img
-                            src={selectedImage}
+                            src={getPrefixedImage(selectedImage, 'small')}
+                            srcSet={`
+                                ${getPrefixedImage(selectedImage, 'small')} 400w,
+                                ${getPrefixedImage(selectedImage, 'medium')} 800w,
+                                ${getPrefixedImage(selectedImage, 'large')} 1200w
+                            `}
+                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                             alt="Selected"
                             className="main-image"
                             onClick={openModal}
@@ -282,13 +288,19 @@ const ProductDetails = () => {
                 <div className="right-section">
                     <h1 className="product-title">{product.title}</h1>
 
-                    {/* Thumbnail Row */}
+                    {/* Thumbnail Row with srcSet */}
                     {product.photos.length > 0 && (
                         <div className="thumbnail-container">
                             {product.photos.map((photo, index) => (
                                 <img
                                     key={index}
-                                    src={photo.photo}
+                                    src={getPrefixedImage(photo.photo, 'small')}
+                                    srcSet={`
+                                        ${getPrefixedImage(photo.photo, 'small')} 100w,
+                                        ${getPrefixedImage(photo.photo, 'medium')} 200w,
+                                        ${getPrefixedImage(photo.photo, 'large')} 300w
+                                    `}
+                                    sizes="100px"
                                     alt={`Thumbnail ${index}`}
                                     className="thumbnail"
                                     onClick={() => setSelectedImage(photo.photo)}
@@ -308,15 +320,15 @@ const ProductDetails = () => {
                                 margin: '10px 0'
                             }}
                         >
-              <span
-                  style={{
-                      textDecoration: 'line-through',
-                      color: 'gray',
-                      marginRight: '8px'
-                  }}
-              >
-                {originalPrice} TL
-              </span>
+                            <span
+                                style={{
+                                    textDecoration: 'line-through',
+                                    color: 'gray',
+                                    marginRight: '8px'
+                                }}
+                            >
+                                {originalPrice} TL
+                            </span>
                             <span
                                 style={{
                                     color: '#1976d2',
@@ -324,8 +336,8 @@ const ProductDetails = () => {
                                     marginRight: '8px'
                                 }}
                             >
-                {discountedPrice} TL
-              </span>
+                                {discountedPrice} TL
+                            </span>
                             <span
                                 style={{
                                     backgroundColor: 'red',
@@ -335,8 +347,8 @@ const ProductDetails = () => {
                                     fontSize: '0.8rem'
                                 }}
                             >
-                {discountPercent}% OFF
-              </span>
+                                {discountPercent}% OFF
+                            </span>
                         </div>
                     )}
 
@@ -474,12 +486,18 @@ const ProductDetails = () => {
                 </div>
             </div>
 
-            {/* IMAGE MODAL (lightbox) */}
+            {/* IMAGE MODAL (lightbox) with srcSet */}
             {isModalOpen && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content">
                         <img
-                            src={selectedImage}
+                            src={getPrefixedImage(selectedImage, 'large')}
+                            srcSet={`
+                                ${getPrefixedImage(selectedImage, 'small')} 400w,
+                                ${getPrefixedImage(selectedImage, 'medium')} 800w,
+                                ${getPrefixedImage(selectedImage, 'large')} 1200w
+                            `}
+                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                             alt="Full Size"
                             className="modal-image"
                             onClick={(e) => e.stopPropagation()}
@@ -488,7 +506,7 @@ const ProductDetails = () => {
                 </div>
             )}
 
-            {/* SIMILAR PRODUCTS SECTION */}
+            {/* SIMILAR PRODUCTS SECTION with srcSet */}
             {similarProducts.length > 0 && (
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
                     <h2>Similar Products</h2>
@@ -501,44 +519,50 @@ const ProductDetails = () => {
                             padding: '10px 20px'
                         }}
                     >
-                        {similarProducts.map((sp) => (
-                            <Card
-                                key={sp.id}
-                                style={{
-                                    marginRight: '30px',
-                                    minWidth: '200px',
-                                    maxWidth: '300px',
-                                    textAlign: 'center',
-                                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)'
-                                }}
-                            >
-                                <CardMedia
-                                    component="img"
-                                    alt={sp.title}
-                                    height="140"
-                                    image={
-                                        sp.photos?.[0]?.photo ||
-                                        "https://via.placeholder.com/300x200?text=No+Image"
-                                    }
-                                />
-                                <CardContent>
-                                    <Typography variant="subtitle1" component="div">
-                                        {sp.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {sp.price} TL
-                                    </Typography>
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        sx={{ mt: 1 }}
-                                        onClick={() => window.open(`/products/detail/${sp.id}/${sp.title}`, "_blank")}
-                                    >
-                                        View
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        {similarProducts.map((sp) => {
+                            const spOriginal = sp.photos?.[0]?.photo || "https://via.placeholder.com/300x200?text=No+Image";
+                            return (
+                                <Card
+                                    key={sp.id}
+                                    style={{
+                                        marginRight: '30px',
+                                        minWidth: '200px',
+                                        maxWidth: '300px',
+                                        textAlign: 'center',
+                                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                >
+                                    <CardMedia
+                                        component="img"
+                                        alt={sp.title}
+                                        height="140"
+                                        image={getPrefixedImage(spOriginal, 'small')}
+                                        srcSet={`
+                                            ${getPrefixedImage(spOriginal, 'small')} 400w,
+                                            ${getPrefixedImage(spOriginal, 'medium')} 800w,
+                                            ${getPrefixedImage(spOriginal, 'large')} 1200w
+                                        `}
+                                        sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                    />
+                                    <CardContent>
+                                        <Typography variant="subtitle1" component="div">
+                                            {sp.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {sp.price} TL
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            sx={{ mt: 1 }}
+                                            onClick={() => window.open(`/products/detail/${sp.id}/${sp.title}`, "_blank")}
+                                        >
+                                            View
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                         <Snackbar
                             open={snackbarOpen}
                             autoHideDuration={6000}
