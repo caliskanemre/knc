@@ -23,6 +23,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
+import {useTranslation} from "react-i18next";
 
 const defaultTheme = createTheme();
 const PAGE_SIZE = 20;
@@ -42,7 +43,7 @@ export default function Main() {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [openDialog, setOpenDialog] = useState(false);
-
+    const { t} = useTranslation();
     const { favorites, isLoggedIn, toggleFavorite } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
@@ -277,7 +278,7 @@ export default function Main() {
                     <DialogTitle>{"Login Required"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Please log in to add this product to your favorites.
+                            {t('Please log in to add this product to your favorites')}
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>

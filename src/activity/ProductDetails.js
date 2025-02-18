@@ -51,7 +51,6 @@ const ProductDetails = () => {
     const { favorites, toggleFavorite } = useAuth();
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-
     // Helper to get image URL with prefix (e.g., small_, medium_, large_)
     const getPrefixedImage = (url, prefix) => {
         if (!url) return url;
@@ -263,7 +262,7 @@ const ProductDetails = () => {
 
             {/* Header */}
             <Header />
-            <h2>{type ? `${type}` : 'All Products'} - {product.category}</h2>
+            <h2>{type ? `${type}` : t("All Products")} - ${t(product.category)})</h2>
 
             <div className="activity-details-wrapper">
                 {/* Left Section: single main image with srcSet */}

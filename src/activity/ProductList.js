@@ -36,6 +36,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import Dialog from "@mui/material/Dialog";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
+import {useTranslation} from "react-i18next";
 
 const ProductList = () => {
     const { type } = useParams();
@@ -44,7 +45,7 @@ const ProductList = () => {
     const [hasMore, setHasMore] = useState(true);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
-
+    const { t} = useTranslation();
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [filters, setFilters] = useState([]);
@@ -162,17 +163,6 @@ const ProductList = () => {
     };
 
     // Optional: If you still need category icons elsewhere, keep this.
-    const activityIcons = {
-        veil: veil,
-        tamborine: tamborine,
-        hennaset: hennaset,
-        handkerchief: handkerchief,
-        gift: gift,
-        ornament: ornament,
-        flower: flower,
-        souvenir: souvenir
-    };
-
     return (
         <div className="activity-list" ref={listRef}>
             <Helmet>
@@ -371,7 +361,7 @@ const ProductList = () => {
                 <DialogTitle>{"Just a moment!"}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!
+                        {t("We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!")}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

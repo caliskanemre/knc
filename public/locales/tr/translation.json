@@ -1,5 +1,5 @@
 {
-  "welcomeMessage": "Kina Sepetine Hoş Geldiniz!",
+  "welcomeMessage": "Kına Sepetine Hoş Geldiniz!",
   "searchEvents": "Etkinlik Ara",
   "Search": "Ara",
   "Login": "Giriş Yap",
@@ -41,14 +41,16 @@
   "bestFamilyEventsInEstonia": "Estonya'daki En İyi Aile Etkinlikleri",
   "bestFriendsEventsInEstonia": "Estonya'daki En İyi Arkadaş Etkinlikleri",
   "Do you want to get any notification?": "Bildirim almak ister misiniz?",
-  "HennaSet": "Kina Seti",
+  "HennaSet": "Kına Seti",
   "Handkerchief": "Mendil",
-  "Tamborine": "Tef",
-  "Veil": "Damat Tülü",
-  "Gift": "Hediyelik Esya",
+  "Tambourine": "Def",
+  "Veil": "Damat Örtüsü",
+  "Gift": "Kına Hediyesi",
   "Flower": "Cicek",
-  "Ornament": "Sus esyasi",
-  "Souvenir": "Hatiralik esya",
+  "Ornament": "Kına süsü",
+  "Souvenir": "Kına hatırası",
   "Add to Cart": "Sepete Ekle",
-  "Articles" : "Makaleler"
+  "Articles" : "Makaleler",
+  "Please log in to add this product to your favorites" : "Lütfen bu ürünü favorilerinize eklemek için giriş yapın",
+    "All Products": "Tüm Ürünler"
 }

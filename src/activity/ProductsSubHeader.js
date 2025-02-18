@@ -66,7 +66,7 @@ function ProductsSubHeader() {
                             <img src={tamborine} alt="tamborine" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/products/tamborine" className="nav-link" activeClassName="active">
-                            {t('Tamborine')}
+                            {t('Tambourine')}
                         </NavLink>
                     </MenuItem>
 
