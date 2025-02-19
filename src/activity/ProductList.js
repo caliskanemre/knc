@@ -263,7 +263,7 @@ const ProductList = () => {
                                                 WebkitBoxOrient: 'vertical',
                                             }}
                                         >
-                                            {item.shortDescription || 'No description available.'}
+                                            {item.short_description || 'No description available.'}
                                         </Typography>
                                         {/* Pricing & Discount Section */}
                                         <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>

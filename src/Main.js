@@ -194,7 +194,7 @@ export default function Main() {
                                                     WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {item.shortDescription || 'No description available.'}
+                                                {item.short_description || 'No description available.'}
                                             </Typography>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                                 {/* Original Price with Strikethrough */}
