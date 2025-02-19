@@ -10,6 +10,7 @@ import {
     Snackbar,
     TextField
 } from '@mui/material';
+import {useTranslation} from "react-i18next";
 
 function Register({open, handleClose}) {
     const [username, setUsername] = useState('');
@@ -19,6 +20,7 @@ function Register({open, handleClose}) {
     const [rePassword, setRePassword] = useState('');
     const [success, setSuccess] = useState(false);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const { t } = useTranslation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -58,16 +60,16 @@ function Register({open, handleClose}) {
 
     return (
         <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Register</DialogTitle>
+            <DialogTitle>{t("Register")}</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    To register, please enter your username and password.
+                    {t("To register, please enter your username and password")}
                 </DialogContentText>
                 <TextField
                     autoFocus
                     margin="dense"
                     id="username"
-                    label="Username"
+                    label={t("Username")}
                     type="text"
                     fullWidth
                     variant="outlined"
@@ -89,7 +91,7 @@ function Register({open, handleClose}) {
                 <TextField
                     margin="dense"
                     id="re-password"
-                    label="Confirm Password"
+                    label={t("Confirm Password")}
                     type="password"
                     fullWidth
                     variant="outlined"

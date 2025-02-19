@@ -33,7 +33,7 @@ function ProductsSubHeaderMobile() {
                         <ListItemIcon>
                             <img src={hennaSet} alt="hennaSet" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Henna Set')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('HennaSet')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/handkerchief">
                         <ListItemIcon>
@@ -45,7 +45,7 @@ function ProductsSubHeaderMobile() {
                         <ListItemIcon>
                             <img src={tamborine} alt="tamborine" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Tamborine')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Tambourine')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/ornament">
                         <ListItemIcon>
@@ -58,12 +58,6 @@ function ProductsSubHeaderMobile() {
                             <img src={gift} alt="Gift" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <ListItemText primary={t('Gift')} style={{ marginLeft: '-16px' }} />
-                    </ListItem>
-                    <ListItem button component={NavLink} to="/products/flower">
-                        <ListItemIcon>
-                            <img src={flower} alt="Flower" style={{ width: '24px', height: '24px' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={t('Flower')} style={{ marginLeft: '-16px' }}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/veil">
                         <ListItemIcon>

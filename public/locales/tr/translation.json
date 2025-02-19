@@ -52,5 +52,10 @@
   "Add to Cart": "Sepete Ekle",
   "Articles" : "Makaleler",
   "Please log in to add this product to your favorites" : "Lütfen bu ürünü favorilerinize eklemek için giriş yapın",
-    "All Products": "Tüm Ürünler"
+    "All Products": "Tüm Ürünler",
+  "Forgot Password": "Şifremi Unuttum",
+  "Close": "Kapat",
+    "To register, please enter your username and password": "Kayıt olmak için lütfen kullanıcı adınızı ve şifrenizi girin",
+  "Confirm Password": "Şifreyi Onayla",
+  "Not a member yet?": "Henüz üye değil misiniz?"
 }

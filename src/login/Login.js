@@ -4,6 +4,7 @@ import { Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField } from 
 import { useAuth } from "../auth/AuthProvider";
 import { jwtDecode } from "jwt-decode";
 import DialogActions from "@mui/material/DialogActions";
+import {useTranslation} from "react-i18next";
 
 function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) {
     const { setUsername } = useAuth();
@@ -14,6 +15,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
     const [success, setSuccess] = useState(false);
     const [email, setEmail] = useState('');
     const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const { t } = useTranslation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -42,7 +44,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
 
     return (
         <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Login</DialogTitle>
+            <DialogTitle>{t("Login")}</DialogTitle>
             <DialogContent>
                 <form onSubmit={handleSubmit}>
                     <TextField
@@ -67,9 +69,9 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     <Button type="submit" color="primary" variant="contained" fullWidth style={{ marginTop: '20px' }}>
-                        Giriş Yap
+                        {t("Login")}
                     </Button>
-                    <p style={{ textAlign: 'center', marginTop: '10px' }}>Üye değil misiniz?</p>
+                    <p style={{ textAlign: 'center', marginTop: '10px' }}>{t("Not a member yet?")}</p>
                     <Button
                         color="primary"
                         variant="contained"
@@ -87,10 +89,10 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
 
             <DialogActions>
                 <Button color="primary" onClick={() => setShowForgotPassword(true)}>
-                    Forgot Password?
+                    {t("Forgot Password")}
                 </Button>
                 <Button onClick={handleClose} color="primary">
-                    Close
+                    {t("Close")}
                 </Button>
 
             </DialogActions>

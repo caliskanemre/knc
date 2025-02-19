@@ -45,7 +45,7 @@ function ProductsSubHeader() {
                 >
                     <MenuItem onClick={handleMouseLeave} >
                         <ListItemIcon style={{ marginRight: '-40px' }}>
-                            <img src={hennaSet} alt="Nature" style={{ width: '24px', height: '24px' }} />
+                            <img src={hennaSet} alt="Henna Set" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
                         <NavLink to="/products/hennaset" className="nav-link" activeClassName="active">
                             {t('HennaSet')}

@@ -262,7 +262,10 @@ const ProductDetails = () => {
 
             {/* Header */}
             <Header />
-            <h2>{type ? `${type}` : t("All Products")} - ${t(product.category)})</h2>
+            <h2>
+                {type ? `${type} - ${t(product.category)}` : t("All Products")}
+            </h2>
+
 
             <div className="activity-details-wrapper">
                 {/* Left Section: single main image with srcSet */}
