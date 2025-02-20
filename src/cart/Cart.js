@@ -105,7 +105,7 @@ const Cart = () => {
                     <List>
                         {cartItems.map((item) => {
                             // Use the helper function to generate optimized image URLs
-                            const originalImageUrl = item.photos[0]?.photo || '';
+                            const originalImage = item.photos[0]?.photo || '';
                             const smallImageUrl = getPrefixedImage(originalImage, 'small');
                             const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
                             const largeImageUrl = getPrefixedImage(originalImage, 'large');
