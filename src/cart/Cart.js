@@ -105,14 +105,16 @@ const Cart = () => {
                     <List>
                         {cartItems.map((item) => {
                             // Use the helper function to generate optimized image URLs
-                            const originalImage = item.image;
+                            const originalImageUrl = item.photos[0]?.photo || '';
                             const smallImageUrl = getPrefixedImage(originalImage, 'small');
                             const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
                             const largeImageUrl = getPrefixedImage(originalImage, 'large');
 
                             return (
+
                                 <Card key={item.productId} sx={{ marginBottom: 2 }}>
                                     <CardContent>
+                                        <a href={`/products/detail/${item.id}`}>
                                         <CardMedia
                                             component="img"
                                             image={smallImageUrl} // Default to small image
@@ -126,14 +128,15 @@ const Cart = () => {
                                             sx={{ width: '100px', height: '100px' }}
                                         />
                                         <Typography variant="h6">{item.title}</Typography>
+                                        </a>
                                         <Typography color="textSecondary">
-                                            Birim Fiyat: {(item.price / item.quantity).toFixed(2)} TL
+                                            Birim Fiyat: {(item.price).toFixed(2)} TL
                                         </Typography>
                                         <Typography color="textSecondary">
                                             Miktar: {item.quantity}
                                         </Typography>
                                         <Typography color="textSecondary">
-                                            Toplam Fiyat: {item.price} TL
+                                            Toplam Fiyat: {item.price * item.quantity} TL
                                         </Typography>
                                     </CardContent>
                                     <CardActions>

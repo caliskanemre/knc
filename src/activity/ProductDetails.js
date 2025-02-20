@@ -511,7 +511,7 @@ const ProductDetails = () => {
             {/* SIMILAR PRODUCTS SECTION with srcSet */}
             {similarProducts.length > 0 && (
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
-                    <h2>Similar Products</h2>
+                    <h2>{t("Similar Products")}</h2>
                     <div
                         style={{
                             display: 'flex',
@@ -559,7 +559,7 @@ const ProductDetails = () => {
                                             sx={{ mt: 1 }}
                                             onClick={() => window.open(`/products/detail/${sp.id}/${sp.title}`, "_blank")}
                                         >
-                                            View
+                                            {t("View")}
                                         </Button>
                                     </CardContent>
                                 </Card>
