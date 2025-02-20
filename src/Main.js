@@ -205,7 +205,7 @@ export default function Main() {
                                                         mr: 1,
                                                     }}
                                                 >
-                                                    {originalPrice} TL
+                                                    {originalPrice} €
                                                 </Typography>
                                                 {/* Discounted Price */}
                                                 <Typography
@@ -214,7 +214,7 @@ export default function Main() {
                                                         fontWeight: 'bold',
                                                     }}
                                                 >
-                                                    {discountedPrice} TL
+                                                    {discountedPrice} €
                                                 </Typography>
                                                 {/* Discount Badge */}
                                                 {discountPercent >= 20 && (

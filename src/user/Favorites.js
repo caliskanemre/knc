@@ -140,7 +140,7 @@ const Favorites = () => {
                                                         fontSize: "0.9rem",
                                                     }}
                                                 >
-                                                    {originalPrice} TL
+                                                    {originalPrice} €
                                                 </Typography>
                                                 <Typography
                                                     sx={{
@@ -149,7 +149,7 @@ const Favorites = () => {
                                                         fontSize: "0.9rem",
                                                     }}
                                                 >
-                                                    {discountedPrice} TL
+                                                    {discountedPrice} €
                                                 </Typography>
                                                 {discountPercent >= 20 && (
                                                     <Box

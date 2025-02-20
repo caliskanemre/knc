@@ -329,7 +329,7 @@ const ProductDetails = () => {
                                     marginRight: '8px'
                                 }}
                             >
-                                {originalPrice} TL
+                                {originalPrice} €
                             </span>
                             <span
                                 style={{
@@ -338,7 +338,7 @@ const ProductDetails = () => {
                                     marginRight: '8px'
                                 }}
                             >
-                                {discountedPrice} TL
+                                {discountedPrice} €
                             </span>
                             <span
                                 style={{
@@ -551,7 +551,7 @@ const ProductDetails = () => {
                                             {sp.title}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {sp.price} TL
+                                            {sp.price} €
                                         </Typography>
                                         <Button
                                             variant="contained"

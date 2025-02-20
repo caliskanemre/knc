@@ -130,13 +130,13 @@ const Cart = () => {
                                         <Typography variant="h6">{item.title}</Typography>
                                         </a>
                                         <Typography color="textSecondary">
-                                            Birim Fiyat: {(item.price).toFixed(2)} TL
+                                            Birim Fiyat: {(item.price).toFixed(2)} €
                                         </Typography>
                                         <Typography color="textSecondary">
                                             Miktar: {item.quantity}
                                         </Typography>
                                         <Typography color="textSecondary">
-                                            Toplam Fiyat: {item.price * item.quantity} TL
+                                            Toplam Fiyat: {item.price * item.quantity} €
                                         </Typography>
                                     </CardContent>
                                     <CardActions>
@@ -171,7 +171,7 @@ const Cart = () => {
                 <Divider sx={{ marginY: 2 }} />
 
                 <Typography variant="h5" component="h2">
-                    Toplam: {totalPrice} TL
+                    Toplam: {totalPrice} €
                 </Typography>
 
                 <Button
