@@ -11,11 +11,13 @@ import {
 import axios from 'axios';
 import Header from "../header/Header";
 import { useAuth } from "../auth/AuthProvider";
+import { useLocation } from 'react-router-dom'; // ✅ Import useLocation to get totalPrice
 
 const Payment = () => {
     const { username } = useAuth();
+    const location = useLocation();
+    const totalPrice = location.state?.totalPrice || 0; // ✅ Retrieve totalPrice from Cart
 
-    const [paymentMethod, setPaymentMethod] = useState('');
     const [shippingAddress, setShippingAddress] = useState({
         name: '',
         addressLine1: '',
@@ -26,7 +28,6 @@ const Payment = () => {
     });
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    const [amount] = useState(10000); // in cents
     const [currency] = useState('EUR');
 
     // Snackbar State
@@ -60,12 +61,11 @@ const Payment = () => {
             return;
         }
 
-        if (!validateFields()) return; // Stop if validation fails
+        if (!validateFields()) return;
 
         const paymentData = {
-            amount,
+            amount: totalPrice * 100, // Convert to cents for backend
             currency,
-            paymentMethod,
             shippingAddress,
             username,
         };
@@ -104,6 +104,11 @@ const Payment = () => {
                     Teslimat Bilgileri
                 </Typography>
                 <Divider sx={{ marginBottom: 2 }} />
+
+                {/* Display Total Price */}
+                <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center', marginBottom: 2 }}>
+                    Ödenecek Tutar: {totalPrice.toFixed(2)} €
+                </Typography>
 
                 {/* Shipping Address Section */}
                 <Box sx={{ marginTop: 3 }}>

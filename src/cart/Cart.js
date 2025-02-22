@@ -93,8 +93,9 @@ const Cart = () => {
     };
 
     const handleCheckout = () => {
-        navigate('/payment');
+        navigate('/payment', { state: { totalPrice } });
     };
+
 
     // Function to show toast message
     const showToast = (message) => {
