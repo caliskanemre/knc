@@ -11,10 +11,7 @@ import {
     CardContent,
     Typography,
     Snackbar,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    CircularProgress
+    Alert, CircularProgress, AccordionDetails,
 } from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
@@ -47,6 +44,7 @@ const ProductDetails = () => {
     const [similarProducts, setSimilarProducts] = useState([]); // NEW state
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Default: success
 
     const { favorites, toggleFavorite } = useAuth();
     const { t } = useTranslation();
@@ -65,6 +63,7 @@ const ProductDetails = () => {
             })
             .catch((error) => {
                 console.error('Error fetching product:', error);
+                showSnackbar("Ürün yüklenemedi! ❌", "error");
             });
     }, [id, title, baseURL]);
 
@@ -111,12 +110,11 @@ const ProductDetails = () => {
 
     const handleFavoriteClick = () => {
         if (!isLoggedIn) {
-            alert("You need to be logged in to add to favorites.");
+            showSnackbar("Favorilere eklemek için giriş yapmalısınız! 🔐", "warning");
             return;
         }
         toggleFavorite(product.id, isAlreadyFavorited, "product");
-        setSnackbarMessage(isAlreadyFavorited ? 'Removed from favorites' : 'Added to favorites');
-        setSnackbarOpen(true);
+        showSnackbar(isAlreadyFavorited ? "Favorilerden kaldırıldı! ❌" : "Favorilere eklendi! ❤️", "success");
     };
 
     const handleSnackbarClose = () => setSnackbarOpen(false);
@@ -131,8 +129,7 @@ const ProductDetails = () => {
 
     const addToCart = async (quantity) => {
         if (!isLoggedIn) {
-            setSnackbarMessage("You need to be logged in to add items to the cart.");
-            setSnackbarOpen(true);
+            showSnackbar("Sepete eklemek için giriş yapmalısınız! 🔐", "warning");
             return;
         }
 
@@ -148,16 +145,21 @@ const ProductDetails = () => {
             });
 
             if (response.status === 200) {
-                alert(`${quantity} ${product.title} added to the cart!`);
+                showSnackbar(`${quantity} adet "${product.title}" sepete eklendi! 🛒`, "success");
             } else {
-                alert("Failed to add item to cart.");
+                showSnackbar("Ürün sepete eklenemedi! ❌", "error");
             }
         } catch (error) {
             console.error("Error adding to cart:", error);
-            alert("There was an error adding the product to your cart.");
+            showSnackbar("Sepete eklerken hata oluştu! ⚠️", "error");
         }
     };
 
+    const showSnackbar = (message, severity) => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+    };
     const shareUrl = window.location.href;
     const shareMessage = `${product.title} - Check out this product!`;
 
@@ -436,12 +438,6 @@ const ProductDetails = () => {
                             <FavoriteBorderIcon />
                         )}
                     </IconButton>
-                    <Snackbar
-                        open={snackbarOpen}
-                        autoHideDuration={6000}
-                        onClose={handleSnackbarClose}
-                        message={snackbarMessage}
-                    />
 
                     {/* Description (Accordion) */}
                     {descriptionLines.length > 0 && (
@@ -567,10 +563,14 @@ const ProductDetails = () => {
                         })}
                         <Snackbar
                             open={snackbarOpen}
-                            autoHideDuration={6000}
+                            autoHideDuration={4000}
                             onClose={handleSnackbarClose}
-                            message={snackbarMessage}
-                        />
+                            anchorOrigin={{ vertical: 'top', horizontal: 'center' }} // Moved to top-center
+                        >
+                            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                                {snackbarMessage}
+                            </Alert>
+                        </Snackbar>
                     </div>
                 </div>
             )}

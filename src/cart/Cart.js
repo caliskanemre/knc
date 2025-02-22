@@ -9,36 +9,34 @@ import {
     Divider,
     List,
     CardMedia,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 
-// Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
-const getPrefixedImage = (url, prefix) => {
-    if (!url) return url;
-    return url.replace(/([^/]+)$/, `${prefix}_$1`);
-};
-
 const Cart = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
-    const [username, setUsername] = useState(''); // To store the username dynamically
+    const [username, setUsername] = useState('');
+
+    // Toast Message State
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastOpen, setToastOpen] = useState(false);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    // Step 1: Extract the username from the token
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             const decodedToken = jwtDecode(token);
-            setUsername(decodedToken.sub); // Assuming 'sub' contains the username
+            setUsername(decodedToken.sub);
         }
     }, []);
 
-    // Step 2: Fetch cart items only when username is available
     useEffect(() => {
         if (username) {
             fetchCartItems();
@@ -58,7 +56,7 @@ const Cart = () => {
     };
 
     const calculateTotalPrice = (items) => {
-        const total = items.reduce((acc, item) => acc + item.price, 0);
+        const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
         setTotalPrice(total);
     };
 
@@ -68,14 +66,18 @@ const Cart = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             fetchCartItems();
+            showToast("Ürün sepetten kaldırıldı! 🗑️");
         } catch (error) {
             console.error("Error removing item:", error);
+            showToast("Ürün kaldırılamadı! ❌");
         }
     };
 
     const handleUpdateQuantity = async (id, action) => {
-        const updatedQuantity = cartItems.find(product => product.productId === id).quantity +
-            (action === 'increment' ? 1 : -1);
+        const product = cartItems.find(product => product.productId === id);
+        if (!product) return;
+
+        const updatedQuantity = product.quantity + (action === 'increment' ? 1 : -1);
         if (updatedQuantity <= 0) return;
 
         try {
@@ -83,13 +85,21 @@ const Cart = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             fetchCartItems();
+            showToast(`Ürün miktarı güncellendi! 🛒`);
         } catch (error) {
             console.error("Error updating quantity:", error);
+            showToast("Miktar güncellenemedi! ❌");
         }
     };
 
     const handleCheckout = () => {
         navigate('/payment');
+    };
+
+    // Function to show toast message
+    const showToast = (message) => {
+        setToastMessage(message);
+        setToastOpen(true);
     };
 
     return (
@@ -104,30 +114,29 @@ const Cart = () => {
                 {cartItems.length > 0 ? (
                     <List>
                         {cartItems.map((item) => {
-                            // Use the helper function to generate optimized image URLs
-                            const originalImage = item.photos[0]?.photo || '';
-                            const smallImageUrl = getPrefixedImage(originalImage, 'small');
-                            const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
-                            const largeImageUrl = getPrefixedImage(originalImage, 'large');
+                            const id = item.productId || item.id;
+                            const originalImageUrl = item.image;
+                            const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
+                            const mediumImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'medium_$1') : '';
+                            const largeImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'large_$1') : '';
 
                             return (
-
-                                <Card key={item.productId} sx={{ marginBottom: 2 }}>
+                                <Card key={id} sx={{ marginBottom: 2 }}>
                                     <CardContent>
-                                        <a href={`/products/detail/${item.id}`}>
-                                        <CardMedia
-                                            component="img"
-                                            image={smallImageUrl} // Default to small image
-                                            srcSet={`
-                        ${smallImageUrl} 100w,
-                        ${mediumImageUrl} 200w,
-                        ${largeImageUrl} 300w
-                      `}
-                                            sizes="(max-width: 600px) 100px, 300px"
-                                            alt={item.title}
-                                            sx={{ width: '100px', height: '100px' }}
-                                        />
-                                        <Typography variant="h6">{item.title}</Typography>
+                                        <a href={`/products/detail/${id}`}>
+                                            <CardMedia
+                                                component="img"
+                                                image={smallImageUrl}
+                                                srcSet={`
+                                                    ${smallImageUrl} 100w,
+                                                    ${mediumImageUrl} 200w,
+                                                    ${largeImageUrl} 300w
+                                                `}
+                                                sizes="(max-width: 600px) 100px, 300px"
+                                                alt={item.title}
+                                                sx={{ width: '100px', height: '100px' }}
+                                            />
+                                            <Typography variant="h6">{item.title}</Typography>
                                         </a>
                                         <Typography color="textSecondary">
                                             Birim Fiyat: {(item.price).toFixed(2)} €
@@ -140,25 +149,9 @@ const Cart = () => {
                                         </Typography>
                                     </CardContent>
                                     <CardActions>
-                                        <Button
-                                            size="small"
-                                            onClick={() => handleUpdateQuantity(item.productId, 'decrement')}
-                                        >
-                                            -
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            onClick={() => handleUpdateQuantity(item.productId, 'increment')}
-                                        >
-                                            +
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            onClick={() => handleRemoveItem(item.productId)}
-                                        >
-                                            Ürünü Kaldır
-                                        </Button>
+                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
+                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
+                                        <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>Ürünü Kaldır</Button>
                                     </CardActions>
                                 </Card>
                             );
@@ -171,7 +164,7 @@ const Cart = () => {
                 <Divider sx={{ marginY: 2 }} />
 
                 <Typography variant="h5" component="h2">
-                    Toplam: {totalPrice} €
+                    Toplam: {totalPrice.toFixed(2)} €
                 </Typography>
 
                 <Button
@@ -185,6 +178,18 @@ const Cart = () => {
                     Alışverişi Tamamla
                 </Button>
             </Box>
+
+            {/* Toast Notification */}
+            <Snackbar
+                open={toastOpen}
+                autoHideDuration={3000}
+                onClose={() => setToastOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
+                    {toastMessage}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
