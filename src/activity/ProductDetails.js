@@ -36,17 +36,14 @@ const ProductDetails = () => {
     const { id, title, type } = useParams();
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [username, setUsername] = useState('');
     const [selectedImage, setSelectedImage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
     const [similarProducts, setSimilarProducts] = useState([]); // NEW state
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Default: success
+    const { token, username, isLoggedIn, favorites, toggleFavorite } = useAuth();
 
-    const { favorites, toggleFavorite } = useAuth();
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     // Helper to get image URL with prefix (e.g., small_, medium_, large_)
@@ -74,15 +71,7 @@ const ProductDetails = () => {
         }
     }, [product]);
 
-    // Check if user is logged in
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-            const decodedToken = jwtDecode(storedToken);
-            setUsername(decodedToken.sub);
-            setIsLoggedIn(true);
-        }
-    }, []);
+
 
     // --- NEW: Fetch similar products whenever `product` changes ---
     useEffect(() => {
