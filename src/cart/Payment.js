@@ -77,6 +77,10 @@ const Payment = () => {
                 const revolutData = response.data;
                 if (revolutData.checkout_url) {
                     showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
+
+                    // ✅ Store order ID in localStorage
+                    localStorage.setItem("orderId", revolutData.order_id);
+
                     window.location.href = revolutData.checkout_url;
                 } else {
                     showSnackbar("Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️", "error");

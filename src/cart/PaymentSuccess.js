@@ -14,7 +14,11 @@ const PaymentSuccess = () => {
         const orderId = queryParams.get('order_id'); // ✅ Get order ID from URL
 
         if (orderId) {
-            checkPaymentStatus(orderId); // ✅ Check payment status
+            const interval = setInterval(() => {
+                checkPaymentStatus(orderId);
+            }, 3000); // Poll every 3 seconds
+
+            return () => clearInterval(interval); // Cleanup on unmount
         } else {
             setPaymentStatus('failed');
             setLoading(false);
@@ -23,7 +27,7 @@ const PaymentSuccess = () => {
 
     const checkPaymentStatus = async (orderId) => {
         try {
-            const response = await axios.get(`${baseURL}/api/orders/status`, {
+            const response = await axios.get(`${baseURL}/api/payment/status`, {
                 params: { orderId },
             });
 
@@ -32,8 +36,10 @@ const PaymentSuccess = () => {
                 setTimeout(() => {
                     navigate('/');
                 }, 3000); // ✅ Redirect after 3 seconds
+            } else if (response.data.status === 'not_found') {
+                setPaymentStatus('not_found');
             } else {
-                setPaymentStatus('failed');
+                setPaymentStatus('pending');
             }
         } catch (error) {
             console.error('Error checking payment status:', error);
@@ -51,6 +57,16 @@ const PaymentSuccess = () => {
                 <>
                     <h2>✅ Ödeme Başarılı!</h2>
                     <p>Teşekkürler! Ana sayfaya yönlendiriliyorsunuz...</p>
+                </>
+            ) : paymentStatus === 'pending' ? (
+                <>
+                    <h2>⏳ Ödeme onaylanıyor...</h2>
+                    <p>Lütfen bekleyin, işlem tamamlanınca yönlendirileceksiniz.</p>
+                </>
+            ) : paymentStatus === 'not_found' ? (
+                <>
+                    <h2>⚠ Ödeme bilgisi bulunamadı</h2>
+                    <p>Ödemeniz işlenmiyor olabilir.</p>
                 </>
             ) : (
                 <>
