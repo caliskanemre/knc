@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Typography,
@@ -76,27 +76,29 @@ const Payment = () => {
 
             if (response.status === 200) {
                 const revolutData = response.data;
-                showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
 
-                // Expecting token and order_id from backend
-                const { token, order_id } = revolutData;
+                if (revolutData.token) {
+                    showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
 
-                if (token) {
-                    const revolutCheckout = await RevolutCheckout(token, 'sandbox');
+                    // ✅ Use Revolut Checkout
+                    const revolutCheckout = await RevolutCheckout(revolutData.token, 'sandbox'); // Use 'production' for live payments
+
                     revolutCheckout.payWithPopup({
                         onSuccess: () => {
                             showSnackbar("Ödeme başarıyla tamamlandı! 🎉", "success");
-                            window.location.href = "/payment-success?order_id=" + order_id;
+                            window.location.href = "/payment-success?order_id=" + revolutData.id;
                         },
                         onError: (error) => {
                             showSnackbar("Ödeme sırasında hata oluştu! ❌ " + error.message, "error");
                         },
                         onCancel: () => {
                             showSnackbar("Ödeme iptal edildi! 🚫", "warning");
-                        },
+                        }
                     });
+
                 } else {
-                    showSnackbar("Ödeme token'ı alınamadı! ⚠️", "error");
+                    // Fallback to traditional redirect if popup fails
+                    window.location.href = revolutData.checkout_url;
                 }
             }
         } catch (error) {
