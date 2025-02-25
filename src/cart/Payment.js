@@ -74,38 +74,39 @@ const Payment = () => {
         try {
             const response = await axios.post(`${baseURL}/api/payment`, paymentData);
 
-            if (response.status === 200) {
-                const revolutData = response.data;
+      if (response.status === 200) {
+        const revolutData = response.data;
+        // Check for token (or public_id) to determine if popup is available
+        if (revolutData.token || revolutData.public_id) {
+          showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
+          const tokenToUse = revolutData.token || revolutData.public_id;
 
-                if (revolutData.token) {
-                    showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
+          // Initialize Revolut Checkout widget in sandbox mode (change to 'production' for live)
+          const revolutCheckout = await RevolutCheckout(tokenToUse, 'sandbox');
 
-                    // ✅ Use Revolut Checkout
-                    const revolutCheckout = await RevolutCheckout(revolutData.token, 'sandbox'); // Use 'production' for live payments
-
-                    revolutCheckout.payWithPopup({
-                        onSuccess: () => {
-                            showSnackbar("Ödeme başarıyla tamamlandı! 🎉", "success");
-                            window.location.href = "/payment-success?order_id=" + revolutData.id;
-                        },
-                        onError: (error) => {
-                            showSnackbar("Ödeme sırasında hata oluştu! ❌ " + error.message, "error");
-                        },
-                        onCancel: () => {
-                            showSnackbar("Ödeme iptal edildi! 🚫", "warning");
-                        }
-                    });
-
-                } else {
-                    // Fallback to traditional redirect if popup fails
-                    window.location.href = revolutData.checkout_url;
-                }
+          revolutCheckout.payWithPopup({
+            onSuccess: () => {
+              showSnackbar("Ödeme başarıyla tamamlandı! 🎉", "success");
+              // Use consistent query parameter key 'orderId'
+              window.location.href = "/payment-success?orderId=" + revolutData.id;
+            },
+            onError: (error) => {
+              showSnackbar("Ödeme sırasında hata oluştu! ❌ " + error.message, "error");
+            },
+            onCancel: () => {
+              showSnackbar("Ödeme iptal edildi! 🚫", "warning");
             }
-        } catch (error) {
-            console.error('Error processing payment:', error);
-            showSnackbar("Ödeme sırasında bir hata oluştu! ❌", "error");
+          });
+        } else {
+          // Fallback to redirect if token/public_id is missing
+          window.location.href = revolutData.checkout_url;
         }
-    };
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      showSnackbar("Ödeme sırasında bir hata oluştu! ❌", "error");
+    }
+  };
 
     const showSnackbar = (message, severity) => {
         setSnackbarMessage(message);
