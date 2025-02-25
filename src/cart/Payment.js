@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Box,
     Typography,
@@ -12,6 +12,7 @@ import axios from 'axios';
 import Header from "../header/Header";
 import { useAuth } from "../auth/AuthProvider";
 import { useLocation } from 'react-router-dom'; // ✅ Import useLocation to get totalPrice
+import RevolutCheckout from '@revolut/checkout';
 
 const Payment = () => {
     const { username } = useAuth();
@@ -75,15 +76,27 @@ const Payment = () => {
 
             if (response.status === 200) {
                 const revolutData = response.data;
-                if (revolutData.checkout_url) {
-                    showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
+                showSnackbar("Ödeme işlemi başlatıldı! 🛒", "success");
 
-                    // ✅ Store order ID in localStorage
-                    localStorage.setItem("orderId", revolutData.order_id);
+                // Expecting token and order_id from backend
+                const { token, order_id } = revolutData;
 
-                    window.location.href = revolutData.checkout_url;
+                if (token) {
+                    const revolutCheckout = await RevolutCheckout(token, 'sandbox');
+                    revolutCheckout.payWithPopup({
+                        onSuccess: () => {
+                            showSnackbar("Ödeme başarıyla tamamlandı! 🎉", "success");
+                            window.location.href = "/payment-success?order_id=" + order_id;
+                        },
+                        onError: (error) => {
+                            showSnackbar("Ödeme sırasında hata oluştu! ❌ " + error.message, "error");
+                        },
+                        onCancel: () => {
+                            showSnackbar("Ödeme iptal edildi! 🚫", "warning");
+                        },
+                    });
                 } else {
-                    showSnackbar("Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️", "error");
+                    showSnackbar("Ödeme token'ı alınamadı! ⚠️", "error");
                 }
             }
         } catch (error) {
@@ -119,81 +132,20 @@ const Payment = () => {
                     <Typography variant="h6" gutterBottom>
                         Teslimat Adresi
                     </Typography>
-                    <TextField
-                        fullWidth
-                        label="İsim Soyisim"
-                        name="name"
-                        value={shippingAddress.name}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="Adres Satırı 1"
-                        name="addressLine1"
-                        value={shippingAddress.addressLine1}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="Adres Satırı 2"
-                        name="addressLine2"
-                        value={shippingAddress.addressLine2}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="Şehir"
-                        name="city"
-                        value={shippingAddress.city}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="Posta Kodu"
-                        name="postalCode"
-                        value={shippingAddress.postalCode}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="Ülke"
-                        name="country"
-                        value={shippingAddress.country}
-                        onChange={handleShippingAddressChange}
-                        sx={{ mb: 1 }}
-                        required
-                    />
+                    <TextField fullWidth label="İsim Soyisim" name="name" value={shippingAddress.name} onChange={handleShippingAddressChange} sx={{ mb: 1 }} required />
+                    <TextField fullWidth label="Adres Satırı 1" name="addressLine1" value={shippingAddress.addressLine1} onChange={handleShippingAddressChange} sx={{ mb: 1 }} required />
+                    <TextField fullWidth label="Adres Satırı 2" name="addressLine2" value={shippingAddress.addressLine2} onChange={handleShippingAddressChange} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="Şehir" name="city" value={shippingAddress.city} onChange={handleShippingAddressChange} sx={{ mb: 1 }} required />
+                    <TextField fullWidth label="Posta Kodu" name="postalCode" value={shippingAddress.postalCode} onChange={handleShippingAddressChange} sx={{ mb: 1 }} required />
+                    <TextField fullWidth label="Ülke" name="country" value={shippingAddress.country} onChange={handleShippingAddressChange} sx={{ mb: 1 }} required />
                 </Box>
 
                 <Divider sx={{ marginY: 3 }} />
-
-                {/* Payment Button */}
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    onClick={handlePaymentSubmit}
-                >
+                <Button variant="contained" color="primary" fullWidth onClick={handlePaymentSubmit}>
                     Ödeme sayfasına geç
                 </Button>
             </Box>
-
-            {/* Snackbar Notification */}
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={4000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
+            <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
                     {snackbarMessage}
                 </Alert>
