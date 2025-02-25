@@ -11,7 +11,7 @@ const PaymentSuccess = () => {
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
-        const orderId = queryParams.get('order_id'); // ✅ Get order ID from URL
+        const orderId = queryParams.get('orderId'); // Updated key to match the redirect
 
         if (orderId) {
             const interval = setInterval(() => {
