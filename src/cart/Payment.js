@@ -82,7 +82,7 @@ const Payment = () => {
           const tokenToUse = revolutData.token || revolutData.public_id;
 
           // Initialize Revolut Checkout widget in sandbox mode (change to 'production' for live)
-          const revolutCheckout = await RevolutCheckout(tokenToUse, 'sandbox');
+          /*const revolutCheckout = await RevolutCheckout(tokenToUse, 'sandbox');
 
           revolutCheckout.payWithPopup({
             onSuccess: () => {
@@ -96,7 +96,7 @@ const Payment = () => {
             onCancel: () => {
               showSnackbar("Ödeme iptal edildi! 🚫", "warning");
             }
-          });
+          });*/
         } else {
           // Fallback to redirect if token/public_id is missing
           window.location.href = revolutData.checkout_url;
