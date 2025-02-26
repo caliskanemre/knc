@@ -7,22 +7,34 @@ const PaymentSuccess = () => {
     const location = useLocation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [loading, setLoading] = useState(true);
-    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [paymentStatus, setPaymentStatus] = useState('pending');
+    const [timeoutReached, setTimeoutReached] = useState(false);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
-        const orderId = queryParams.get('orderId'); // Updated key to match the redirect
+        const orderId = queryParams.get('orderId'); // Ensure this matches what Revolut sends
 
-        if (orderId) {
-            const interval = setInterval(() => {
-                checkPaymentStatus(orderId);
-            }, 3000); // Poll every 3 seconds
-
-            return () => clearInterval(interval); // Cleanup on unmount
-        } else {
+        if (!orderId) {
             setPaymentStatus('failed');
             setLoading(false);
+            return;
         }
+
+        const interval = setInterval(() => {
+            checkPaymentStatus(orderId);
+        }, 3000); // Poll every 3 seconds
+
+        // Set a timeout to stop polling after 30 seconds
+        const timeout = setTimeout(() => {
+            setTimeoutReached(true);
+            clearInterval(interval);
+            setLoading(false);
+        }, 30000);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
     }, [location]);
 
     const checkPaymentStatus = async (orderId) => {
@@ -31,20 +43,23 @@ const PaymentSuccess = () => {
                 params: { orderId },
             });
 
-            if (response.data.status === 'completed') {
-                setPaymentStatus('completed');
+            const status = response.data.status;
+            setPaymentStatus(status);
+
+            if (status === 'completed') {
+                setLoading(false);
                 setTimeout(() => {
                     navigate('/');
-                }, 3000); // ✅ Redirect after 3 seconds
-            } else if (response.data.status === 'not_found') {
-                setPaymentStatus('not_found');
+                }, 3000); // Redirect after 3 seconds
+            } else if (status === 'failed') {
+                setLoading(false);
             } else {
-                setPaymentStatus('pending');
+                // Keep polling for 'pending' or 'not_found'
+                console.log(`Payment status still ${status}, continuing to poll...`);
             }
         } catch (error) {
             console.error('Error checking payment status:', error);
             setPaymentStatus('failed');
-        } finally {
             setLoading(false);
         }
     };
@@ -52,26 +67,22 @@ const PaymentSuccess = () => {
     return (
         <div style={{ textAlign: 'center', padding: '20px' }}>
             {loading ? (
-                <h2>Ödeme durumu kontrol ediliyor...</h2>
+                <h2>⏳ Ödeme durumu kontrol ediliyor...</h2>
             ) : paymentStatus === 'completed' ? (
                 <>
                     <h2>✅ Ödeme Başarılı!</h2>
                     <p>Teşekkürler! Ana sayfaya yönlendiriliyorsunuz...</p>
                 </>
-            ) : paymentStatus === 'pending' ? (
+            ) : paymentStatus === 'failed' || timeoutReached ? (
                 <>
-                    <h2>⏳ Ödeme onaylanıyor...</h2>
-                    <p>Lütfen bekleyin, işlem tamamlanınca yönlendirileceksiniz.</p>
-                </>
-            ) : paymentStatus === 'not_found' ? (
-                <>
-                    <h2>⚠ Ödeme bilgisi bulunamadı</h2>
-                    <p>Ödemeniz işlenmiyor olabilir.</p>
+                    <h2>❌ Ödeme Başarısız</h2>
+                    <p>Ödeme onaylanamadı. Lütfen tekrar deneyin.</p>
+                    <button onClick={() => navigate('/payment')}>Tekrar Dene</button>
                 </>
             ) : (
                 <>
-                    <h2>❌ Ödeme Başarısız</h2>
-                    <button onClick={() => navigate('/payment')}>Tekrar Dene</button>
+                    <h2>⏳ Ödeme onaylanıyor...</h2>
+                    <p>Lütfen bekleyin, işlem tamamlanıyor...</p>
                 </>
             )}
         </div>
