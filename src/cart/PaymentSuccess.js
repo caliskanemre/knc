@@ -1,41 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const PaymentSuccess = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [loading, setLoading] = useState(true);
     const [paymentStatus, setPaymentStatus] = useState('pending');
+    const [orderId, setOrderId] = useState(null);
     const [timeoutReached, setTimeoutReached] = useState(false);
 
     useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const orderId = queryParams.get('orderId'); // Ensure this matches what Revolut sends
+        fetchLatestOrderId();
+    }, []);
 
-        if (!orderId) {
+    useEffect(() => {
+        if (orderId) {
+            const interval = setInterval(() => {
+                checkPaymentStatus(orderId);
+            }, 3000); // Poll every 3 seconds
+
+            const timeout = setTimeout(() => {
+                setTimeoutReached(true);
+                clearInterval(interval);
+                setLoading(false);
+            }, 30000);
+
+            return () => {
+                clearInterval(interval);
+                clearTimeout(timeout);
+            };
+        }
+    }, [orderId]);
+
+    const fetchLatestOrderId = async () => {
+        try {
+            const response = await axios.get(`${baseURL}/api/payment/latest-order`);
+            if (response.data.orderId) {
+                setOrderId(response.data.orderId);
+            } else {
+                setPaymentStatus('failed');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Error fetching order ID:', error);
             setPaymentStatus('failed');
             setLoading(false);
-            return;
         }
-
-        const interval = setInterval(() => {
-            checkPaymentStatus(orderId);
-        }, 3000); // Poll every 3 seconds
-
-        // Set a timeout to stop polling after 30 seconds
-        const timeout = setTimeout(() => {
-            setTimeoutReached(true);
-            clearInterval(interval);
-            setLoading(false);
-        }, 30000);
-
-        return () => {
-            clearInterval(interval);
-            clearTimeout(timeout);
-        };
-    }, [location]);
+    };
 
     const checkPaymentStatus = async (orderId) => {
         try {
@@ -50,11 +62,10 @@ const PaymentSuccess = () => {
                 setLoading(false);
                 setTimeout(() => {
                     navigate('/');
-                }, 3000); // Redirect after 3 seconds
+                }, 3000);
             } else if (status === 'failed') {
                 setLoading(false);
             } else {
-                // Keep polling for 'pending' or 'not_found'
                 console.log(`Payment status still ${status}, continuing to poll...`);
             }
         } catch (error) {
