@@ -126,11 +126,9 @@ export default function Main() {
                     <Grid container spacing={4}>
                         {products.map((item) => {
                             // Define the discount percentage (can be dynamic per product)
-                            const discountPercent = 20; // For example, 20% discount
-
-                            // Calculate prices
-                            const originalPrice = Math.floor(item.price);
-                            const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
+                            const discountPercent = 20; // Example: fixed 20% discount
+                            const originalPrice = Number(item.price).toFixed(2);
+                            const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
 
                             // Build image URLs using prefixes
                             const originalPhoto = item.photos[0]?.photo || '';

@@ -202,9 +202,8 @@ const ProductList = () => {
 
                         // Pricing and discount logic (adjust if needed)
                         const discountPercent = 20; // Example: fixed 20% discount
-                        const originalPrice = Math.floor(item.price);
-                        const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
-
+                        const originalPrice = Number(item.price).toFixed(2);
+                        const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
                         // Build image URLs with prefixes
                         const originalImageUrl = item.photos[0]?.photo || '';
                         const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
