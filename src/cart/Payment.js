@@ -152,8 +152,14 @@ const Payment = () => {
             const response = await axios.post(`${baseURL}/api/payment`, paymentData);
             if (response.status === 200) {
                 const revolutData = response.data;
-                if (revolutData.checkout_url) {
+
+                if (revolutData.checkout_url && revolutData.order_id) {
                     showSnackbar('Ödeme işlemi başlatıldı! 🛒', 'success');
+
+                    // ✅ Store Revolut Order ID before redirecting
+                    setRevolutOrderId(revolutData.order_id);
+
+                    // ✅ Redirect to Revolut Checkout
                     window.location.href = revolutData.checkout_url;
                 } else {
                     showSnackbar('Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️', 'error');
@@ -162,6 +168,45 @@ const Payment = () => {
         } catch (error) {
             console.error('Error processing payment:', error);
             showSnackbar('Ödeme sırasında bir hata oluştu! ❌', 'error');
+        }
+    };
+
+    /**
+     * ✅ Step 2: Places Order in Backend After Payment is Authorized
+     */
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const revolutOrderIdFromURL = queryParams.get('order_id');
+        const paymentStatus = queryParams.get('status'); // "success" or "failed"
+
+        if (revolutOrderIdFromURL && paymentStatus === "success") {
+            setRevolutOrderId(revolutOrderIdFromURL);
+            placeOrderAfterPayment(revolutOrderIdFromURL);
+        }
+    }, []);
+
+    const placeOrderAfterPayment = async (revolutOrderId) => {
+        if (!username || !revolutOrderId) return;
+
+        const orderData = {
+            totalPrice: finalPrice,
+            paymentMethod: "Revolut",
+            orderItems: [],
+        };
+
+        try {
+            const response = await axios.post(
+                `${baseURL}/orders/${username}?revolutOrderId=${revolutOrderId}`,
+                orderData
+            );
+
+            if (response.status === 200) {
+                showSnackbar('Siparişiniz başarıyla oluşturuldu! 🎉', 'success');
+                navigate('/my-orders'); // ✅ Redirect to My Orders page
+            }
+        } catch (error) {
+            console.error('Error placing order:', error);
+            showSnackbar('Sipariş oluşturulurken hata oluştu! ❌', 'error');
         }
     };
 
