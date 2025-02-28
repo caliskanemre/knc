@@ -151,28 +151,29 @@ const Payment = () => {
             username,
         };
 
-        try {
-            const response = await axios.post(`${baseURL}/api/payment`, paymentData);
-            if (response.status === 200) {
-                const revolutData = response.data;
+    try {
+        const response = await axios.post(`${baseURL}/api/payment`, paymentData);
 
-                if (revolutData.checkout_url && revolutData.order_id) {
-                    showSnackbar('Ödeme işlemi başlatıldı! 🛒', 'success');
+        console.log("🚀 Payment API Response:", response.data); // ✅ Debug Log
 
-                    // ✅ Store Revolut Order ID before redirecting
-                    setRevolutOrderId(revolutData.order_id);
+        if (response.status === 200 && response.data.checkout_url) {
+            const revolutOrderId = new URL(response.data.checkout_url).searchParams.get("order_id"); // ✅ Extract order_id
+            setRevolutOrderId(revolutOrderId);
+            console.log("✅ Revolut Order ID:", revolutOrderId); // ✅ Debug Log
 
-                    // ✅ Redirect to Revolut Checkout
-                    window.location.href = revolutData.checkout_url;
-                } else {
-                    showSnackbar('Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️', 'error');
-                }
-            }
-        } catch (error) {
-            console.error('Error processing payment:', error);
-            showSnackbar('Ödeme sırasında bir hata oluştu! ❌', 'error');
+            showSnackbar('Ödeme işlemi başlatıldı! 🛒', 'success');
+
+            // ✅ Redirect to Revolut Checkout
+            window.location.href = response.data.checkout_url;
+        } else {
+            showSnackbar('Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️', 'error');
+            console.error("❌ checkout_url alınamadı, response:", response.data);
         }
-    };
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        showSnackbar('Ödeme sırasında bir hata oluştu! ❌', 'error');
+    }
+};
 
     /**
      * ✅ Step 2: Places Order in Backend After Payment is Authorized
