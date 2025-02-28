@@ -25,6 +25,7 @@
     "jwt-decode": "^4.0.0",
     "react": "^18.2.0",
     "react-bootstrap-icons": "^1.10.3",
+    "react-confetti": "^6.2.3",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
@@ -36,6 +37,7 @@
     "react-scripts": "5.0.1",
     "react-share": "^5.1.0",
     "react-swipeable": "^7.0.1",
+    "react-use": "^17.6.0",
     "serve": "^14.2.1",
     "web-vitals": "^2.1.4"
   },

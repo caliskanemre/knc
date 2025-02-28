@@ -24,6 +24,7 @@ import PaymentFailure from "./cart/PaymentFailure";
 import PaymentSuccess from "./cart/PaymentSuccess";
 import ArticlesPage from "./activity/ArticlesPage";
 import ArticleDetailPage from "./activity/ArticleDetailPage";
+import MyOrders from "./login/MyOrders";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -114,6 +115,7 @@ function App() {
                             <Route path="/contact-us" element={<ContactUs />} />
                             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess}/>}/>
                             <Route path="/users/favorites" element={<Favorites/>}/>
+                            <Route path="/my-orders" element={<MyOrders />} />
                             <Route path="/register" element={<Register/>}/>
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/cart" element={<Cart />} />

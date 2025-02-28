@@ -70,6 +70,13 @@ export default function Header() {
             console.error('Failed to fetch favorites:', error);
         }
     };
+    const handleMyOrders = async () => {
+        try {
+            navigate('/my-orders');
+        } catch (error) {
+            console.error('Failed to fetch favorites:', error);
+        }
+    };
 
     // Register dialog
     const handleOpenRegisterDialog = () => setOpenRegisterDialog(true);
@@ -248,6 +255,7 @@ export default function Header() {
                                 open={Boolean(anchorEl)}
                                 onClose={handleMenuClose}
                             >
+                                <MenuItem onClick={handleMyOrders}>Siparişlerim</MenuItem>
                                 <MenuItem onClick={handleFetchFavorites}>Favoriler</MenuItem>
                                 <MenuItem onClick={handleLogout}>Çıkış Yap</MenuItem>
                             </Menu>
