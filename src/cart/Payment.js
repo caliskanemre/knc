@@ -16,11 +16,12 @@ import {
 import axios from 'axios';
 import Header from '../header/Header';
 import { useAuth } from '../auth/AuthProvider';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Payment = () => {
     const { username } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate(); // ✅ For navigation after successful payment
 
     // Received from Cart (without shipping)
     const basePrice = location.state?.totalPrice || 0;
@@ -89,13 +90,15 @@ const Payment = () => {
 
     // Final computed price (basePrice + shippingCost)
     const [finalPrice, setFinalPrice] = useState(basePrice);
+    const [currency] = useState('EUR');
+
+    const [revolutOrderId, setRevolutOrderId] = useState(null); // ✅ Stores Revolut Order ID
 
     useEffect(() => {
         setFinalPrice(basePrice + shippingCost);
     }, [basePrice, shippingCost]);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    const [currency] = useState('EUR');
 
     // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
