@@ -28,7 +28,7 @@ const Payment = () => {
 
     // List of shipping countries & costs
     const shippingCountries = [
-        { code: 'TR', name: 'Türkiye', cost: 3 },
+        { code: 'TR', name: 'Türkiye', cost: 0 },
         { code: 'AL', name: 'Albania', cost: 12.99 },
         { code: 'AT', name: 'Austria', cost: 12.99 },
         { code: 'AU', name: 'Australia', cost: 49.99 },

@@ -44,53 +44,79 @@ const MyOrders = () => {
     }
   };
 
-    return (
-        <>
-            <Header />
-            <Box sx={{ maxWidth: 800, margin: "0 auto", padding: 2 }}>
-                <Typography variant="h4" gutterBottom>
-                    Siparişlerim
-                </Typography>
+  return (
+    <>
+      <Header />
+      <Box sx={{ maxWidth: 800, margin: "0 auto", padding: 2 }}>
+        <Typography variant="h4" gutterBottom>
+          Siparişlerim
+        </Typography>
 
-                {loading ? (
-                    <Box display="flex" justifyContent="center" mt={5}>
-                        <CircularProgress />
-                    </Box>
-                ) : orders.length === 0 ? (
-                    <Typography variant="body1">
-                        Henüz siparişiniz yok.
-                    </Typography>
-                ) : (
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell><strong>Order #</strong></TableCell>
-                                    <TableCell><strong>Tarih</strong></TableCell>
-                                    <TableCell><strong>Durum</strong></TableCell>
-                                    <TableCell><strong>Toplam</strong></TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {orders.map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell>{order.id}</TableCell>
-                                        <TableCell>
-                                            {new Date(order.createdAt).toLocaleDateString("tr-TR")}
-                                        </TableCell>
-                                        <TableCell>{order.status}</TableCell>
-                                        <TableCell>
-                                            {order.totalAmount?.toFixed(2)} €
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                )}
-            </Box>
-        </>
-    );
+        {loading ? (
+          <Box display="flex" justifyContent="center" mt={5}>
+            <CircularProgress />
+          </Box>
+        ) : orders.length === 0 ? (
+          <Typography variant="body1">
+            Henüz siparişiniz yok.
+          </Typography>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Order #</strong></TableCell>
+                  <TableCell><strong>Tarih</strong></TableCell>
+                  <TableCell><strong>Durum</strong></TableCell>
+                  <TableCell><strong>Toplam</strong></TableCell>
+                  <TableCell><strong>Ödeme Yöntemi</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {orders.map((order) => (
+                  <React.Fragment key={order.id}>
+                    {/* Main row for basic order info */}
+                    <TableRow>
+                      <TableCell>{order.id}</TableCell>
+                      <TableCell>
+                        {new Date(order.createdAt).toLocaleDateString("tr-TR")}
+                      </TableCell>
+                      <TableCell>{order.status}</TableCell>
+                      <TableCell>
+                        {/* Use `totalPrice` from your API */}
+                        {order.totalPrice?.toFixed(2)} €
+                      </TableCell>
+                      <TableCell>{order.paymentMethod}</TableCell>
+                    </TableRow>
+
+                    {/* Optional sub-row for order items */}
+                    {order.orderItems && order.orderItems.length > 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} sx={{ backgroundColor: "#f9f9f9" }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                            Ürünler:
+                          </Typography>
+                          {order.orderItems.map((item, idx) => (
+                            <Box key={idx} sx={{ pl: 2 }}>
+                              <Typography variant="body2">
+                                <strong>Ürün ID:</strong> {item.productId} |{" "}
+                                <strong>Adet:</strong> {item.quantity} |{" "}
+                                <strong>Fiyat:</strong> {item.price} €
+                              </Typography>
+                            </Box>
+                          ))}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+    </>
+  );
 };
 
 export default MyOrders;
