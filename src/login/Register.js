@@ -8,7 +8,8 @@ import {
     DialogContentText,
     DialogTitle,
     Snackbar,
-    TextField
+    TextField,
+    CircularProgress
 } from '@mui/material';
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +19,8 @@ function Register({ open, handleClose }) {
     const [error, setError] = useState('');
     const [rePassword, setRePassword] = useState('');
     const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false); // 🔄 NEW: Track loading state
+
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { t } = useTranslation();
 
@@ -29,13 +32,17 @@ function Register({ open, handleClose }) {
             return;
         }
 
+        setLoading(true); // 🔄 Show spinner when starting registration
+
         try {
-            await axios.post(`${baseURL}/auth/register`, { email, password }); // Removed username
+            await axios.post(`${baseURL}/auth/register`, { email, password });
+
             if (window.gtag) {
                 window.gtag('event', 'conversion', {
                     'send_to': 'AW-854444729/AzNyCLCa4JMZELmVt5cD'
                 });
             }
+
             setSuccess(true);
             setError('');
             setPassword('');
@@ -44,6 +51,8 @@ function Register({ open, handleClose }) {
         } catch (error) {
             setError(t('Failed to register'));
             setSuccess(false);
+        } finally {
+            setLoading(false); // 🔄 Hide spinner after request is done
         }
     };
 
@@ -62,7 +71,6 @@ function Register({ open, handleClose }) {
                     {t("To register, please enter your email and password")}
                 </DialogContentText>
 
-                {/* Removed Username Field */}
                 <TextField
                     margin="dense"
                     id="email"
@@ -99,8 +107,12 @@ function Register({ open, handleClose }) {
                 {error && <p style={{ color: 'red' }}>{error}</p>}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>{t("Cancel")}</Button>
-                <Button onClick={handleSubmit}>{t("Register")}</Button>
+                <Button onClick={handleClose} disabled={loading}>
+                    {t("Cancel")}
+                </Button>
+                <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading}>
+                    {loading ? <CircularProgress size={24} color="inherit" /> : t("Register")}
+                </Button>
             </DialogActions>
             <Snackbar
                 open={success}

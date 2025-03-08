@@ -37,41 +37,42 @@ const Cart = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (email) {
-            fetchCartItems();
-        }
-    }, [email]); // ✅ Fetch cart items when email is available
+useEffect(() => {
+    if (email && email.includes('@')) { // ✅ Prevents API call with empty email
+        fetchCartItems();
+    }
+}, [email]);
 
     const fetchCartItems = async () => {
         try {
             const response = await axios.get(`${baseURL}/cart/${email}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            setCartItems(response.data);
+            setCartItems(response.data ?? []);
             calculateTotalPrice(response.data);
         } catch (error) {
             console.error("Error fetching cart items:", error);
+            setCartItems([]);
         }
     };
-
     const calculateTotalPrice = (items) => {
         const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
         setTotalPrice(total);
     };
 
-    const handleRemoveItem = async (id) => {
-        try {
-            await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            });
-            fetchCartItems();
-            showToast("Ürün sepetten kaldırıldı! 🗑️");
-        } catch (error) {
-            console.error("Error removing item:", error);
-            showToast("Ürün kaldırılamadı! ❌");
-        }
-    };
+const handleRemoveItem = async (id) => {
+    if (!email) return;
+    try {
+        await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        fetchCartItems();
+        showToast("Ürün sepetten kaldırıldı! 🗑️");
+    } catch (error) {
+        console.error("Error removing item:", error);
+        showToast("Ürün kaldırılamadı! ❌");
+    }
+};
 
     const handleUpdateQuantity = async (id, action) => {
         const product = cartItems.find(product => product.productId === id);
