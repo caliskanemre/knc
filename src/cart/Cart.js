@@ -32,22 +32,31 @@ const Cart = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            const decodedToken = jwtDecode(token);
-            setEmail(decodedToken.sub); // ✅ Set email from JWT token
+            try {
+                const decodedToken = jwtDecode(token);
+                if (decodedToken?.sub && decodedToken.sub.includes('@')) { // ✅ Check if valid email
+                    setEmail(decodedToken.sub);
+                }
+            } catch (error) {
+                console.error("Error decoding JWT token:", error);
+            }
         }
     }, []);
 
-useEffect(() => {
-    if (email && email.includes('@')) { // ✅ Prevents API call with empty email
-        fetchCartItems();
-    }
-}, [email]);
+    useEffect(() => {
+        if (email) { // ✅ Only fetch when email is set
+            fetchCartItems();
+        }
+    }, [email]);
 
     const fetchCartItems = async () => {
+        if (!email) return; // ✅ Prevents API call with an empty email
+
         try {
             const response = await axios.get(`${baseURL}/cart/${email}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
+
             setCartItems(response.data ?? []);
             calculateTotalPrice(response.data);
         } catch (error) {
