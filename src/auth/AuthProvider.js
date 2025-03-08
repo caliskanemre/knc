@@ -8,18 +8,18 @@ const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
 
-  // On component mount, check localStorage for a token
+  // ✅ On component mount, check localStorage for a token
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       try {
         const decoded = jwtDecode(storedToken);
         setToken(storedToken);
-        setUsername(decoded.sub); // Assumes the token contains a 'sub' claim for the username
+        setEmail(decoded.sub); // ✅ Assumes JWT `sub` contains email
         setIsLoggedIn(true);
         fetchFavorites(storedToken);
         fetchCart(storedToken);
@@ -29,11 +29,11 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(false);
       }
     }
-  }, []); // Run only once on mount
+  }, []);
 
   const fetchCart = async (authToken) => {
     try {
-      const response = await axios.get(`${baseURL}/cart/${username}`, {
+      const response = await axios.get(`${baseURL}/cart/${email}`, {
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
       setCart(response.data || []);
@@ -56,14 +56,14 @@ export const AuthProvider = ({ children }) => {
   const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
     try {
       if (isInCart) {
-        // Remove from cart
-        await axios.delete(`${baseURL}/cart/${username}/item/${itemId}`, {
+        // ✅ Remove from cart using email
+        await axios.delete(`${baseURL}/cart/${email}/item/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        // Add to cart
+        // ✅ Add to cart using email
         const cartItem = { productId: itemId, quantity, price };
-        await axios.post(`${baseURL}/cart/${username}`, cartItem, {
+        await axios.post(`${baseURL}/cart/${email}`, cartItem, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -99,8 +99,8 @@ export const AuthProvider = ({ children }) => {
       setIsLoggedIn,
       token,
       setToken,
-      username,
-      setUsername,
+      email, // ✅ Updated from `username` to `email`
+      setEmail, // ✅ Ensure we have a setter for email
       favorites,
       toggleFavorite,
       cart,

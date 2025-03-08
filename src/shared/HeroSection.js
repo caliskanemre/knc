@@ -1,16 +1,21 @@
 // HeroSection.js
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import backgroundImage from './../background6.jpg'; // Or any other
+import { Box, useTheme } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import backgroundImageDesktop from '../background6.jpg'; // Desktop image
+import backgroundImageMobile from './../images/IMG_6719.JPG'; // Mobile image
 
 export default function HeroSection() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Detect mobile screen
+
     return (
         <Box
             sx={{
                 width: '100%',
                 // Hero height: smaller for mobile, larger for desktop
                 height: { xs: '200px', sm: '300px', md: '450px' },
-                backgroundImage: `url(${backgroundImage})`,
+                backgroundImage: `url(${isMobile ? backgroundImageMobile : backgroundImageDesktop})`,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',

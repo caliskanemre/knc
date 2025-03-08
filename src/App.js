@@ -1,9 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Main from "./Main";
-import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import ProductList from "./activity/ProductList";
-import Map from "./header/Map";
-import EventDetails from "./event/EventDetails";
 import ProductDetails from "./activity/ProductDetails";
 import SearchPage from "./search/SearchPage";
 import {LocalizationProvider} from "@mui/x-date-pickers";
@@ -105,8 +103,6 @@ function App() {
                             <Route path="/" element={<Main/>}/>
                             <Route path="/products" element={<ProductList/>}/>
                             <Route path="/products/:type" element={<ProductList/>}/>
-                            <Route path="/map" element={<Map/>}/>
-                            <Route path="/events/:eventId/:eventName" element={<EventDetails/>}/>
                             <Route path="/products/detail/:id/:title" element={<ProductDetails/>}/>
                             <Route path="/products/detail/:id" element={<ProductDetails/>}/>
                             <Route path="/search" element={<SearchPage/>}/>

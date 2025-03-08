@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import {
     Button,
@@ -10,10 +10,9 @@ import {
     Snackbar,
     TextField
 } from '@mui/material';
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
 
-function Register({open, handleClose}) {
-    const [username, setUsername] = useState('');
+function Register({ open, handleClose }) {
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
@@ -26,12 +25,12 @@ function Register({open, handleClose}) {
         e.preventDefault();
 
         if (password !== rePassword) {
-            setError('Passwords do not match');
-            return; // Stop the form submission
+            setError(t('Passwords do not match'));
+            return;
         }
 
         try {
-            await axios.post(`${baseURL}/auth/register`, {username, password, email});
+            await axios.post(`${baseURL}/auth/register`, { email, password }); // Removed username
             if (window.gtag) {
                 window.gtag('event', 'conversion', {
                     'send_to': 'AW-854444729/AzNyCLCa4JMZELmVt5cD'
@@ -39,14 +38,11 @@ function Register({open, handleClose}) {
             }
             setSuccess(true);
             setError('');
-            setUsername('');
             setPassword('');
             setRePassword('');
             setEmail('');
-            setError('');
-            // Optionally, inform the user of successful registration
         } catch (error) {
-            setError('Failed to register');
+            setError(t('Failed to register'));
             setSuccess(false);
         }
     };
@@ -55,7 +51,7 @@ function Register({open, handleClose}) {
         if (reason === 'clickaway') {
             return;
         }
-        setSuccess(false); // Reset success status
+        setSuccess(false);
     };
 
     return (
@@ -63,24 +59,25 @@ function Register({open, handleClose}) {
             <DialogTitle>{t("Register")}</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    {t("To register, please enter your username and password")}
+                    {t("To register, please enter your email and password")}
                 </DialogContentText>
+
+                {/* Removed Username Field */}
                 <TextField
-                    autoFocus
                     margin="dense"
-                    id="username"
-                    label={t("Username")}
-                    type="text"
+                    id="email"
+                    label="E-mail"
+                    type="email"
                     fullWidth
                     variant="outlined"
-                    value={username}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    onChange={(e) => setUsername(e.target.value)}
                 />
                 <TextField
                     margin="dense"
                     id="password"
-                    label="Password"
+                    label={t("Password")}
                     type="password"
                     fullWidth
                     variant="outlined"
@@ -99,31 +96,20 @@ function Register({open, handleClose}) {
                     onChange={(e) => setRePassword(e.target.value)}
                     required
                 />
-                <TextField
-                    margin="dense"
-                    id="email"
-                    label="e-mail"
-                    type="email"
-                    fullWidth
-                    variant="outlined"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-                {error && <p style={{color: 'red'}}>{error}</p>}
+                {error && <p style={{ color: 'red' }}>{error}</p>}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button onClick={handleSubmit}>Register</Button>
+                <Button onClick={handleClose}>{t("Cancel")}</Button>
+                <Button onClick={handleSubmit}>{t("Register")}</Button>
             </DialogActions>
             <Snackbar
                 open={success}
                 autoHideDuration={6000}
                 onClose={handleSnackbarClose}
-                message="Registration successful!"
+                message={t("Registration successful!")}
                 action={
                     <Button color="secondary" size="small" onClick={handleSnackbarClose}>
-                        Close
+                        {t("Close")}
                     </Button>
                 }
             />
@@ -131,4 +117,4 @@ function Register({open, handleClose}) {
     );
 }
 
-export default Register
+export default Register;

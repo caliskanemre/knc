@@ -19,9 +19,9 @@ import { useAuth } from '../auth/AuthProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Payment = () => {
-    const { username } = useAuth();
+    const { email } = useAuth(); // ✅ Use email instead of username
     const location = useLocation();
-    const navigate = useNavigate(); // ✅ For navigation after successful payment
+    const navigate = useNavigate();
 
     // Received from Cart (without shipping)
     const basePrice = location.state?.totalPrice || 0;
@@ -136,8 +136,8 @@ const Payment = () => {
     };
 
     const handlePaymentSubmit = async () => {
-        if (!username) {
-            showSnackbar('Kullanıcı adı bulunamadı. Lütfen giriş yapın! 🔐', 'warning');
+        if (!email) { // ✅ Using email instead of username
+            showSnackbar('Kullanıcı bulunamadı. Lütfen giriş yapın! 🔐', 'warning');
             return;
         }
 
@@ -148,7 +148,7 @@ const Payment = () => {
             amount: amountInCents,
             currency,
             shippingAddress,
-            username,
+            email, // ✅ Use email in request payload
         };
 
     try {
@@ -190,7 +190,7 @@ const Payment = () => {
     }, []);
 
     const placeOrderAfterPayment = async (revolutOrderId) => {
-        if (!username || !revolutOrderId) return;
+        if (!email || !revolutOrderId) return; // ✅ Use email instead of username
 
         const orderData = {
             totalPrice: finalPrice,
@@ -200,7 +200,7 @@ const Payment = () => {
 
         try {
             const response = await axios.post(
-                `${baseURL}/orders/${username}?revolutOrderId=${revolutOrderId}`,
+                `${baseURL}/orders/${email}?revolutOrderId=${revolutOrderId}`,
                 orderData
             );
 
@@ -291,7 +291,7 @@ const Payment = () => {
                                         label="Ülke"
                                         value={shippingAddress.country}
                                         onChange={handleCountrySelect}
-                                    >
+                                     variant={'outlined'}>
                                         <MenuItem value="">
                                             <em>Seçiniz</em>
                                         </MenuItem>

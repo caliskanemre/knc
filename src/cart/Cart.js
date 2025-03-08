@@ -21,7 +21,7 @@ const Cart = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState(''); // ✅ Define email & setEmail state
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -33,19 +33,19 @@ const Cart = () => {
         const token = localStorage.getItem('token');
         if (token) {
             const decodedToken = jwtDecode(token);
-            setUsername(decodedToken.sub);
+            setEmail(decodedToken.sub); // ✅ Set email from JWT token
         }
     }, []);
 
     useEffect(() => {
-        if (username) {
+        if (email) {
             fetchCartItems();
         }
-    }, [username]);
+    }, [email]); // ✅ Fetch cart items when email is available
 
     const fetchCartItems = async () => {
         try {
-            const response = await axios.get(`${baseURL}/cart/${username}`, {
+            const response = await axios.get(`${baseURL}/cart/${email}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             setCartItems(response.data);
@@ -62,7 +62,7 @@ const Cart = () => {
 
     const handleRemoveItem = async (id) => {
         try {
-            await axios.delete(`${baseURL}/cart/${username}/item/${id}`, {
+            await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             fetchCartItems();
@@ -81,7 +81,7 @@ const Cart = () => {
         if (updatedQuantity <= 0) return;
 
         try {
-            await axios.put(`${baseURL}/cart/${username}/item/${id}`, { quantity: updatedQuantity }, {
+            await axios.put(`${baseURL}/cart/${email}/item/${id}`, { quantity: updatedQuantity }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             fetchCartItems();
@@ -95,7 +95,6 @@ const Cart = () => {
     const handleCheckout = () => {
         navigate('/payment', { state: { totalPrice } });
     };
-
 
     // Function to show toast message
     const showToast = (message) => {

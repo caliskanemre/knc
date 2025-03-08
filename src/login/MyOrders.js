@@ -16,22 +16,22 @@ import {
 import Header from "../header/Header";
 
 const MyOrders = () => {
-  const { username, token } = useAuth();
+  const { email, token } = useAuth(); // ✅ Use `email` instead of `username`
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-    const baseURL = process.env.REACT_APP_BASE_URL || "http://localhost:8080";
+  const baseURL = process.env.REACT_APP_BASE_URL || "http://localhost:8080";
 
-    useEffect(() => {
-        if (username) {
-            fetchUserOrders(username);
-        }
-    }, [username]);
+  useEffect(() => {
+    if (email) {
+      fetchUserOrders(email);
+    }
+  }, [email]); // ✅ Fetch orders when `email` changes
 
-  const fetchUserOrders = async (username) => {
+  const fetchUserOrders = async (email) => {
     try {
-      // Include auth token if the endpoint requires authentication
-      const response = await axios.get(`${baseURL}/orders/user/${username}`, {
+      // ✅ Updated API URL to use `email`
+      const response = await axios.get(`${baseURL}/orders/user/${email}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

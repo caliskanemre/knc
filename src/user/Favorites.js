@@ -1,28 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../auth/AuthProvider";
+import React, {useEffect} from "react";
+import {useAuth} from "../auth/AuthProvider";
 import Header from "../header/Header";
-import {
-    Button,
-    Card,
-    IconButton,
-    Container,
-    Grid,
-    Box,
-    Typography,
-    CardMedia,
-} from "@mui/material";
+import {Box, Card, CardMedia, Container, Grid, IconButton, Typography,} from "@mui/material";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 
-// Import images for activity icons (if needed)
-import CampingIcon2 from "../images/camping_summer2.jpg";
-import wellness from "../images/wellness_green2.png";
-import winter from "../images/winter_green.jpeg";
-import swimming from "../images/summer_green3.jpg";
-import park from "../images/park_green.jpg";
-import nature from "../images/nature2.jpg";
-import naturalPark from "../images/park_green2.png";
-import museumIcon from "../images/green_museum.png";
+
 
 // Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
 const getPrefixedImage = (url, prefix) => {
@@ -31,11 +14,7 @@ const getPrefixedImage = (url, prefix) => {
 };
 
 const Favorites = () => {
-    const { favorites, toggleFavorite, isLoggedIn } = useAuth();
-    const [eventPage, setEventPage] = useState(0);
-    const [hasMoreEvents, setHasMoreEvents] = useState(0);
-    const [activityPage, setActivityPage] = useState(0);
-    const [hasMoreActivity, setHasMoreActivity] = useState(0);
+    const { favorites, toggleFavorite } = useAuth(); // ✅ Ensure `useAuth()` provides correct props
 
     useEffect(() => {
         // Additional logic if needed when favorites change
@@ -43,10 +22,8 @@ const Favorites = () => {
 
     // Dynamically adjust font size based on title length
     const getDynamicFontSize = (title) => {
-        title = title || "";
-        if (title.length < 10) return "1.8rem";
-        if (title.length < 20) return "1.5rem";
-        return "1.2rem";
+        if (!title) return "1.5rem";
+        return title.length < 10 ? "1.8rem" : title.length < 20 ? "1.5rem" : "1.2rem";
     };
 
     return (
@@ -55,22 +32,18 @@ const Favorites = () => {
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
                     {Array.isArray(favorites.favoriteProducts) &&
+                        favorites.favoriteProducts.length > 0 ? (
                         favorites.favoriteProducts.map((item) => {
-                            // Check if the item is already favorited
-                            const isAlreadyFavorited = favorites.favoriteProducts
-                                .map((product) => product.id)
-                                .includes(item.id);
+                            // ✅ Fix: Use `.some()` instead of `.map().includes()` for better performance
+                            const isAlreadyFavorited = favorites.favoriteProducts.some(product => product.id === item.id);
 
-                            // Pricing and discount logic (adjust as needed)
-                            const discountPercent = 20; // Example: fixed 20% discount
+                            // ✅ Pricing and discount logic
+                            const discountPercent = 20;
                             const originalPrice = Math.floor(item.price);
-                            const discountedPrice = Math.floor(
-                                item.price * (1 - discountPercent / 100)
-                            );
+                            const discountedPrice = Math.floor(item.price * (1 - discountPercent / 100));
 
-                            // Get the original image URL and generate prefixed versions
-                            const originalImage =
-                                item.photos && item.photos[0] ? item.photos[0].photo : "";
+                            // ✅ Get image URLs
+                            const originalImage = item.photos?.[0]?.photo || "";
                             const smallImageUrl = getPrefixedImage(originalImage, "small");
                             const mediumImageUrl = getPrefixedImage(originalImage, "medium");
                             const largeImageUrl = getPrefixedImage(originalImage, "large");
@@ -91,12 +64,8 @@ const Favorites = () => {
                                         >
                                             <CardMedia
                                                 component="img"
-                                                image={smallImageUrl} // Default to small image
-                                                srcSet={`
-                          ${smallImageUrl} 400w,
-                          ${mediumImageUrl} 800w,
-                          ${largeImageUrl} 1200w
-                        `}
+                                                image={smallImageUrl}
+                                                srcSet={`${smallImageUrl} 400w, ${mediumImageUrl} 800w, ${largeImageUrl} 1200w`}
                                                 sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                                 alt={item.title}
                                                 sx={{
@@ -187,21 +156,27 @@ const Favorites = () => {
                                     </Card>
                                 </Grid>
                             );
-                        })}
+                        })
+                    ) : (
+                        <Typography variant="h6" sx={{ textAlign: "center", width: "100%", mt: 5 }}>
+                            Favori ürününüz bulunmamaktadır.
+                        </Typography>
+                    )}
                 </Grid>
             </Container>
-            {(hasMoreEvents || hasMoreActivity) &&
-                (eventPage > 0 || activityPage > 0) && (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ textTransform: "none", fontSize: "16px", px: 3, py: 1 }}
-                        >
-                            Load More
-                        </Button>
-                    </Box>
-                )}
+
+            {/* ✅ Load More Button - Only shows if more events/activities exist */}
+           {/* {(hasMoreEvents || hasMoreActivity) && (eventPage > 0 || activityPage > 0) && (
+                <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ textTransform: "none", fontSize: "16px", px: 3, py: 1 }}
+                    >
+                        Daha Fazla Yükle
+                    </Button>
+                </Box>
+            )}*/}
         </div>
     );
 };

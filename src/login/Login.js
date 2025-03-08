@@ -4,11 +4,10 @@ import { Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField } from 
 import { useAuth } from "../auth/AuthProvider";
 import { jwtDecode } from "jwt-decode";
 import DialogActions from "@mui/material/DialogActions";
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) {
     const { setUsername } = useAuth();
-    const [localUsername, setLocalUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -20,16 +19,16 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${baseURL}/auth/login`, { username: localUsername, password });
+            const response = await axios.post(`${baseURL}/auth/login`, { email, password }); // Changed to use email
             if (response.data && response.data.accessToken) {
                 const { accessToken } = response.data;
                 localStorage.setItem('token', accessToken);
 
                 const decodedToken = jwtDecode(accessToken);
-                const username = decodedToken.sub;
+                const userEmail = decodedToken.sub; // Extract email instead of username
 
                 onLoginSuccess(response.data);
-                setUsername(username);
+                setUsername(userEmail); // Set email instead of username
                 handleClose();
                 setError('');
                 setSuccess(true);
@@ -50,13 +49,13 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                     <TextField
                         autoFocus
                         margin="dense"
-                        id="username"
-                        label="Username"
-                        type="text"
+                        id="email"
+                        label="Email"
+                        type="email"
                         fullWidth
                         variant="outlined"
-                        value={localUsername}
-                        onChange={(e) => setLocalUsername(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
                     <TextField
                         margin="dense"
@@ -77,11 +76,11 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                         variant="contained"
                         fullWidth
                         onClick={() => {
-                            handleClose(); // Giriş ekranını kapat
-                            handleOpenRegisterDialog(); // Üye Ol ekranını aç
+                            handleClose();
+                            handleOpenRegisterDialog();
                         }}
                     >
-                        üye ol
+                        {t("Sign Up")}
                     </Button>
                     {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
                 </form>
@@ -99,12 +98,12 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
 
             {/* Forgot Password Dialog */}
             <Dialog open={showForgotPassword} onClose={() => setShowForgotPassword(false)}>
-                <DialogTitle>Forgot Password</DialogTitle>
+                <DialogTitle>{t("Forgot Password")}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         margin="dense"
-                        id="email"
+                        id="forgot-email"
                         label="Email Address"
                         type="email"
                         fullWidth
@@ -115,10 +114,10 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                 </DialogContent>
                 <DialogActions>
                     <Button color="primary" variant="contained">
-                        Send Reset Link
+                        {t("Send Reset Link")}
                     </Button>
                     <Button onClick={() => setShowForgotPassword(false)} color="primary">
-                        Cancel
+                        {t("Cancel")}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -126,10 +125,10 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
             <Snackbar
                 open={success}
                 autoHideDuration={6000}
-                message="Login successful!"
+                message={t("Login successful!")}
                 action={
                     <Button color="secondary" size="small" onClick={() => setSuccess(false)}>
-                        Close
+                        {t("Close")}
                     </Button>
                 }
             />

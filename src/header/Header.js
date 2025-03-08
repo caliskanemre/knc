@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {NavLink, useNavigate} from 'react-router-dom';
 import './css/Header.css';
 import SearchImage from "../images/urunAra.png";
 import ProductsSubHeader from "../activity/ProductsSubHeader";
@@ -23,18 +23,17 @@ import {
     Typography
 } from "@mui/material";
 import Register from "../login/Register";
-// import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Removed
 import LoginIcon from '@mui/icons-material/Login';
-import { useAuth } from "../auth/AuthProvider";
+import {useAuth} from "../auth/AuthProvider";
 import MenuIcon from '@mui/icons-material/Menu';
 import ProductsSubHeaderMobile from "../activity/ProductsSubHeaderMobile";
-import { Helmet } from "react-helmet";
-import { useTranslation } from "react-i18next";
+import {Helmet} from "react-helmet";
+import {useTranslation} from "react-i18next";
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 export default function Header() {
-    const { isLoggedIn, setIsLoggedIn, username, setUsername } = useAuth();
+    const {isLoggedIn, setIsLoggedIn, username, setUsername} = useAuth();
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const navigate = useNavigate();
     const keywords = "kına, wedding, personalized gifts, bride, groom, henna night, kına setleri";
@@ -42,7 +41,7 @@ export default function Header() {
     const [openLoginDialog, setOpenLoginDialog] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
-    const { t, i18n } = useTranslation();
+    const {t, i18n} = useTranslation();
     const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
 
     const changeLanguage = (language) => {
@@ -116,24 +115,24 @@ export default function Header() {
                     name="description"
                     content="Find unique and personalized products for weddings and henna nights at KınaSepeti! Add names, dates, and custom designs to create unforgettable memories."
                 />
-                <meta name="keywords" content={keywords} />
+                <meta name="keywords" content={keywords}/>
                 <link
                     rel="canonical"
                     href={`${window.location.origin}${window.location.pathname}`}
                 />
             </Helmet>
 
-            <AppBar position="relative" style={{ backgroundColor: 'white' }}>
+            <AppBar position="relative" style={{backgroundColor: 'white'}}>
                 <Toolbar>
                     {/* Mobile Menu Button */}
                     {isMobile && (
                         <IconButton
                             edge="start"
                             aria-label="menu"
-                            style={{ color: '#5D4037' }}
+                            style={{color: '#5D4037'}}
                             onClick={() => setMobileMenuOpen(true)}
                         >
-                            <MenuIcon />
+                            <MenuIcon/>
                         </IconButton>
                     )}
 
@@ -186,10 +185,10 @@ export default function Header() {
                                 <img
                                     src={SearchImage}
                                     alt="Search events"
-                                    style={{ cursor: 'pointer' }}
+                                    style={{cursor: 'pointer'}}
                                 />
                             </NavLink>
-                            <ProductsSubHeader />
+                            <ProductsSubHeader/>
                             {/* NEW Section for Articles */}
                             <NavLink to="/articles" className="nav-link">
                                 {t('Articles')}
@@ -207,7 +206,7 @@ export default function Header() {
                         </>
                     )}
 
-                    <Box flexGrow={1} />
+                    <Box flexGrow={1}/>
 
                     {/* Cart Icon */}
                     <IconButton
@@ -215,11 +214,11 @@ export default function Header() {
                         sx={{
                             color: 'black',
                             marginLeft: '10px',
-                            '&:hover': { color: '#8B0000' },
+                            '&:hover': {color: '#8B0000'},
                         }}
                         onClick={() => handleNavigation('/cart')}
                     >
-                        <ShoppingBagOutlinedIcon sx={{ fontSize: 30 }} />
+                        <ShoppingBagOutlinedIcon sx={{fontSize: 30}}/>
                     </IconButton>
 
                     {/* Login / User Menu */}
@@ -227,10 +226,10 @@ export default function Header() {
                         <>
                             <IconButton
                                 aria-label="login"
-                                sx={{ color: 'black' }}
+                                sx={{color: 'black'}}
                                 onClick={handleOpenLoginDialog}
                             >
-                                <LoginIcon />
+                                <LoginIcon/>
                             </IconButton>
                         </>
                     ) : (
@@ -270,7 +269,7 @@ export default function Header() {
                         open={mobileMenuOpen}
                         onClose={() => setMobileMenuOpen(false)}
                         sx={{
-                            '& .MuiDrawer-paper': { width: { xs: '50%', sm: '400px' } },
+                            '& .MuiDrawer-paper': {width: {xs: '50%', sm: '400px'}},
                         }}
                     >
                         <List>
@@ -300,36 +299,36 @@ export default function Header() {
                                     <ListItemText
                                         primary={t('Search')}
                                         primaryTypographyProps={{
-                                            style: { fontSize: '1.2rem', marginLeft: '10px' },
+                                            style: {fontSize: '1.2rem', marginLeft: '10px'},
                                         }}
                                     />
                                 </Box>
                             </ListItem>
 
-                            <ProductsSubHeaderMobile />
+                            <ProductsSubHeaderMobile/>
                             <ListItem button onClick={() => handleNavigation('/articles')}>
                                 <ListItemText
                                     primary={t('Articles')}
-                                    primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
+                                    primaryTypographyProps={{style: {fontSize: '1.2rem'}}}
                                 />
                             </ListItem>
 
                             <ListItem button onClick={() => handleNavigation('/about-us')}>
                                 <ListItemText
                                     primary={t('How it works')}
-                                    primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
+                                    primaryTypographyProps={{style: {fontSize: '1.2rem'}}}
                                 />
                             </ListItem>
                             <ListItem button onClick={() => handleNavigation('/privacy-policy')}>
                                 <ListItemText
                                     primary={t('Privacy Policy')}
-                                    primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
+                                    primaryTypographyProps={{style: {fontSize: '1.2rem'}}}
                                 />
                             </ListItem>
                             <ListItem button onClick={() => handleNavigation('/contact-us')}>
                                 <ListItemText
                                     primary={t('Contact Us')}
-                                    primaryTypographyProps={{ style: { fontSize: '1.2rem' } }}
+                                    primaryTypographyProps={{style: {fontSize: '1.2rem'}}}
                                 />
                             </ListItem>
 
@@ -353,7 +352,7 @@ export default function Header() {
             {/* Register Dialog */}
             <Dialog open={openRegisterDialog} onClose={handleCloseRegisterDialog}>
                 <DialogContent>
-                    <Register open={openRegisterDialog} handleClose={handleCloseRegisterDialog} />
+                    <Register open={openRegisterDialog} handleClose={handleCloseRegisterDialog}/>
                 </DialogContent>
             </Dialog>
 

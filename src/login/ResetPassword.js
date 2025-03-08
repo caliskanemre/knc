@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {TextField, Button, Snackbar, Box} from '@mui/material';
+import { TextField, Button, Snackbar, Box } from '@mui/material';
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 
@@ -11,7 +11,7 @@ function useQuery() {
 
 function ResetPassword() {
     const query = useQuery();
-    const navigate = useNavigate();  // Using useNavigate instead of useHistory
+    const navigate = useNavigate();
     const token = query.get("token");
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,12 +30,12 @@ function ResetPassword() {
             const response = await axios.post(`${baseURL}/auth/reset-password`, { token, newPassword });
             if (response.data.success) {
                 setSuccess(true);
-                setTimeout(() => navigate('/'), 6000); // Redirect to login after a delay using navigate
+                setTimeout(() => navigate('/login'), 3000); // Redirect to login after 3 seconds
             } else {
                 setError(response.data.message || "Failed to reset password");
             }
         } catch (error) {
-            setError(error.response?.data?.message || "Failed to reset password");
+            setError(error.response?.data?.message || "An error occurred. Please try again.");
         }
     };
 
@@ -49,7 +49,7 @@ function ResetPassword() {
                     <TextField
                         margin="normal"
                         required
-                        fullWidth  // Ensures the text field takes the full width of its container
+                        fullWidth
                         id="new-password"
                         label="New Password"
                         name="newPassword"
@@ -57,12 +57,12 @@ function ResetPassword() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        sx={{ mb: 2 }}  // Adds bottom margin for spacing
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="normal"
                         required
-                        fullWidth  // Ensures the text field takes the full width of its container
+                        fullWidth
                         id="confirm-new-password"
                         label="Confirm New Password"
                         name="confirmNewPassword"
@@ -70,7 +70,7 @@ function ResetPassword() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        sx={{ mb: 2 }}  // Adds bottom margin for spacing
+                        sx={{ mb: 2 }}
                     />
                     <Button
                         type="submit"
@@ -86,8 +86,9 @@ function ResetPassword() {
             </Box>
             <Snackbar
                 open={success}
-                autoHideDuration={6000}
-                message="Password reset successfully. You will be redirected to login."
+                autoHideDuration={3000}
+                message="Password reset successfully. Redirecting to login..."
+                onClose={() => setSuccess(false)} // Allow Snackbar to be closed
             />
         </Container>
     );
