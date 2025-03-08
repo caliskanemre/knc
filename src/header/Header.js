@@ -244,9 +244,10 @@ export default function Header() {
                                     borderColor: 'primary.main',
                                 }}
                                 onClick={handleMenuClick}
+                                src={"/images/default-avatar.png"} // ✅ Default avatar image
                             >
-                                {username[0]?.toUpperCase()}
                             </Avatar>
+
 
                             <Menu
                                 anchorEl={anchorEl}
