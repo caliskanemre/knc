@@ -50,10 +50,10 @@ const Cart = () => {
     }, [email]);
 
     const fetchCartItems = async () => {
-        if (!email) return; // ✅ Prevents API call with an empty email
+        if (!email || !email.includes('@')) return; // ✅ Prevents invalid API calls
 
         try {
-            const response = await axios.get(`${baseURL}/cart/${email}`, {
+            const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, { // ✅ Ensures email is included
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
@@ -64,6 +64,14 @@ const Cart = () => {
             setCartItems([]);
         }
     };
+
+// Ensure this effect runs only when email is properly set
+    useEffect(() => {
+        if (email) {
+            fetchCartItems();
+        }
+    }, [email]);
+
     const calculateTotalPrice = (items) => {
         const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
         setTotalPrice(total);
