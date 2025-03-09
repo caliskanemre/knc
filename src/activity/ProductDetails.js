@@ -11,7 +11,9 @@ import {
     CardContent,
     Typography,
     Snackbar,
-    Alert, CircularProgress, AccordionDetails,
+    Alert,
+    CircularProgress,
+    AccordionDetails
 } from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
@@ -37,12 +39,14 @@ const ProductDetails = () => {
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false); // For image modal
-    const [similarProducts, setSimilarProducts] = useState([]); // NEW state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [similarProducts, setSimilarProducts] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Default: success
-    const { token, username, isLoggedIn, favorites, toggleFavorite } = useAuth();
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+    const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
+    const [email, setEmail] = useState('');
 
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -52,7 +56,15 @@ const ProductDetails = () => {
         return url.replace(/([^/]+)$/, `${prefix}_$1`);
     };
 
-    // Fetch product details
+    // Extract email from JWT token
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            const decoded = jwtDecode(storedToken);
+            setEmail(decoded.sub); // ✅ Extract email instead of username
+        }
+    }, []);
+
     useEffect(() => {
         Axios.get(`${baseURL}/products/detail/${id}/${title}`)
             .then((response) => {
@@ -122,6 +134,12 @@ const ProductDetails = () => {
             return;
         }
 
+        if (!email) {
+            console.error("User email is missing.");
+            showSnackbar("Kullanıcı e-posta adresi eksik! ❌", "error");
+            return;
+        }
+
         try {
             const cartItem = {
                 productId: product.id,
@@ -129,7 +147,7 @@ const ProductDetails = () => {
                 price: product.price,
             };
 
-            const response = await axios.post(`${baseURL}/cart/${username}`, cartItem, {
+            const response = await axios.post(`${baseURL}/cart/${email}`, cartItem, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
