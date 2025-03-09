@@ -72,12 +72,16 @@ const Cart = () => {
         }
     }, [email]);
 
+    const discountRate = 20; // Set discount rate (e.g., 20% discount)
+
     const calculateTotalPrice = (items) => {
         const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        setTotalPrice(total);
+        const discountedTotal = total * (1 - discountRate / 100); // Apply discount
+        setTotalPrice(discountedTotal);
     };
 
-const handleRemoveItem = async (id) => {
+
+    const handleRemoveItem = async (id) => {
     if (!email) return;
     try {
         await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
