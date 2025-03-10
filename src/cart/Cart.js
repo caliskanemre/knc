@@ -167,8 +167,10 @@ const Cart = () => {
                                             Miktar: {item.quantity}
                                         </Typography>
                                         <Typography color="textSecondary">
-                                            Toplam Fiyat: {item.price * item.quantity} €
+                                            Toplam Fiyat: <s>{(item.price * item.quantity).toFixed(2)} €</s> →
+                                            <strong>{((item.price * item.quantity) * (1 - discountRate / 100)).toFixed(2)} €</strong>
                                         </Typography>
+
                                     </CardContent>
                                     <CardActions>
                                         <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>

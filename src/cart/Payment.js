@@ -25,6 +25,10 @@ const Payment = () => {
 
     // Received from Cart (without shipping)
     const basePrice = location.state?.totalPrice || 0;
+    const discountRate = 20; // %20 indirim
+    const discountedBasePrice = basePrice * (1 - discountRate / 100);
+    const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
+
 
     // List of shipping countries & costs
     const shippingCountries = [
@@ -89,7 +93,6 @@ const Payment = () => {
     const [shippingCost, setShippingCost] = useState(0);
 
     // Final computed price (basePrice + shippingCost)
-    const [finalPrice, setFinalPrice] = useState(basePrice);
     const [currency] = useState('EUR');
 
     const [revolutOrderId, setRevolutOrderId] = useState(null); // ✅ Stores Revolut Order ID
@@ -318,7 +321,8 @@ const Payment = () => {
                                     Sipariş Özeti
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Ürünler Toplamı: <strong>{basePrice.toFixed(2)} €</strong>
+                                    <s>Ürünler Toplamı: {basePrice.toFixed(2)} €</s> →
+                                    <strong>{discountedBasePrice.toFixed(2)} €</strong>
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Kargo Ücreti: <strong>{shippingCost.toFixed(2)} €</strong>
