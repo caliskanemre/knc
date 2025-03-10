@@ -27,7 +27,11 @@ const Payment = () => {
     const basePrice = location.state?.totalPrice || 0;
     const discountRate = 20; // %20 indirim
     const discountedBasePrice = basePrice * (1 - discountRate / 100);
+
+    const [shippingCost, setShippingCost] = useState(0);
+
     const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
+
 
 
     // List of shipping countries & costs
@@ -88,9 +92,6 @@ const Payment = () => {
         postalCode: '',
         country: '',
     });
-
-    // Shipping cost state
-    const [shippingCost, setShippingCost] = useState(0);
 
     // Final computed price (basePrice + shippingCost)
     const [currency] = useState('EUR');
