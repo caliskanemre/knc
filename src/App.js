@@ -22,7 +22,7 @@ import PaymentFailure from "./cart/PaymentFailure";
 import PaymentSuccess from "./cart/PaymentSuccess";
 import ArticlesPage from "./activity/ArticlesPage";
 import ArticleDetailPage from "./activity/ArticleDetailPage";
-import MyOrders from "./login/MyOrders";
+import MyOrders from "./user/MyOrders";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);

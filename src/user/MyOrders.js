@@ -70,6 +70,7 @@ const MyOrders = () => {
                   <TableCell><strong>Durum</strong></TableCell>
                   <TableCell><strong>Toplam</strong></TableCell>
                   <TableCell><strong>Ödeme Yöntemi</strong></TableCell>
+                  <TableCell><strong>Kargo Durumu</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -87,6 +88,7 @@ const MyOrders = () => {
                         {order.totalPrice?.toFixed(2)} €
                       </TableCell>
                       <TableCell>{order.paymentMethod}</TableCell>
+                      <TableCell>{order.cargoStatus}</TableCell>
                     </TableRow>
 
                     {/* Optional sub-row for order items */}
