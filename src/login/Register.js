@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthProvider";
-import jwtDecode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 
 function Register({ open, handleClose }) {
   const { setUsername } = useAuth();
