@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, useTheme } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import backgroundImageDesktop from '../background6.jpg'; // Desktop image
-import backgroundImageMobile from './../images/IMG_6719.JPG'; // Mobile image
+import backgroundImageMobile from './../images/kapak2.png'; // Mobile image
 
 export default function HeroSection() {
     const theme = useTheme();
