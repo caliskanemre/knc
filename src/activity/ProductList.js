@@ -236,7 +236,7 @@ const ProductList = () => {
                                                 objectFit: 'cover'
                                             }}
                                         />
-                                    </a>
+
                                     <Box sx={{ padding: 2, flex: 1 }}>
                                         <Typography
                                             sx={{
@@ -303,6 +303,7 @@ const ProductList = () => {
                                             )}
                                         </Box>
                                     </Box>
+                                    </a>
                                     <IconButton
                                         aria-label="add to favorites"
                                         onClick={() => handleFavoriteClick(item.id)}
