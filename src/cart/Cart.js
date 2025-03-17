@@ -21,10 +21,11 @@ const Cart = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
-    const [email, setEmail] = useState(''); // ✅ Define email & setEmail state
+    const [email, setEmail] = useState('');
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
+    const [toastSeverity, setToastSeverity] = useState("success");
     const [toastOpen, setToastOpen] = useState(false);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -50,7 +51,7 @@ const Cart = () => {
     }, [email]);
 
     const fetchCartItems = async () => {
-        if (!email || !email.includes('@')) return; // ✅ Prevents invalid API calls
+        if (!email) return;
 
         try {
             const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, { // ✅ Ensures email is included
@@ -107,10 +108,10 @@ const Cart = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             fetchCartItems();
-            showToast(`Ürün miktarı güncellendi! 🛒`);
+            showToast(`Ürün miktarı güncellendi! 🛒`, "success");
         } catch (error) {
             console.error("Error updating quantity:", error);
-            showToast("Miktar güncellenemedi! ❌");
+            showToast("Miktar güncellenemedi! ❌", "error");
         }
     };
 
@@ -118,9 +119,9 @@ const Cart = () => {
         navigate('/payment', { state: { totalPrice } });
     };
 
-    // Function to show toast message
-    const showToast = (message) => {
+    const showToast = (message, severity) => {
         setToastMessage(message);
+        setToastSeverity(severity);
         setToastOpen(true);
     };
 
@@ -155,7 +156,7 @@ const Cart = () => {
                                                     ${largeImageUrl} 300w
                                                 `}
                                                 sizes="(max-width: 600px) 100px, 300px"
-                                                alt={item.title}
+                                                alt={item.title || "Ürün Resmi"}
                                                 sx={{ width: '100px', height: '100px' }}
                                             />
                                             <Typography variant="h6">{item.title}</Typography>
@@ -171,6 +172,12 @@ const Cart = () => {
                                             <strong>{((item.price * item.quantity) * (1 - discountRate / 100)).toFixed(2)} €</strong>
                                         </Typography>
 
+                                        {/* Display order note if exists */}
+                                        {item.note && (
+                                            <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
+                                                Not: {item.note}
+                                            </Typography>
+                                        )}
                                     </CardContent>
                                     <CardActions>
                                         <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
@@ -210,7 +217,7 @@ const Cart = () => {
                 onClose={() => setToastOpen(false)}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
-                <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
+                <Alert onClose={() => setToastOpen(false)} severity={toastSeverity} sx={{ width: '100%' }}>
                     {toastMessage}
                 </Alert>
             </Snackbar>

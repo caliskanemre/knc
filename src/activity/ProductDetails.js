@@ -44,6 +44,7 @@ const ProductDetails = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    const [orderNote, setOrderNote] = useState(""); // New state for order note
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const [email, setEmail] = useState('');
@@ -145,6 +146,7 @@ const ProductDetails = () => {
                 productId: product.id,
                 quantity,
                 price: product.price,
+                note: orderNote, // Include the customer's note
             };
 
             const response = await axios.post(`${baseURL}/cart/${email}`, cartItem, {
@@ -384,6 +386,27 @@ const ProductDetails = () => {
                         >
                             +
                         </Button>
+                    </div>
+
+                    <div className="order-note-section" style={{ marginTop: "15px" }}>
+                        <label htmlFor="order-note" style={{ fontWeight: "bold", display: "block", marginBottom: "5px" }}>
+                            {t("Order Note (Optional)")}
+                        </label>
+                        <textarea
+                            id="order-note"
+                            value={orderNote}
+                            onChange={(e) => setOrderNote(e.target.value)}
+                            placeholder={t("Add any special instructions for your order...")}
+                            style={{
+                                width: "100%",
+                                minHeight: "10px",
+                                border: "1px solid #ccc",
+                                borderRadius: "5px",
+                                padding: "8px",
+                                fontSize: "14px",
+                                marginBottom: "10px"
+                            }}
+                        />
                     </div>
 
                     {/* Add to Cart Button */}
