@@ -16,6 +16,18 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const { t } = useTranslation();
 
+    const handleForgotPassword = async () => {
+        try {
+            const response = await axios.post(`${baseURL}/auth/forgot-password`, { email });
+            // Optionally show a success message
+            console.log("Forgot password response:", response.data);
+            setShowForgotPassword(false);
+        } catch (error) {
+            console.error("Forgot password error:", error.response || error.message);
+            // Optionally show an error message
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -113,7 +125,12 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button color="primary" variant="contained">
+                    {/* 2. Call your function on click */}
+                    <Button
+                        color="primary"
+                        variant="contained"
+                        onClick={handleForgotPassword}
+                    >
                         {t("Send Reset Link")}
                     </Button>
                     <Button onClick={() => setShowForgotPassword(false)} color="primary">
