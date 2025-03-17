@@ -72,10 +72,10 @@ export default function ArticlesPage() {
                 {/* Page Title */}
                 <Box sx={{ textAlign: 'center', mb: 5 }}>
                     <Typography variant="h3" sx={{ fontFamily: "'Arial'", fontWeight: 700, color: '#8B0000' }}>
-                        Kına gecesi tarihi ve trendleri
+                        Kına gecesi fikirleri
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.secondary', mt: 2 }}>
-                        Discover tips, traditions, and creative ideas for your next Henna celebration.
+                        Bir sonraki kına kutlamanız için ipuçlarını, gelenekleri ve yaratıcı fikirleri keşfedin
                     </Typography>
                 </Box>
 
