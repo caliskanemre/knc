@@ -29,6 +29,7 @@ const Cart = () => {
     const [toastOpen, setToastOpen] = useState(false);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const discountRate = 20;
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -54,63 +55,66 @@ const Cart = () => {
         if (!email) return;
 
         try {
-            const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, { // ✅ Ensures email is included
+            const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-
-            setCartItems(response.data ?? []);
-            calculateTotalPrice(response.data);
+            const items = response.data ?? [];
+            setCartItems(items);
+            calculateTotalPrice(items);
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);
+            setTotalPrice(0);
         }
     };
-
-// Ensure this effect runs only when email is properly set
-    useEffect(() => {
-        if (email) {
-            fetchCartItems();
-        }
-    }, [email]);
-
-    const discountRate = 20; // Set discount rate (e.g., 20% discount)
 
     const calculateTotalPrice = (items) => {
         const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        const discountedTotal = total * (1 - discountRate / 100); // Apply discount
+        const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
     };
 
-
     const handleRemoveItem = async (id) => {
-    if (!email) return;
-    try {
-        await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        fetchCartItems();
-        showToast("Ürün sepetten kaldırıldı! 🗑️");
-    } catch (error) {
-        console.error("Error removing item:", error);
-        showToast("Ürün kaldırılamadı! ❌");
-    }
-};
+        if (!email) return;
+        try {
+            await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
+            setCartItems(updatedItems);
+            calculateTotalPrice(updatedItems);
+            showToast("Ürün sepetten kaldırıldı! 🗑️", "success");
+        } catch (error) {
+            console.error("Error removing item:", error);
+            showToast("Ürün kaldırılamadı! ❌", "error");
+        }
+    };
 
     const handleUpdateQuantity = async (id, action) => {
-        const product = cartItems.find(product => product.productId === id);
-        if (!product) return;
+        const productIndex = cartItems.findIndex(item => (item.productId || item.id) === id);
+        if (productIndex === -1) return;
 
+        const product = cartItems[productIndex];
         const updatedQuantity = product.quantity + (action === 'increment' ? 1 : -1);
-        if (updatedQuantity <= 0) return;
+
+        if (updatedQuantity <= 0) return; // Prevent negative or zero quantities
+
+        // Optimistically update the local state
+        const updatedItems = [...cartItems];
+        updatedItems[productIndex] = { ...product, quantity: updatedQuantity };
+        setCartItems(updatedItems);
+        calculateTotalPrice(updatedItems);
 
         try {
             await axios.put(`${baseURL}/cart/${email}/item/${id}`, { quantity: updatedQuantity }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            fetchCartItems();
             showToast(`Ürün miktarı güncellendi! 🛒`, "success");
+            // No need to call fetchCartItems since we updated locally
         } catch (error) {
             console.error("Error updating quantity:", error);
+            // Revert to server state on failure
+            fetchCartItems();
             showToast("Miktar güncellenemedi! ❌", "error");
         }
     };

@@ -322,7 +322,7 @@ const Payment = () => {
                                     Sipariş Özeti
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    <s>Ürünler Toplamı: {basePrice.toFixed(2)} €</s> →
+                                    Ürünler Toplamı: <s>{basePrice.toFixed(2)} €</s> →
                                     <strong>{discountedBasePrice.toFixed(2)} €</strong>
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>

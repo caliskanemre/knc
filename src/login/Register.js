@@ -14,6 +14,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthProvider";
 import {jwtDecode} from "jwt-decode";
+//import jwtDecode from 'jwt-decode';
+// NOT import { jwtDecode } from 'jwt-decode';
 
 function Register({ open, handleClose }) {
   const { setUsername } = useAuth();
@@ -53,9 +55,10 @@ function Register({ open, handleClose }) {
     setLoading(true);
     setError('');
 
-    try {
-      // Registration API call
-      await axios.post(`${baseURL}/auth/register`, { email, password });
+  try {
+    // Registration API call
+    const registerResponse = await axios.post(`${baseURL}/auth/register`, { email, password });
+    console.log("Register response:", registerResponse.data); // Debug
 
       // Optional tracking event
       if (window.gtag) {
@@ -64,17 +67,19 @@ function Register({ open, handleClose }) {
         });
       }
 
-      // Automatic login API call
-      const loginResponse = await axios.post(`${baseURL}/auth/login`, { email, password });
-      if (loginResponse.data && loginResponse.data.accessToken) {
-        const { accessToken } = loginResponse.data;
-        localStorage.setItem('token', accessToken);
+    // Automatic login API call
+    const loginResponse = await axios.post(`${baseURL}/auth/login`, { email, password });
+    console.log("Login response:", loginResponse.data); // Debug
 
-        const decodedToken = jwtDecode(accessToken);
-        const userEmail = decodedToken.sub; // Assuming the token's subject is the email
+    if (loginResponse.data && loginResponse.data.accessToken) {
+      const { accessToken } = loginResponse.data;
+      localStorage.setItem('token', accessToken);
 
-        setUsername(userEmail);
-        setSuccess(true);
+      const decodedToken = jwtDecode(accessToken);
+      const userEmail = decodedToken.sub;
+
+      setUsername(userEmail);
+      setSuccess(true);
 
         // Clear fields and close dialog
         setPassword('');
