@@ -22,6 +22,7 @@ const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
+    const [previousCartItems, setPreviousCartItems] = useState([]); // To track changes
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -61,6 +62,22 @@ const Cart = () => {
             const items = response.data ?? [];
             setCartItems(items);
             calculateTotalPrice(items);
+
+            // Check for new items to trigger "Add to Cart" conversion
+            if (previousCartItems.length < items.length) {
+                const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
+                if (newItem && window.gtag) {
+                    window.gtag('event', 'conversion', {
+                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', // Replace with your Conversion ID/Label
+                        'value': newItem.price, // Optional: Send the item price
+                        'currency': 'EUR', // Match your currency (e.g., €)
+                        'event_callback': () => {
+                            console.log('Add to Cart conversion tracked');
+                        }
+                    });
+                }
+            }
+            setPreviousCartItems(items); // Update previous state
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);
@@ -82,6 +99,7 @@ const Cart = () => {
             });
             const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
             setCartItems(updatedItems);
+            setPreviousCartItems(updatedItems); // Update previous state
             calculateTotalPrice(updatedItems);
             showToast("Ürün sepetten kaldırıldı! 🗑️", "success");
         } catch (error) {
