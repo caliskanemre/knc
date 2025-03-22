@@ -40,15 +40,15 @@ function Register({ open, handleClose }) {
 
     // Client-side validations
     if (!validateEmail(email)) {
-      setError(t("Please enter a valid email address."));
+      setError(t("Please enter a valid email address"));
       return;
     }
     if (password.length < 5) {
-      setError(t("Password must be at least 5 characters."));
+      setError(t("Password must be at least 5 characters"));
       return;
     }
     if (password !== rePassword) {
-      setError(t("Passwords do not match."));
+      setError(t("Passwords do not match"));
       return;
     }
 

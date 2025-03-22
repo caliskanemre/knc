@@ -87,7 +87,7 @@ function ResetPassword() {
             <Snackbar
                 open={success}
                 autoHideDuration={3000}
-                message="Password reset successfully. Redirecting to login..."
+                message={t("Password reset successfully. Redirecting to login...")}
                 onClose={() => setSuccess(false)} // Allow Snackbar to be closed
             />
         </Container>

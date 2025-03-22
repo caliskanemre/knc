@@ -126,22 +126,22 @@ const Payment = () => {
 
     const validateFields = () => {
         const missingFields = [];
-        if (!shippingAddress.name) missingFields.push('İsim Soyisim');
-        if (!shippingAddress.addressLine1) missingFields.push('Adres Satırı 1');
-        if (!shippingAddress.city) missingFields.push('Şehir');
-        if (!shippingAddress.postalCode) missingFields.push('Posta Kodu');
-        if (!shippingAddress.country) missingFields.push('Ülke');
+        if (!shippingAddress.name) missingFields.push(t('Full Name'));
+        if (!shippingAddress.addressLine1) missingFields.push(t('Address Line 1'));
+        if (!shippingAddress.city) missingFields.push(t('City'));
+        if (!shippingAddress.postalCode) missingFields.push(t('Postal Code'));
+        if (!shippingAddress.country) missingFields.push(t('Country'));
 
         if (missingFields.length > 0) {
-            showSnackbar(`Lütfen eksik alanları doldurun: ${missingFields.join(', ')}`, 'warning');
+            showSnackbar(`${t('Please fill in the missing fields')}: ${missingFields.join(', ')}`, 'warning');
             return false;
         }
         return true;
     };
 
     const handlePaymentSubmit = async () => {
-        if (!email) { // ✅ Using email instead of username
-            showSnackbar('Kullanıcı bulunamadı. Lütfen giriş yapın! 🔐', 'warning');
+        if (!email) {
+            showSnackbar(t('User not found. Please log in!'), 'warning');
             return;
         }
 
@@ -165,19 +165,17 @@ const Payment = () => {
             setRevolutOrderId(revolutOrderId);
             console.log("✅ Revolut Order ID:", revolutOrderId); // ✅ Debug Log
 
-            showSnackbar('Ödeme işlemi başlatıldı! 🛒', 'success');
-
-            // ✅ Redirect to Revolut Checkout
-            window.location.href = response.data.checkout_url;
-        } else {
-            showSnackbar('Ödeme oluşturuldu, ancak checkout_url alınamadı! ⚠️', 'error');
-            console.error("❌ checkout_url alınamadı, response:", response.data);
+                showSnackbar(t('Payment process started!'), 'success');
+                window.location.href = response.data.checkout_url;
+            } else {
+                showSnackbar(t('Payment created but checkout_url not received!'), 'error');
+                console.error("❌ checkout_url alınamadı, response:", response.data);
+            }
+        } catch (error) {
+            console.error('Error processing payment:', error);
+            showSnackbar(t('Error occurred during payment!'), 'error');
         }
-    } catch (error) {
-        console.error('Error processing payment:', error);
-        showSnackbar('Ödeme sırasında bir hata oluştu! ❌', 'error');
-    }
-};
+    };
 
     /**
      * ✅ Step 2: Places Order in Backend After Payment is Authorized
@@ -194,7 +192,7 @@ const Payment = () => {
     }, []);
 
     const placeOrderAfterPayment = async (revolutOrderId) => {
-        if (!email || !revolutOrderId) return; // ✅ Use email instead of username
+        if (!email || !revolutOrderId) return;
 
         const orderData = {
             totalPrice: finalPrice,
@@ -209,12 +207,12 @@ const Payment = () => {
             );
 
             if (response.status === 200) {
-                showSnackbar('Siparişiniz başarıyla oluşturuldu! 🎉', 'success');
-                navigate('/my-orders'); // ✅ Redirect to My Orders page
+                showSnackbar(t('Your order has been successfully created!'), 'success');
+                navigate('/my-orders');
             }
         } catch (error) {
             console.error('Error placing order:', error);
-            showSnackbar('Sipariş oluşturulurken hata oluştu! ❌', 'error');
+            showSnackbar(t('Error occurred while creating order!'), 'error');
         }
     };
 
@@ -233,18 +231,18 @@ const Payment = () => {
                 <Grid container spacing={3}>
                     {/* Shipping Information Section */}
                     <Grid item xs={12} md={6}>
-                        <section id="teslimat-bilgileri">
+                        <section id="shipping-information">
                             <Typography variant="h4" component="h1" gutterBottom>
-                                Teslimat Bilgileri
+                                {t('Shipping Information')}
                             </Typography>
                             <Divider sx={{ marginBottom: 2 }} />
                             <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
                                 <Typography variant="h6" gutterBottom>
-                                    Teslimat Adresi
+                                    {t('Shipping Address')}
                                 </Typography>
                                 <TextField
                                     fullWidth
-                                    label="İsim Soyisim"
+                                    label={t('Full Name')}
                                     name="name"
                                     value={shippingAddress.name}
                                     onChange={handleShippingAddressChange}
@@ -253,7 +251,7 @@ const Payment = () => {
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Adres Satırı 1"
+                                    label={t('Address Line 1')}
                                     name="addressLine1"
                                     value={shippingAddress.addressLine1}
                                     onChange={handleShippingAddressChange}
@@ -262,7 +260,7 @@ const Payment = () => {
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Adres Satırı 2"
+                                    label={t('Address Line 2')}
                                     name="addressLine2"
                                     value={shippingAddress.addressLine2}
                                     onChange={handleShippingAddressChange}
@@ -270,7 +268,7 @@ const Payment = () => {
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Şehir"
+                                    label={t('City')}
                                     name="city"
                                     value={shippingAddress.city}
                                     onChange={handleShippingAddressChange}
@@ -279,7 +277,7 @@ const Payment = () => {
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Posta Kodu"
+                                    label={t('Postal Code')}
                                     name="postalCode"
                                     value={shippingAddress.postalCode}
                                     onChange={handleShippingAddressChange}
@@ -287,17 +285,18 @@ const Payment = () => {
                                     required
                                 />
                                 <FormControl fullWidth sx={{ mb: 2 }} required>
-                                    <InputLabel id="country-select-label">Ülke</InputLabel>
+                                    <InputLabel id="country-select-label">{t('Country')}</InputLabel>
                                     <Select
                                         labelId="country-select-label"
                                         id="country-select"
                                         name="country"
-                                        label="Ülke"
+                                        label={t('Country')}
                                         value={shippingAddress.country}
                                         onChange={handleCountrySelect}
-                                     variant={'outlined'}>
+                                        variant={'outlined'}
+                                    >
                                         <MenuItem value="">
-                                            <em>Seçiniz</em>
+                                            <em>{t('Select')}</em>
                                         </MenuItem>
                                         {shippingCountries.map((country) => (
                                             <MenuItem key={country.code} value={country.code}>
@@ -312,25 +311,25 @@ const Payment = () => {
 
                     {/* Payment Information Section */}
                     <Grid item xs={12} md={6}>
-                        <section id="odeme-bilgileri">
+                        <section id="payment-information">
                             <Typography variant="h4" component="h1" gutterBottom>
-                                Ödeme Bilgileri
+                                {t('Payment Information')}
                             </Typography>
                             <Divider sx={{ marginBottom: 2 }} />
                             <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
                                 <Typography variant="h6" gutterBottom>
-                                    Sipariş Özeti
+                                    {t('Order Summary')}
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Ürünler Toplamı: <s>{basePrice.toFixed(2)} €</s> →
+                                    {t('Items Total')}: <s>{basePrice.toFixed(2)} €</s> →
                                     <strong>{discountedBasePrice.toFixed(2)} €</strong>
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Kargo Ücreti: <strong>{shippingCost.toFixed(2)} €</strong>
+                                    {t('Shipping Cost')}: <strong>{shippingCost.toFixed(2)} €</strong>
                                 </Typography>
                                 <Divider sx={{ my: 1 }} />
                                 <Typography variant="h6">
-                                    Toplam: <strong>{finalPrice.toFixed(2)} €</strong>
+                                    {t('Total')}: <strong>{finalPrice.toFixed(2)} €</strong>
                                 </Typography>
                                 <Button
                                     variant="contained"
@@ -339,7 +338,7 @@ const Payment = () => {
                                     sx={{ mt: 2 }}
                                     onClick={handlePaymentSubmit}
                                 >
-                                    Ödeme sayfasına geç
+                                    {t('Proceed to Payment')}
                                 </Button>
                             </Box>
                         </section>

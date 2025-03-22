@@ -152,7 +152,7 @@ const Cart = () => {
             <Header />
             <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
-                    Sepetim
+                    {t("My Cart")}
                 </Typography>
                 <Divider sx={{ marginBottom: 2 }} />
 

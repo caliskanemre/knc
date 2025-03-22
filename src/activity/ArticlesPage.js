@@ -4,6 +4,7 @@ import { Box, Container, Grid, Typography, Card, CardMedia, CardContent, Chip, B
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Header from "../header/Header";
+import {t} from "i18next";
 
 
 const articlesData = [
@@ -72,10 +73,10 @@ export default function ArticlesPage() {
                 {/* Page Title */}
                 <Box sx={{ textAlign: 'center', mb: 5 }}>
                     <Typography variant="h3" sx={{ fontFamily: "'Arial'", fontWeight: 700, color: '#8B0000' }}>
-                        Kına gecesi fikirleri
+                        {t("Henna Night Ideas")}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.secondary', mt: 2 }}>
-                        Bir sonraki kına kutlamanız için ipuçlarını, gelenekleri ve yaratıcı fikirleri keşfedin
+                        {t("Discover tips, traditions, and creative ideas for your next henna celebration")}
                     </Typography>
                 </Box>
 
@@ -135,7 +136,7 @@ export default function ArticlesPage() {
                                             },
                                         }}
                                     >
-                                        Read More
+                                        {t("Read More")}
                                     </Button>
                                 </Box>
                             </Card>
