@@ -16,6 +16,7 @@ import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
+import {t} from "i18next";
 
 const Cart = () => {
     const navigate = useNavigate();

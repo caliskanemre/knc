@@ -17,6 +17,7 @@ import axios from 'axios';
 import Header from '../header/Header';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {t} from "i18next";
 
 const Payment = () => {
     const { email } = useAuth(); // ✅ Use email instead of username

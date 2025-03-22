@@ -4,6 +4,7 @@ import axios from 'axios';
 import { TextField, Button, Snackbar, Box } from '@mui/material';
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
+import {t} from "i18next";
 
 function useQuery() {
     return new URLSearchParams(useLocation().search);
