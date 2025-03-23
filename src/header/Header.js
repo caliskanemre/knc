@@ -210,7 +210,7 @@ export default function Header() {
 
                     <IconButton
                         aria-label="Instagram"
-                        href="https://www.instagram.com/knc_kina_ogranizasyon" // Kendi Instagram URL'nizi ekleyin
+                        href="https://www.instagram.com/knc_kina_organizasyon" // Kendi Instagram URL'nizi ekleyin
                         target="_blank"
                         rel="noopener noreferrer"
                         sx={{
