@@ -159,7 +159,8 @@ export default function Main() {
                           ${largeImageUrl} 1200w
                         `}
                                                 sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                                alt={item.title}
+                                                alt={item.short_description}
+                                                title={item.title}
                                                 sx={{
                                                     width: '100%',
                                                     height: { xs: 140, md: 200 },
@@ -288,13 +289,36 @@ export default function Main() {
             </main>
 
             {/* Footer */}
+            {/* Footer */}
             <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
                     Kına Sepeti
                 </Typography>
-                <Typography variant="subtitle1" align="center" color="text.secondary" component="p">
-                    All rights reserved © 2025 Kına Sepeti
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="subtitle1" color="text.secondary" component="p">
+                        All rights reserved © 2025 Kına Sepeti
+                    </Typography>
+                    <IconButton
+                        aria-label="Instagram"
+                        href="https://www.instagram.com/knc_kina_organizasyon" // Buraya kendi Instagram URL'nizi ekleyin
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ color: 'text.secondary' }}
+                    >
+                        {/* Instagram SVG İkonu */}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.326 3.608 1.301.975.975 1.24 2.242 1.301 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.326 2.633-1.301 3.608-.975.975-2.242 1.24-3.608 1.301-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.326-3.608-1.301-.975-.975-1.24-2.242-1.301-3.608-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.062-1.366.326-2.633 1.301-3.608.975-.975 2.242-1.24 3.608-1.301 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.67.014-4.947.072-1.277.058-2.153.28-2.92.599-.79.33-1.454.794-2.118 1.458-.664.664-1.128 1.328-1.458 2.118-.319.767-.541 1.643-.599 2.92-.058 1.277-.072 1.688-.072 4.947s.014 3.67.072 4.947c.058 1.277.28 2.153.599 2.92.33.79.794 1.454 1.458 2.118.664.664 1.328 1.128 2.118 1.458.767.319 1.643.541 2.92.599 1.277.058 1.688.072 4.947.072s3.67-.014 4.947-.072c1.277-.058 2.153-.28 2.92-.599.79-.33 1.454-.794 2.118-1.458.664-.664 1.128-1.328 1.458-2.118.319-.767.541-1.643.599-2.92.058-1.277.072-1.688.072-4.947s-.014-3.67-.072-4.947c-.058-1.277-.28-2.153-.599-2.92-.33-.79-.794-1.454-1.458-2.118-.664-.664-1.328-1.128-2.118-1.458-.767-.319-1.643-.541-2.92-.599-1.277-.058-1.688-.072-4.947-.072z" />
+                            <path d="M12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z" />
+                            <circle cx="18.406" cy="5.594" r="1.44" />
+                        </svg>
+                    </IconButton>
+                </Box>
             </Box>
         </ThemeProvider>
     );
