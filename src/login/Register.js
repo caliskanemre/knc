@@ -12,13 +12,8 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../auth/AuthProvider";
-import {jwtDecode} from "jwt-decode";
-//import jwtDecode from 'jwt-decode';
-// NOT import { jwtDecode } from 'jwt-decode';
 
 function Register({ open, handleClose }) {
-  const { setUsername } = useAuth();
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +24,6 @@ function Register({ open, handleClose }) {
 
   const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-  // Helper: simple email format validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -55,10 +49,10 @@ function Register({ open, handleClose }) {
     setLoading(true);
     setError('');
 
-  try {
-    // Registration API call
-    const registerResponse = await axios.post(`${baseURL}/auth/register`, { email, password });
-    console.log("Register response:", registerResponse.data); // Debug
+    try {
+      // Registration API call
+      const registerResponse = await axios.post(`${baseURL}/auth/register`, { email, password });
+      console.log("Register response:", registerResponse.data); // Debug
 
       // Optional tracking event
       if (window.gtag) {
@@ -67,28 +61,13 @@ function Register({ open, handleClose }) {
         });
       }
 
-    // Automatic login API call
-    const loginResponse = await axios.post(`${baseURL}/auth/login`, { email, password });
-    console.log("Login response:", loginResponse.data); // Debug
-
-    if (loginResponse.data && loginResponse.data.accessToken) {
-      const { accessToken } = loginResponse.data;
-      localStorage.setItem('token', accessToken);
-
-      const decodedToken = jwtDecode(accessToken);
-      const userEmail = decodedToken.sub;
-
-      setUsername(userEmail);
+      // Kayıt başarılıysa
       setSuccess(true);
+      setPassword('');
+      setRePassword('');
+      setEmail('');
+      handleClose();
 
-        // Clear fields and close dialog
-        setPassword('');
-        setRePassword('');
-        setEmail('');
-        handleClose();
-      } else {
-        setError(t("Registration successful but failed to log in automatically."));
-      }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         setError(error.response.data.message);
@@ -160,7 +139,7 @@ function Register({ open, handleClose }) {
         open={success}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
-        message={t("Registration successful and you are now logged in!")}
+        message={t("Registration successful! Please login to continue.")}
         action={
           <Button color="secondary" size="small" onClick={handleSnackbarClose}>
             {t("Close")}
