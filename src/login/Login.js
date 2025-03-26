@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { jwtDecode } from "jwt-decode";
 import DialogActions from "@mui/material/DialogActions";
 import { useTranslation } from "react-i18next";
+import { ClipLoader } from 'react-spinners'; // Import a spinner
 
 function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) {
     const { setUsername } = useAuth();
@@ -14,22 +15,22 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
     const [success, setSuccess] = useState(false);
     const [email, setEmail] = useState('');
     const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [loading, setLoading] = useState(false); // Add loading state
     const { t } = useTranslation();
 
     const handleForgotPassword = async () => {
         try {
             const response = await axios.post(`${baseURL}/auth/forgot-password`, { email });
-            // Optionally show a success message
             console.log("Forgot password response:", response.data);
             setShowForgotPassword(false);
         } catch (error) {
             console.error("Forgot password error:", error.response || error.message);
-            // Optionally show an error message
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true); // Show spinner
         try {
             const response = await axios.post(`${baseURL}/auth/login`, { email, password }); // Changed to use email
             if (response.data && response.data.accessToken) {
@@ -40,16 +41,23 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                 const userEmail = decodedToken.sub; // Extract email instead of username
 
                 onLoginSuccess(response.data);
-                setUsername(userEmail); // Set email instead of username
-                handleClose();
+                setUsername(userEmail);
                 setError('');
                 setSuccess(true);
+
+                // Simulate a delay to show the animation, then close
+                setTimeout(() => {
+                    setLoading(false);
+                    handleClose();
+                }, 1000); // 1-second delay for animation
             } else {
                 setError('Failed to login - No data received');
+                setLoading(false);
             }
         } catch (error) {
             console.error('Login error:', error.response || error.message);
             setError('Failed to login');
+            setLoading(false);
         }
     };
 
@@ -79,8 +87,15 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <Button type="submit" color="primary" variant="contained" fullWidth style={{ marginTop: '20px' }}>
-                        {t("Login")}
+                    <Button
+                        type="submit"
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        style={{ marginTop: '20px' }}
+                        disabled={loading} // Disable button while loading
+                    >
+                        {loading ? <ClipLoader size={20} color="#fff" /> : t("Login")}
                     </Button>
                     <p style={{ textAlign: 'center', marginTop: '10px' }}>{t("Not a member yet?")}</p>
                     <Button
@@ -91,6 +106,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                             handleClose();
                             handleOpenRegisterDialog();
                         }}
+                        disabled={loading}
                     >
                         {t("Sign Up")}
                     </Button>
@@ -99,13 +115,12 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
             </DialogContent>
 
             <DialogActions>
-                <Button color="primary" onClick={() => setShowForgotPassword(true)}>
+                <Button color="primary" onClick={() => setShowForgotPassword(true)} disabled={loading}>
                     {t("Forgot Password")}
                 </Button>
-                <Button onClick={handleClose} color="primary">
+                <Button onClick={handleClose} color="primary" disabled={loading}>
                     {t("Close")}
                 </Button>
-
             </DialogActions>
 
             {/* Forgot Password Dialog */}
@@ -125,12 +140,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                     />
                 </DialogContent>
                 <DialogActions>
-                    {/* 2. Call your function on click */}
-                    <Button
-                        color="primary"
-                        variant="contained"
-                        onClick={handleForgotPassword}
-                    >
+                    <Button color="primary" variant="contained" onClick={handleForgotPassword}>
                         {t("Send Reset Link")}
                     </Button>
                     <Button onClick={() => setShowForgotPassword(false)} color="primary">
@@ -140,7 +150,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
             </Dialog>
 
             <Snackbar
-                open={success}
+                open={success && !loading} // Only show when loading is done
                 autoHideDuration={6000}
                 message={t("Login successful!")}
                 action={

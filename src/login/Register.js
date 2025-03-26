@@ -61,12 +61,17 @@ function Register({ open, handleClose }) {
         });
       }
 
-      // Kayıt başarılıysa
+      // Registration successful
       setSuccess(true);
       setPassword('');
       setRePassword('');
       setEmail('');
-      handleClose();
+
+      // Add a delay to show the success animation before closing
+      setTimeout(() => {
+        setLoading(false);
+        handleClose();
+      }, 1000); // 1-second delay
 
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
@@ -74,7 +79,6 @@ function Register({ open, handleClose }) {
       } else {
         setError(t("Failed to register."));
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -102,6 +106,7 @@ function Register({ open, handleClose }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={loading} // Disable input during loading
         />
         <TextField
           margin="dense"
@@ -113,6 +118,7 @@ function Register({ open, handleClose }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          disabled={loading}
         />
         <TextField
           margin="dense"
@@ -124,6 +130,7 @@ function Register({ open, handleClose }) {
           value={rePassword}
           onChange={(e) => setRePassword(e.target.value)}
           required
+          disabled={loading}
         />
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </DialogContent>
@@ -131,12 +138,17 @@ function Register({ open, handleClose }) {
         <Button onClick={handleClose} disabled={loading}>
           {t("Cancel")}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading}>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          disabled={loading}
+        >
           {loading ? <CircularProgress size={24} color="inherit" /> : t("Register")}
         </Button>
       </DialogActions>
       <Snackbar
-        open={success}
+        open={success && !loading} // Show only when loading is complete
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
         message={t("Registration successful! Please login to continue.")}
