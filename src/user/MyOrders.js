@@ -19,28 +19,33 @@ const MyOrders = () => {
   const { email, token } = useAuth(); // ✅ Use `email` instead of `username`
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // Add error state
 
   const baseURL = process.env.REACT_APP_BASE_URL || "http://localhost:8080";
 
   useEffect(() => {
-    if (email) {
+    if (email && token) { // Check for both email and token
       fetchUserOrders(email);
+    } else {
+      setLoading(false); // Stop loading if no email/token
+      setError("Kullanıcı bilgileri eksik."); // Set an error message
     }
-  }, [email]); // ✅ Fetch orders when `email` changes
+  }, [email, token]);
 
   const fetchUserOrders = async (email) => {
     try {
-      // ✅ Updated API URL to use `email`
       const response = await axios.get(`${baseURL}/orders/user/${email}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      setOrders(response.data);
+      // Ensure response.data is an array; fallback to empty array if not
+      setOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch user orders:", error);
+      setError("Siparişler yüklenirken bir hata oluştu."); // User-friendly error
     } finally {
-      setLoading(false);
+      setLoading(false); // Always resolve loading
     }
   };
 
@@ -56,6 +61,10 @@ const MyOrders = () => {
           <Box display="flex" justifyContent="center" mt={5}>
             <CircularProgress />
           </Box>
+        ) : error ? (
+          <Typography variant="body1" color="error">
+            {error}
+          </Typography>
         ) : orders.length === 0 ? (
           <Typography variant="body1">
             Henüz siparişiniz yok.
@@ -76,7 +85,6 @@ const MyOrders = () => {
               <TableBody>
                 {orders.map((order) => (
                   <React.Fragment key={order.id}>
-                    {/* Main row for basic order info */}
                     <TableRow>
                       <TableCell>{order.id}</TableCell>
                       <TableCell>
@@ -84,14 +92,11 @@ const MyOrders = () => {
                       </TableCell>
                       <TableCell>{order.status}</TableCell>
                       <TableCell>
-                        {/* Use `totalPrice` from your API */}
                         {order.totalPrice?.toFixed(2)} €
                       </TableCell>
                       <TableCell>{order.paymentMethod}</TableCell>
                       <TableCell>{order.cargoStatus}</TableCell>
                     </TableRow>
-
-                    {/* Optional sub-row for order items */}
                     {order.orderItems && order.orderItems.length > 0 && (
                       <TableRow>
                         <TableCell colSpan={5} sx={{ backgroundColor: "#f9f9f9" }}>
