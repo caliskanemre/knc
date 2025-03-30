@@ -23,6 +23,7 @@ import PaymentSuccess from "./cart/PaymentSuccess";
 import ArticlesPage from "./activity/ArticlesPage";
 import ArticleDetailPage from "./activity/ArticleDetailPage";
 import MyOrders from "./user/MyOrders";
+import Chatbot from "./chatbot/Chatbot";
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -122,7 +123,7 @@ function App() {
                             <Route path="/articles/:id" element={<ArticleDetailPage />} />
 
                         </Routes>
-
+                        <Chatbot /> {/* Chatbot'u buraya ekleyin */}
                         <CookieConsent
                             onAccept={handleAccept}
                             location="bottom"
