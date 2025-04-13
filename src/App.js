@@ -25,6 +25,7 @@ import ArticleDetailPage from "./activity/ArticleDetailPage";
 import MyOrders from "./user/MyOrders";
 import Chatbot from "./chatbot/Chatbot";
 import {useTranslation} from "react-i18next";
+import {Helmet} from "react-helmet";
 
 const LanguageRedirect = () => {
     const { i18n } = useTranslation();
