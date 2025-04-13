@@ -49,8 +49,9 @@ const LanguageRedirect = () => {
 };
 
 function App() {
-    const [, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
+  const { i18n } = useTranslation();
+  const [, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
 
     useEffect(() => {
@@ -123,6 +124,10 @@ function App() {
       <Router>
         <AuthProvider>
           <div className="App">
+            {/* Set <html lang> dynamically based on i18n language */}
+            <Helmet>
+              <html lang={i18n.language || 'tr'} />
+            </Helmet>
             <LanguageRedirect />
             <Routes>
               <Route path="/:lang/" element={<Main />} />
