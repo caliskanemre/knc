@@ -332,7 +332,7 @@ const ProductList = () => {
                             color="primary"
                             style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
                         >
-                            Load More
+                            {t("Load More")}
                         </Button>
                     </div>
                 )}

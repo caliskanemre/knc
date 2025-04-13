@@ -261,7 +261,7 @@ export default function Main() {
 
                     {hasMore && (
                         <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
-                            Load More
+                            {t("Load More")}
                         </Button>
                     )}
                 </Container>

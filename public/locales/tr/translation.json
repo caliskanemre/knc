@@ -95,5 +95,8 @@
   "Error occurred during payment!": "Ödeme sırasında bir hata oluştu!",
   "Your order has been successfully created!": "Siparişiniz başarıyla oluşturuldu!",
   "Error occurred while creating order!": "Sipariş oluşturulurken hata oluştu!",
-  "Select": "Seçiniz"
+  "Select": "Seçiniz",
+  "site_title": "Kına Sepeti - Kişiselleştirilmiş Düğün ve Kına Hediyeleri",
+  "site_description": "KınaSepeti'nde düğün ve kına geceleri için benzersiz ve kişiselleştirilmiş ürünler bulun! İsimler, tarihler ve özel tasarımlar ekleyerek unutulmaz anılar yaratın.",
+  "site_keywords": "kına, düğün, duvak, def,tef, halay mendili, kına gecesi, kına setleri"
 }

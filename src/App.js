@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Main from "./Main";
-import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes, useLocation, useNavigate} from 'react-router-dom';
 import ProductList from "./activity/ProductList";
 import ProductDetails from "./activity/ProductDetails";
 import SearchPage from "./search/SearchPage";
@@ -24,6 +24,29 @@ import ArticlesPage from "./activity/ArticlesPage";
 import ArticleDetailPage from "./activity/ArticleDetailPage";
 import MyOrders from "./user/MyOrders";
 import Chatbot from "./chatbot/Chatbot";
+import {useTranslation} from "react-i18next";
+
+const LanguageRedirect = () => {
+    const { i18n } = useTranslation();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        const lang = pathSegments[0];
+
+        // Eğer dil öneki yoksa veya geçersizse, varsayılan dile yönlendir
+        if (!['en', 'tr'].includes(lang)) {
+            const defaultLang = i18n.language || 'tr'; // Varsayılan dil 'tr'
+            navigate(`/${defaultLang}${location.pathname}`, { replace: true });
+        } else {
+            // URL'deki dil ile i18n dilini senkronize et
+            i18n.changeLanguage(lang);
+        }
+    }, [location.pathname, i18n, navigate]);
+
+    return null;
+};
 
 function App() {
     const [, setIsAuthenticated] = useState(false);
@@ -95,53 +118,53 @@ function App() {
     };
 
 
-    return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Router>
-                <AuthProvider>
-                    <div className="App">
-                        <Routes>
-                            <Route path="/" element={<Main/>}/>
-                            <Route path="/products" element={<ProductList/>}/>
-                            <Route path="/products/:type" element={<ProductList/>}/>
-                            <Route path="/products/detail/:id/:title" element={<ProductDetails/>}/>
-                            <Route path="/products/detail/:id" element={<ProductDetails/>}/>
-                            <Route path="/search" element={<SearchPage/>}/>
-                            <Route path="/about-us" element={<AboutUs />} />
-                            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                            <Route path="/contact-us" element={<ContactUs />} />
-                            <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess}/>}/>
-                            <Route path="/users/favorites" element={<Favorites/>}/>
-                            <Route path="/my-orders" element={<MyOrders />} />
-                            <Route path="/register" element={<Register/>}/>
-                            <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/cart" element={<Cart />} />
-                            <Route path="/payment" element={<Payment />} />
-                            <Route path="/payment-success" element={<PaymentSuccess />} />
-                            <Route path="/payment-failure" element={<PaymentFailure />} />
-                            <Route path="/articles" element={<ArticlesPage />} />
-                            <Route path="/articles/:id" element={<ArticleDetailPage />} />
-
-                        </Routes>
-                        <Chatbot /> {/* Chatbot'u buraya ekleyin */}
-                        <CookieConsent
-                            onAccept={handleAccept}
-                            location="bottom"
-                            buttonText="Accept"
-                            declineButtonText="Decline"
-                            cookieName="activentyUserConsent"
-                            style={{background: "#2B373B"}}
-                            buttonStyle={{color: "#4e503b", fontSize: "13px"}}
-                            declineButtonStyle={{fontSize: "13px"}}
-                            expires={150}
-                        >
-                            This website uses cookies to enhance the user experience.{" "}
-                        </CookieConsent>
-                    </div>
-                </AuthProvider>
-            </Router>
-        </LocalizationProvider>
-    );
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Router>
+        <AuthProvider>
+          <div className="App">
+            <LanguageRedirect />
+            <Routes>
+              <Route path="/:lang/" element={<Main />} />
+              <Route path="/:lang/products" element={<ProductList />} />
+              <Route path="/:lang/products/:type" element={<ProductList />} />
+              <Route path="/:lang/products/detail/:id/:title" element={<ProductDetails />} />
+              <Route path="/:lang/products/detail/:id" element={<ProductDetails />} />
+              <Route path="/:lang/search" element={<SearchPage />} />
+              <Route path="/:lang/about-us" element={<AboutUs />} />
+              <Route path="/:lang/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/:lang/contact-us" element={<ContactUs />} />
+              <Route path="/:lang/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+              <Route path="/:lang/users/favorites" element={<Favorites />} />
+              <Route path="/:lang/my-orders" element={<MyOrders />} />
+              <Route path="/:lang/register" element={<Register />} />
+              <Route path="/:lang/reset-password" element={<ResetPassword />} />
+              <Route path="/:lang/cart" element={<Cart />} />
+              <Route path="/:lang/payment" element={<Payment />} />
+              <Route path="/:lang/payment-success" element={<PaymentSuccess />} />
+              <Route path="/:lang/payment-failure" element={<PaymentFailure />} />
+              <Route path="/:lang/articles" element={<ArticlesPage />} />
+              <Route path="/:lang/articles/:id" element={<ArticleDetailPage />} />
+            </Routes>
+            <Chatbot />
+            {/* <CookieConsent
+              onAccept={handleAccept}
+              location="bottom"
+              buttonText="Accept"
+              declineButtonText="Decline"
+              cookieName="activentyUserConsent"
+              style={{ background: '#2B373B' }}
+              buttonStyle={{ color: '#4e503b', fontSize: '13px' }}
+              declineButtonStyle={{ fontSize: '13px' }}
+              expires={150}
+            >
+              This website uses cookies to enhance the user experience.{' '}
+            </CookieConsent> */}
+          </div>
+        </AuthProvider>
+      </Router>
+    </LocalizationProvider>
+  );
 }
 
 export default App;

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {NavLink, useNavigate} from 'react-router-dom';
+import {NavLink, useLocation, useNavigate} from 'react-router-dom';
 import './css/Header.css';
 import SearchImage from "../images/urunAra.png";
 import ProductsSubHeader from "../activity/ProductsSubHeader";
@@ -33,21 +33,27 @@ import {useTranslation} from "react-i18next";
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 export default function Header() {
-    const {isLoggedIn, setIsLoggedIn, username, setUsername} = useAuth();
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const navigate = useNavigate();
-    const keywords = "kına, wedding, personalized gifts, bride, groom, henna night, kına setleri";
-    const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
-    const [openLoginDialog, setOpenLoginDialog] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
-    const {t, i18n} = useTranslation();
-    const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+  const { isLoggedIn, setIsLoggedIn, username, setUsername } = useAuth();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t, i18n } = useTranslation();
+  const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
+  const [openLoginDialog, setOpenLoginDialog] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
 
-    const changeLanguage = (language) => {
-        i18n.changeLanguage(language);
-        setSelectedLanguage(language);
-    };
+  // Mevcut dil parametresini al
+  const currentLang = location.pathname.split('/')[1] || 'tr';
+
+  const changeLanguage = (language) => {
+    i18n.changeLanguage(language);
+    setSelectedLanguage(language);
+    // Mevcut yolu dil önekiyle güncelle
+    const newPath = location.pathname.replace(/^\/(en|tr)/, `/${language}`) || `/${language}`;
+    navigate(newPath);
+  };
 
     useEffect(() => {
         const handleResize = () => {
@@ -57,25 +63,26 @@ export default function Header() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleNavigation = (path) => {
-        navigate(path);
-        setMobileMenuOpen(false); // Close drawer after navigation
-    };
+  const handleNavigation = (path) => {
+    navigate(`/${currentLang}${path}`);
+    setMobileMenuOpen(false);
+  };
 
-    const handleFetchFavorites = async () => {
-        try {
-            navigate('/users/favorites');
-        } catch (error) {
-            console.error('Failed to fetch favorites:', error);
-        }
-    };
-    const handleMyOrders = async () => {
-        try {
-            navigate('/my-orders');
-        } catch (error) {
-            console.error('Failed to fetch favorites:', error);
-        }
-    };
+  const handleFetchFavorites = async () => {
+    try {
+      navigate(`/${currentLang}/users/favorites`);
+    } catch (error) {
+      console.error('Failed to fetch favorites:', error);
+    }
+  };
+
+  const handleMyOrders = async () => {
+    try {
+      navigate(`/${currentLang}/my-orders`);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    }
+  };
 
     // Register dialog
     const handleOpenRegisterDialog = () => setOpenRegisterDialog(true);
@@ -107,55 +114,50 @@ export default function Header() {
         setOpenLoginDialog(false);
     };
 
-    return (
-        <>
-            <Helmet>
-                <title>Kına Sepeti - Personalized Wedding and Henna Gifts</title>
-                <meta
-                    name="description"
-                    content="Find unique and personalized products for weddings and henna nights at KınaSepeti! Add names, dates, and custom designs to create unforgettable memories."
-                />
-                <meta name="keywords" content={keywords}/>
-                <link
-                    rel="canonical"
-                    href={`${window.location.origin}${window.location.pathname}`}
-                />
-            </Helmet>
+  return (
+    <>
+      <Helmet>
+        <title>{t('site_title')}</title>
+        <meta name="description" content={t('site_description')} />
+        <meta name="keywords" content={t('site_keywords')} />
+        <link rel="canonical" href={`${window.location.origin}/${currentLang}${location.pathname.replace(/^\/(en|tr)/, '')}`} />
+        <link rel="alternate" hreflang="tr" href={`${window.location.origin}/tr${location.pathname.replace(/^\/(en|tr)/, '')}`} />
+        <link rel="alternate" hreflang="en" href={`${window.location.origin}/en${location.pathname.replace(/^\/(en|tr)/, '')}`} />
+        <link rel="alternate" hreflang="x-default" href={`${window.location.origin}/tr${location.pathname.replace(/^\/(en|tr)/, '')}`} />
+      </Helmet>
 
-            <AppBar position="relative" style={{backgroundColor: 'white'}}>
-                <Toolbar>
-                    {/* Mobile Menu Button */}
-                    {isMobile && (
-                        <IconButton
-                            edge="start"
-                            aria-label="menu"
-                            style={{color: '#5D4037'}}
-                            onClick={() => setMobileMenuOpen(true)}
-                        >
-                            <MenuIcon/>
-                        </IconButton>
-                    )}
+      <AppBar position="relative" style={{ backgroundColor: 'white' }}>
+        <Toolbar>
+          {isMobile && (
+            <IconButton
+              edge="start"
+              aria-label="menu"
+              style={{ color: '#5D4037' }}
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
 
-                    {/* Brand Name - Desktop */}
-                    {!isMobile && (
-                        <Typography
-                            variant="h1"
-                            component="h1"
-                            onClick={() => handleNavigation('/')}
-                            style={{
-                                cursor: 'pointer',
-                                color: '#8B0000',
-                                fontFamily: "'Dancing Script', cursive",
-                                fontSize: '2.5rem',
-                                fontWeight: 700,
-                                letterSpacing: '0.03em',
-                                lineHeight: 1.2,
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
-                            }}
-                        >
-                            Kınasepeti
-                        </Typography>
-                    )}
+          {!isMobile && (
+            <Typography
+              variant="h1"
+              component="h1"
+              onClick={() => handleNavigation('/')}
+              style={{
+                cursor: 'pointer',
+                color: '#8B0000',
+                fontFamily: "'Dancing Script', cursive",
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                letterSpacing: '0.03em',
+                lineHeight: 1.2,
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              Kınasepeti
+            </Typography>
+          )}
 
                     {/* Brand Name - Mobile */}
                     {isMobile && (
@@ -178,32 +180,43 @@ export default function Header() {
                         </Typography>
                     )}
 
-                    {/* Desktop Menu Links */}
-                    {!isMobile && (
-                        <>
-                            <NavLink to="/search" className="nav-link">
-                                <img
-                                    src={SearchImage}
-                                    alt="Search events"
-                                    style={{cursor: 'pointer'}}
-                                />
-                            </NavLink>
-                            <ProductsSubHeader/>
-                            {/* NEW Section for Articles */}
-                            <NavLink to="/articles" className="nav-link">
-                                {t('Articles')}
-                            </NavLink>
-                            <NavLink to="/about-us" className="nav-link">
-                                {t('How it works')}
-                            </NavLink>
-                            <NavLink to="/privacy-policy" className="nav-link">
-                                {t('Privacy Policy')}
-                            </NavLink>
-                            <NavLink to="/contact-us" className="nav-link">
-                                {t('Contact Us')}
-                            </NavLink>
+          {!isMobile && (
+            <>
+              <NavLink to={`/${currentLang}/search`} className="nav-link">
+                <img src={SearchImage} alt="Search events" style={{ cursor: 'pointer' }} />
+              </NavLink>
+              <ProductsSubHeader />
+              <NavLink to={`/${currentLang}/articles`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {t('Articles')}
+              </NavLink>
+              <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {t('How it works')}
+              </NavLink>
+              <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {t('Privacy Policy')}
+              </NavLink>
+              <NavLink to={`/${currentLang}/contact-us`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {t('Contact Us')}
+              </NavLink>
+            </>
+          )}
 
-                        </>
+
+                    {isMobile && (
+                        <Drawer anchor="left" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} sx={{ '& .MuiDrawer-paper': { width: { xs: '50%', sm: '400px' } } }}>
+                            <List>
+                                <Typography variant="h1" component="h1" onClick={() => handleNavigation('/')} style={{ /* Mevcut stil */ }}>
+                                    Kınasepeti
+                                </Typography>
+                                <ListItem button onClick={() => handleNavigation('/articles')}>
+                                    <ListItemText
+                                        primary={t('Articles')}
+                                        primaryTypographyProps={{ style: { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem' } }}
+                                    />
+                                </ListItem>
+                                {/* Diğer mobil menü öğeleri benzer şekilde güncellenir */}
+                            </List>
+                        </Drawer>
                     )}
 
                     <Box flexGrow={1}/>
@@ -261,49 +274,43 @@ export default function Header() {
                         <ShoppingBagOutlinedIcon sx={{fontSize: 30}}/>
                     </IconButton>
 
-
-
-                    {/* Login / User Menu */}
-                    {!isLoggedIn ? (
-                        <>
-                            <IconButton
-                                aria-label="login"
-                                sx={{color: 'black'}}
-                                onClick={handleOpenLoginDialog}
-                            >
-                                <LoginIcon/>
-                            </IconButton>
-                        </>
-                    ) : (
-                        <div>
-                            <Avatar
-                                sx={{
-                                    bgcolor: 'grey.300',
-                                    color: 'blue',
-                                    fontSize: '1rem',
-                                    marginLeft: '8px',
-                                    border: '2px solid',
-                                    borderColor: 'primary.main',
-                                }}
-                                onClick={handleMenuClick}
-                                src={"/images/default-avatar.png"} // ✅ Default avatar image
-                            >
-                            </Avatar>
-
-
-                            <Menu
-                                anchorEl={anchorEl}
-                                keepMounted
-                                open={Boolean(anchorEl)}
-                                onClose={handleMenuClose}
-                            >
-                                <MenuItem onClick={handleMyOrders}>Siparişlerim</MenuItem>
-                                <MenuItem onClick={handleFetchFavorites}>Favoriler</MenuItem>
-                                <MenuItem onClick={handleLogout}>Çıkış Yap</MenuItem>
-                            </Menu>
-                        </div>
-                    )}
-                </Toolbar>
+          {!isLoggedIn ? (
+            <>
+              <IconButton
+                aria-label="login"
+                sx={{ color: 'black' }}
+                onClick={handleOpenLoginDialog}
+              >
+                <LoginIcon />
+              </IconButton>
+            </>
+          ) : (
+            <div>
+              <Avatar
+                sx={{
+                  bgcolor: 'grey.300',
+                  color: 'blue',
+                  fontSize: '1rem',
+                  marginLeft: '8px',
+                  border: '2px solid',
+                  borderColor: 'primary.main',
+                }}
+                onClick={handleMenuClick}
+                src={'/images/default-avatar.png'}
+              ></Avatar>
+              <Menu
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
+                <MenuItem onClick={handleMyOrders}>{t('My Orders')}</MenuItem>
+                <MenuItem onClick={handleFetchFavorites}>{t('Favorites')}</MenuItem>
+                <MenuItem onClick={handleLogout}>{t('Logout')}</MenuItem>
+              </Menu>
+            </div>
+          )}
+        </Toolbar>
 
                 {/* Mobile Drawer */}
                 {isMobile && (
