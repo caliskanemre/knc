@@ -97,6 +97,50 @@
   "Error occurred while creating order!": "Error occurred while creating order!",
   "Select": "Select",
   "site_title": "Kına Sepeti - Personalized Wedding and Henna Night Products",
-  "site_description": "Find unique and personalized products for weddings and henna nights at KınaSepeti! Add names, dates, and custom designs to create unforgettable memories.",
-  "site_keywords": "henna, wedding, veil, handkerchief, tambourine, henna night, henna sets"
+  "site_description": "Find unique and personalized products for weddings and henna nights at Kınasepeti! Add names, dates, and custom designs to create unforgettable memories.",
+  "site_keywords": "henna, wedding, veil, handkerchief, tambourine, henna night, henna sets",
+  "shipping_policy": {
+    "title": "Shipping Policy",
+    "content": "We offer shipping to various regions worldwide. Orders are processed within 1-3 business days from our warehouse. Shipping within the Europe typically takes 3-7 business days, while international shipping may take 7-14 business days, depending on the destination and customs clearance. Shipping costs are calculated at checkout based on the weight, dimensions, and destination of your order. You will receive a tracking number via email once your order has shipped. Please note that delivery times may be affected by holidays, weather conditions, or other unforeseen circumstances. For international orders, customers are responsible for any applicable customs duties, taxes, or fees imposed by their country. If you have any questions about shipping, please contact our customer support team at info@kinasepeti.com."
+  },
+  "return_policy": {
+    "title": "Return Policy",
+    "content": "We accept returns within 30 days of delivery, provided the items are unused, in their original condition, and in their original packaging without personalization. To initiate a return, please contact our customer service team at support@example.com to obtain a return authorization number. Include this number with your return package. Customers are responsible for return shipping costs unless the item is defective, damaged, or incorrect. Once we receive and inspect the returned item, we will process your refund within 7-10 business days to the original payment method. Refunds do not include original shipping costs. For defective or incorrect items, we will cover return shipping and provide a full refund or replacement, as per your preference. If you have any questions about our return process, please reach out to our support team."
+  },
+  "sales_agreement": {
+    "title": "Sales Agreement",
+    "content": "By purchasing from our website, you agree to the following terms of sale. All products are sold as-is and subject to availability. Prices displayed on the website are in USD and are subject to change without notice. We reserve the right to refuse or cancel any order at our discretion, including orders with pricing errors or suspected fraudulent activity, with a full refund issued if applicable. Payments are processed securely through our trusted payment gateway, and you agree to provide accurate payment and billing information. All sales are final unless covered by our return policy. We are not responsible for delays or issues caused by third-party shipping carriers or customs processes. If you have any questions about these terms, please contact us at info@kinasepeti.com."
+  },
+  "contact_us": {
+    "title": "Contact Us",
+    "description": "If you have any questions about our policies or services, please contact our customer support team at info@kinasepeti.com or chat with us from WhatsApp at +90-534-829-08-66"
+  },
+  "privacy_policy": {
+    "title": "Privacy Policy",
+    "content": "Your privacy is important to us. This privacy policy explains the types of information we collect, how it's used, and the measures we take to safeguard your data.",
+    "information_collection": {
+      "title": "Information Collection",
+      "content": "We collect information to provide better services to all our users, including personal details like name, email, and address provided during account creation or checkout, as well as usage data from your interactions with our website."
+    },
+    "use_of_information": {
+      "title": "Use of Information",
+      "content": "The information we collect is used to improve our services, customize the user experience, process orders, and communicate updates or promotional offers. We may also use aggregated data for analytics to enhance our platform."
+    },
+    "cookies_and_tracking": {
+      "title": "Cookies and Tracking Technologies",
+      "content": "Our website uses cookies and similar tracking technologies to enhance user experience and analyze website traffic. In accordance with European data protection laws, we seek your consent before placing any cookies on your device. You have the option to accept or decline cookies and can modify your preferences at any time through our cookie settings. For more detailed information about the cookies we use, please review our Cookie Policy."
+    },
+    "data_sharing": {
+      "title": "Data Sharing and Transfers",
+      "content": "We respect your privacy and only share your personal information with third parties when necessary for the provision of our services, compliance with legal obligations, or with your explicit consent. We ensure that all data transfers, especially those crossing European borders, adhere to legal standards and are protected by appropriate safeguards."
+    },
+    "your_choices": {
+      "title": "Your Choices",
+      "content": "You have choices regarding the information we collect and how it's used. You can opt out of promotional emails, manage cookie preferences, or request access to or deletion of your personal data by contacting us."
+    },
+    "changes_to_policy": {
+      "title": "Changes to This Policy",
+      "content": "We may update our privacy policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the effective date."
+    }
+  }
 }

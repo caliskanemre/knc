@@ -98,5 +98,49 @@
   "Select": "Seçiniz",
   "site_title": "Kına Sepeti - Kişiselleştirilmiş Düğün ve Kına Hediyeleri",
   "site_description": "KınaSepeti'nde düğün ve kına geceleri için benzersiz ve kişiselleştirilmiş ürünler bulun! İsimler, tarihler ve özel tasarımlar ekleyerek unutulmaz anılar yaratın.",
-  "site_keywords": "kına, düğün, duvak, def,tef, halay mendili, kına gecesi, kına setleri"
+  "site_keywords": "kına, düğün, duvak, def,tef, halay mendili, kına gecesi, kına setleri",
+  "shipping_policy": {
+    "title": "Kargo Politikası",
+    "content": "Dünya çapında çeşitli bölgelere kargo hizmeti sunuyoruz. Siparişler, depomuzdan 1-3 iş günü içinde işlenir. Avrupa içi kargolar genellikle 3-7 iş günü içinde teslim edilirken, uluslararası kargolar hedef ülkeye ve gümrük işlemlerine bağlı olarak 7-21 iş günü sürebilir. Kargo maliyetleri, siparişinizin ağırlığı, boyutları ve teslimat adresine göre ödeme sırasında hesaplanır. Siparişiniz kargoya verildiğinde, takip numarası e-posta yoluyla size gönderilecektir. Tatiller, hava koşulları veya öngörülemeyen durumlar teslimat sürelerini etkileyebilir. Uluslararası siparişlerde, müşteriler ülkelerinin uyguladığı gümrük vergileri, vergiler veya ücretlerden sorumludur. Kargo ile ilgili sorularınız için lütfen destek ekibimizle info@kinasepeti.com adresinden iletişime geçin."
+  },
+  "return_policy": {
+    "title": "İade Politikası",
+    "content": "Teslimattan itibaren 30 gün içinde, kullanılmamış, orijinal durumunda ve orijinal ambalajında ve nakis yapilmamis olan ürünlerin iadesini kabul ediyoruz. İade başlatmak için lütfen info@kinasepeti.com adresinden müşteri hizmetleri ekibimizle iletişime geçerek bir iade yetki numarası alın. Bu numarayı iade paketinizle birlikte ekleyin. Ürün kusurlu, hasarlı veya yanlış değilse, iade kargo masrafları müşteriye aittir. İade edilen ürünü aldıktan ve inceledikten sonra, orijinal ödeme yönteminize 7-10 iş günü içinde iade işlemini gerçekleştiririz. İadeler, orijinal kargo masraflarını kapsamaz. Kusurlu veya yanlış ürünler için iade kargo masraflarını biz karşılarız ve tercihinize göre tam iade veya değişim sağlarız. İade süreciyle ilgili sorularınız için destek ekibimize ulaşın."
+  },
+  "sales_agreement": {
+    "title": "Satış Sözleşmesi",
+    "content": "Web sitemizden satın alarak aşağıdaki satış şartlarını kabul etmiş olursunuz. Tüm ürünler olduğu gibi satılır ve stok durumuna bağlıdır. Web sitesinde gösterilen fiyatlar EUR cinsindendir ve bildirim yapılmaksızın değiştirilebilir. Fiyat hataları veya şüpheli dolandırıcılık faaliyetleri dahil olmak üzere, herhangi bir siparişi reddetme veya iptal etme hakkını saklı tutarız; bu durumda tam iade yapılır. Ödemeler, güvenilir ödeme ağ geçidimiz aracılığıyla güvenli bir şekilde işlenir ve doğru ödeme ve fatura bilgileri sağlamayı kabul edersiniz. İade politikamız kapsamındaki durumlar hariç tüm satışlar kesindir. Üçüncü taraf kargo şirketleri veya gümrük süreçlerinden kaynaklanan gecikmelerden veya sorunlardan sorumlu değiliz. Bu şartlarla ilgili sorularınız için lütfen info@kinasepeti.com adresinden bizimle iletişime geçin."
+  },
+  "contact_us": {
+    "title": "Bize Ulaşın",
+    "description": "Poliçelerimiz veya hizmetlerimiz hakkında sorularınız varsa, lütfen müşteri destek ekibimizle info@kinasepeti.com adresinden veya +90-534-829-08-66 numaralı telefondan iletişime geçin."
+  },
+  "privacy_policy": {
+    "title": "Gizlilik Politikası",
+    "content": "Gizliliğiniz bizim için önemlidir. Bu gizlilik politikası, topladığımız bilgi türlerini, nasıl kullanıldığını ve verilerinizi korumak için aldığımız önlemleri açıklar.",
+    "information_collection": {
+      "title": "Bilgi Toplama",
+      "content": "Tüm kullanıcılarımıza daha iyi hizmet sunmak için bilgi topluyoruz; bu bilgiler, hesap oluşturma veya ödeme sırasında sağlanan ad, e-posta ve adres gibi kişisel bilgileri ve web sitemizle etkileşimlerinizden elde edilen kullanım verilerini içerir."
+    },
+    "use_of_information": {
+      "title": "Bilgi Kullanımı",
+      "content": "Topladığımız bilgiler, hizmetlerimizi geliştirmek, kullanıcı deneyimini özelleştirmek, siparişleri işlemek ve güncellemeler veya promosyon teklifleri iletmek için kullanılır. Ayrıca, platformumuzu geliştirmek için toplu verileri analiz amacıyla kullanabiliriz."
+    },
+    "cookies_and_tracking": {
+      "title": "Çerezler ve İzleme Teknolojileri",
+      "content": "Web sitemiz, kullanıcı deneyimini geliştirmek ve web sitesi trafiğini analiz etmek için çerezler ve benzer izleme teknolojileri kullanır. Avrupa veri koruma yasalarına uygun olarak, cihazınıza herhangi bir çerez yerleştirmeden önce izninizi alırız. Çerezleri kabul etme veya reddetme seçeneğiniz vardır ve çerez ayarlarımız aracılığıyla tercihlerinizi istediğiniz zaman değiştirebilirsiniz. Kullandığımız çerezler hakkında daha ayrıntılı bilgi için lütfen Çerez Politikamızı inceleyin."
+    },
+    "data_sharing": {
+      "title": "Veri Paylaşımı ve Aktarımı",
+      "content": "Gizliliğinize saygı duyarız ve kişisel bilgilerinizi yalnızca hizmetlerimizin sağlanması, yasal yükümlülüklerin yerine getirilmesi veya açık izninizle üçüncü taraflarla paylaşırız. Özellikle Avrupa sınırlarını aşan veri aktarımlarının yasal standartlara uygun olmasını ve uygun korumalarla korunmasını sağlarız."
+    },
+    "your_choices": {
+      "title": "Seçenekleriniz",
+      "content": "Topladığımız bilgiler ve nasıl kullanıldığı konusunda seçenekleriniz vardır. Promosyon e-postalarından çıkabilir, çerez tercihlerini yönetebilir veya kişisel verilerinize erişim veya silme talebinde bulunmak için bizimle iletişime geçebilirsiniz."
+    },
+    "changes_to_policy": {
+      "title": "Bu Politikada Değişiklikler",
+      "content": "Gizlilik politikamızı zaman zaman güncelleyebiliriz. Değişiklikleri bu sayfada yeni politikayı yayınlayarak ve yürürlük tarihini güncelleyerek size bildiririz."
+    }
+  }
 }

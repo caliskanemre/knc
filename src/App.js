@@ -26,6 +26,9 @@ import MyOrders from "./user/MyOrders";
 import Chatbot from "./chatbot/Chatbot";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet";
+import ShippingPolicy from "./links/ShippingPolicy";
+import ReturnPolicy from "./links/ReturnPolicy";
+import SalesAgreement from "./links/SalesAggrement";
 
 const LanguageRedirect = () => {
     const { i18n } = useTranslation();
@@ -131,24 +134,36 @@ function App() {
             </Helmet>
             <LanguageRedirect />
             <Routes>
+              {/* Main Routes */}
               <Route path="/:lang/" element={<Main />} />
               <Route path="/:lang/products" element={<ProductList />} />
               <Route path="/:lang/products/:type" element={<ProductList />} />
               <Route path="/:lang/products/detail/:id/:title" element={<ProductDetails />} />
               <Route path="/:lang/products/detail/:id" element={<ProductDetails />} />
               <Route path="/:lang/search" element={<SearchPage />} />
+
+              {/* Legal Pages */}
               <Route path="/:lang/about-us" element={<AboutUs />} />
               <Route path="/:lang/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/:lang/shipping-policy" element={<ShippingPolicy />} />
+              <Route path="/:lang/return-policy" element={<ReturnPolicy />} />
+              <Route path="/:lang/sales-agreement" element={<SalesAgreement />} />
               <Route path="/:lang/contact-us" element={<ContactUs />} />
+
+              {/* User Routes */}
               <Route path="/:lang/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
               <Route path="/:lang/users/favorites" element={<Favorites />} />
               <Route path="/:lang/my-orders" element={<MyOrders />} />
               <Route path="/:lang/register" element={<Register />} />
               <Route path="/:lang/reset-password" element={<ResetPassword />} />
+
+              {/* Cart and Payment Routes */}
               <Route path="/:lang/cart" element={<Cart />} />
               <Route path="/:lang/payment" element={<Payment />} />
               <Route path="/:lang/payment-success" element={<PaymentSuccess />} />
               <Route path="/:lang/payment-failure" element={<PaymentFailure />} />
+
+              {/* Articles */}
               <Route path="/:lang/articles" element={<ArticlesPage />} />
               <Route path="/:lang/articles/:id" element={<ArticleDetailPage />} />
             </Routes>
