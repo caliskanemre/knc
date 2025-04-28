@@ -24,14 +24,11 @@ const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Received from Cart (without shipping)
-    const basePrice = location.state?.totalPrice || 0;
-    const discountRate = 20; // %20 indirim
-    const discountedBasePrice = basePrice * (1 - discountRate / 100);
+    // Use the totalPrice from Cart directly (already discounted)
+    const cartTotal = location.state?.totalPrice || 0;
 
     const [shippingCost, setShippingCost] = useState(0);
-
-    const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
+    const [finalPrice, setFinalPrice] = useState(cartTotal + shippingCost);
 
 
 
@@ -96,12 +93,7 @@ const Payment = () => {
 
     // Final computed price (basePrice + shippingCost)
     const [currency] = useState('EUR');
-
-    const [revolutOrderId, setRevolutOrderId] = useState(null); // ✅ Stores Revolut Order ID
-
-    useEffect(() => {
-        setFinalPrice(basePrice + shippingCost);
-    }, [basePrice, shippingCost]);
+    const [revolutOrderId, setRevolutOrderId] = useState(null);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
@@ -109,6 +101,11 @@ const Payment = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+    // Update finalPrice when cartTotal or shippingCost changes
+    useEffect(() => {
+        setFinalPrice(cartTotal + shippingCost);
+    }, [cartTotal, shippingCost]);
 
     // Handle form changes
     const handleShippingAddressChange = (event) => {
@@ -322,8 +319,7 @@ const Payment = () => {
                                     {t('Order Summary')}
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Items Total')}: <s>{basePrice.toFixed(2)} €</s> →
-                                    <strong>{discountedBasePrice.toFixed(2)} €</strong>
+                                    {t('Items Total')}: <strong>{cartTotal.toFixed(2)} €</strong>
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     {t('Shipping Cost')}: <strong>{shippingCost.toFixed(2)} €</strong>
