@@ -16,14 +16,17 @@ import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
-import {t} from "i18next";
+import { useTranslation } from "react-i18next";
 
 const Cart = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
-    const [previousCartItems, setPreviousCartItems] = useState([]); // To track changes
+    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [previousCartItems, setPreviousCartItems] = useState([]);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -33,26 +36,127 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
+    // Generate UUID for guest token
+    function generateUUID() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
+
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const decodedToken = jwtDecode(token);
-                if (decodedToken?.sub && decodedToken.sub.includes('@')) { // ✅ Check if valid email
-                    setEmail(decodedToken.sub);
+        const initializeCart = async () => {
+            // Store guest token
+            localStorage.setItem('guestToken', guestToken);
+
+            // Check for logged-in user
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decodedToken = jwtDecode(token);
+                    if (decodedToken?.sub && decodedToken.sub.includes('@')) {
+                        setEmail(decodedToken.sub);
+                        await syncLocalCartToServer();
+                        await fetchCartItems();
+                    }
+                } catch (error) {
+                    console.error("Error decoding JWT token:", error);
                 }
-            } catch (error) {
-                console.error("Error decoding JWT token:", error);
+            } else {
+                // Load guest cart from localStorage
+                const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+                const normalizedCart = localCart.map(item => ({
+                    ...item,
+                    price: parseFloat(item.price) || 0,
+                }));
+                setCartItems(normalizedCart);
+                calculateTotalPrice(normalizedCart);
+                await syncGuestCart(normalizedCart);
             }
-        }
-    }, []);
+        };
 
-    useEffect(() => {
-        if (email) { // ✅ Only fetch when email is set
-            fetchCartItems();
-        }
-    }, [email]);
+        initializeCart();
+    }, [guestToken]);
 
+    const syncGuestCart = async (items) => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        try {
+            console.log("Syncing guest cart with items:", items);
+            const normalizedItems = items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: parseFloat(item.price) || 0, // Ensure total price
+                title: item.title,
+                image: item.image,
+                orderNote: item.orderNote,
+            }));
+            const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
+                headers: { 'X-Guest-Token': guestToken },
+            });
+            console.log("Sync response:", response.data);
+            const serverCart = response.data || [];
+            const normalizedServerCart = serverCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            const mergedCart = mergeCarts(JSON.parse(localStorage.getItem('cart')) || [], normalizedServerCart);
+            localStorage.setItem('cart', JSON.stringify(mergedCart));
+            setCartItems(mergedCart);
+            calculateTotalPrice(mergedCart);
+        } catch (error) {
+            console.error("Error syncing guest cart:", error.response?.data || error.message);
+            showToast(error.response?.data || t("Error syncing guest cart"), "error");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const syncLocalCartToServer = async () => {
+        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (localCart.length === 0) return;
+
+        try {
+            for (const item of localCart) {
+                await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, {
+                    ...item,
+                    price: parseFloat(item.price) || 0,
+                }, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+            }
+            localStorage.removeItem('cart');
+            localStorage.removeItem('guestToken');
+            setGuestToken(generateUUID());
+        } catch (error) {
+            console.error("Error syncing local cart to server:", error);
+            showToast(t("Error syncing cart"), "error");
+        }
+    };
+
+    const mergeCarts = (localCart, serverCart) => {
+        const merged = [];
+        const itemMap = new Map();
+
+        [...localCart, ...serverCart].forEach(item => {
+            const key = item.productId || item.id;
+            if (!itemMap.has(key)) {
+                const unitPrice = parseFloat(item.price) / (item.quantity || 1) || 0;
+                itemMap.set(key, {
+                    ...item,
+                    price: unitPrice * (item.quantity || 1), // Store total price
+                    quantity: item.quantity || 1,
+                });
+            } else {
+                const existing = itemMap.get(key);
+                const unitPrice = parseFloat(item.price) / (item.quantity || 1) || parseFloat(existing.price) / (existing.quantity || 1) || 0;
+                existing.quantity = email ? existing.quantity : Math.max(existing.quantity, item.quantity);
+                existing.price = unitPrice * existing.quantity; // Update total price
+                existing.orderNote = item.orderNote || existing.orderNote;
+            }
+        });
+
+        return Array.from(itemMap.values());
+    };
     const fetchCartItems = async () => {
         if (!email) return;
 
@@ -60,52 +164,81 @@ const Cart = () => {
             const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            const items = response.data ?? [];
+            const items = (response.data ?? []).map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
             setCartItems(items);
             calculateTotalPrice(items);
 
-            // Check for new items to trigger "Add to Cart" conversion
             if (previousCartItems.length < items.length) {
                 const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
                 if (newItem && window.gtag) {
                     window.gtag('event', 'conversion', {
-                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', // Replace with your Conversion ID/Label
-                        'value': newItem.price, // Optional: Send the item price
-                        'currency': 'EUR', // Match your currency (e.g., €)
+                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
+                        'value': newItem.price,
+                        'currency': 'EUR',
                         'event_callback': () => {
                             console.log('Add to Cart conversion tracked');
                         }
                     });
                 }
             }
-            setPreviousCartItems(items); // Update previous state
+            setPreviousCartItems(items);
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);
             setTotalPrice(0);
+            showToast(t("Error fetching cart"), "error");
         }
     };
 
     const calculateTotalPrice = (items) => {
-        const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const total = items.reduce((acc, item) => {
+            const unitPrice = parseFloat(item.price) / item.quantity || 0; // Calculate unit price
+            return acc + unitPrice * item.quantity;
+        }, 0);
         const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
     };
 
     const handleRemoveItem = async (id) => {
-        if (!email) return;
-        try {
-            await axios.delete(`${baseURL}/cart/${email}/item/${id}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            });
-            const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
-            setCartItems(updatedItems);
-            setPreviousCartItems(updatedItems); // Update previous state
-            calculateTotalPrice(updatedItems);
-            showToast("Ürün sepetten kaldırıldı! 🗑️", "success");
-        } catch (error) {
-            console.error("Error removing item:", error);
-            showToast("Ürün kaldırılamadı! ❌", "error");
+        const originalItems = [...cartItems]; // Backup current state
+        const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
+
+        if (email) {
+            try {
+                console.log(`Removing item for user: ${email}, productId: ${id}`);
+                const response = await axios.delete(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                console.log(`Delete response: ${response.status}`);
+                setCartItems(updatedItems);
+                setPreviousCartItems(updatedItems);
+                calculateTotalPrice(updatedItems);
+                showToast(t("Item removed from cart"), "success");
+            } catch (error) {
+                console.error("Error removing item:", error.response?.data || error.message);
+                setCartItems(originalItems); // Revert on failure
+                showToast(error.response?.data || t("Error removing item"), "error");
+            }
+        } else {
+            try {
+                console.log(`Removing item for guest, productId: ${id}, guestToken: ${guestToken}`);
+                await axios.delete(`${baseURL}/cart/guest/item/${id}`, {
+                    headers: { 'X-Guest-Token': guestToken },
+                });
+                localStorage.setItem('cart', JSON.stringify(updatedItems));
+                setCartItems(updatedItems);
+                setPreviousCartItems(updatedItems);
+                calculateTotalPrice(updatedItems);
+                showToast(t("Item removed from cart"), "success");
+            } catch (error) {
+                console.error("Error removing guest item:", error.response?.data || error.message);
+                setCartItems(originalItems);
+                localStorage.setItem('cart', JSON.stringify(originalItems));
+                showToast(error.response?.data || t("Error removing item"), "error");
+            }
         }
     };
 
@@ -116,30 +249,46 @@ const Cart = () => {
         const product = cartItems[productIndex];
         const updatedQuantity = product.quantity + (action === 'increment' ? 1 : -1);
 
-        if (updatedQuantity <= 0) return; // Prevent negative or zero quantities
+        if (updatedQuantity <= 0) return;
 
-        // Optimistically update the local state
+        const unitPrice = product.price / product.quantity;
         const updatedItems = [...cartItems];
-        updatedItems[productIndex] = { ...product, quantity: updatedQuantity };
+        updatedItems[productIndex] = {
+            ...product,
+            quantity: updatedQuantity,
+            price: unitPrice * updatedQuantity,
+        };
         setCartItems(updatedItems);
         calculateTotalPrice(updatedItems);
 
-        try {
-            await axios.put(`${baseURL}/cart/${email}/item/${id}`, { quantity: updatedQuantity }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            });
-            showToast(`Ürün miktarı güncellendi! 🛒`, "success");
-            // No need to call fetchCartItems since we updated locally
-        } catch (error) {
-            console.error("Error updating quantity:", error);
-            // Revert to server state on failure
-            fetchCartItems();
-            showToast("Miktar güncellenemedi! ❌", "error");
+        if (email) {
+            try {
+                const cartItemDTO = {
+                    productId: id,
+                    quantity: updatedQuantity,
+                    price: unitPrice,
+                    title: product.title,
+                    image: product.image,
+                    orderNote: product.orderNote,
+                };
+                await axios.put(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, cartItemDTO, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                showToast(t("Quantity updated"), "success");
+            } catch (error) {
+                console.error("Error updating quantity:", error);
+                fetchCartItems();
+                showToast(error.response?.data || t("Error updating quantity"), "error");
+            }
+        } else {
+            localStorage.setItem('cart', JSON.stringify(updatedItems));
+            await syncGuestCart(updatedItems);
+            showToast(t("Quantity updated"), "success");
         }
     };
 
     const handleCheckout = () => {
-        navigate('/payment', { state: { totalPrice } });
+        navigate('/payment', { state: { totalPrice, cartItems, email, guestToken } });
     };
 
     const showToast = (message, severity) => {
@@ -161,15 +310,16 @@ const Cart = () => {
                     <List>
                         {cartItems.map((item) => {
                             const id = item.productId || item.id;
-                            const originalImageUrl = item.image;
-                            const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
-                            const mediumImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'medium_$1') : '';
-                            const largeImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'large_$1') : '';
+                            const price = parseFloat(item.price) || 0;
+                            const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
+                            const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
+                            const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
+                            const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
 
                             return (
                                 <Card key={id} sx={{ marginBottom: 2 }}>
                                     <CardContent>
-                                        <a href={`/products/detail/${id}`}>
+                                        <a href={`/products/detail/${id}/${encodeURIComponent(item.title || '')}`}>
                                             <CardMedia
                                                 component="img"
                                                 image={smallImageUrl}
@@ -179,46 +329,44 @@ const Cart = () => {
                                                     ${largeImageUrl} 300w
                                                 `}
                                                 sizes="(max-width: 600px) 100px, 300px"
-                                                alt={item.title || "Ürün Resmi"}
-                                                sx={{ width: '100px', height: '100px' }}
+                                                alt={item.title || t("Product Image")}
+                                                sx={{ width: '100px', height: '100px', objectFit: 'cover' }}
                                             />
                                             <Typography variant="h6">{item.title}</Typography>
                                         </a>
                                         <Typography color="textSecondary">
-                                            Birim Fiyat: {(item.price).toFixed(2)} €
+                                            {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
                                         </Typography>
                                         <Typography color="textSecondary">
-                                            Miktar: {item.quantity}
+                                            {t("Quantity")}: {item.quantity}
                                         </Typography>
                                         <Typography color="textSecondary">
-                                            Toplam Fiyat: <s>{(item.price * item.quantity).toFixed(2)} €</s> →
-                                            <strong>{((item.price * item.quantity) * (1 - discountRate / 100)).toFixed(2)} €</strong>
+                                            {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
+                                            <strong>{(price * (1 - discountRate / 100)).toFixed(2)} €</strong>
                                         </Typography>
-
-                                        {/* Display order note if exists */}
-                                        {item.note && (
+                                        {item.orderNote && (
                                             <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
-                                                Not: {item.note}
+                                                {t("Note")}: {item.orderNote}
                                             </Typography>
                                         )}
                                     </CardContent>
                                     <CardActions>
                                         <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
                                         <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
-                                        <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>Ürünü Kaldır</Button>
+                                        <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t("Remove Item")}</Button>
                                     </CardActions>
                                 </Card>
                             );
                         })}
                     </List>
                 ) : (
-                    <Typography>Sepetiniz boş.</Typography>
+                    <Typography>{t("Your cart is empty")}</Typography>
                 )}
 
                 <Divider sx={{ marginY: 2 }} />
 
                 <Typography variant="h5" component="h2">
-                    Toplam: {totalPrice.toFixed(2)} €
+                    {t("Total")}: {totalPrice.toFixed(2)} €
                 </Typography>
 
                 <Button
@@ -229,11 +377,10 @@ const Cart = () => {
                     disabled={cartItems.length === 0}
                     onClick={handleCheckout}
                 >
-                    Alışverişi Tamamla
+                    {t("Proceed to Checkout")}
                 </Button>
             </Box>
 
-            {/* Toast Notification */}
             <Snackbar
                 open={toastOpen}
                 autoHideDuration={3000}

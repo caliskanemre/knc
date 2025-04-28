@@ -13,7 +13,8 @@ import {
     Snackbar,
     Alert,
     CircularProgress,
-    AccordionDetails
+    AccordionDetails,
+    debounce
 } from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
@@ -44,25 +45,65 @@ const ProductDetails = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-    const [orderNote, setOrderNote] = useState(""); // New state for order note
+    const [orderNote, setOrderNote] = useState("");
+    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const [email, setEmail] = useState('');
 
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    // Helper to get image URL with prefix (e.g., small_, medium_, large_)
+
+    // Generate UUID for guest token
+    const generateUUID = () => {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    };
+
+    // Helper to get image URL with prefix
     const getPrefixedImage = (url, prefix) => {
         if (!url) return url;
         return url.replace(/([^/]+)$/, `${prefix}_$1`);
     };
+
+    useEffect(() => {
+        // Store guest token
+        localStorage.setItem('guestToken', guestToken);
+
+        if (isLoggedIn && email && token) {
+            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+            localCart.forEach(async (item) => {
+                try {
+                    await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, item, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                } catch (error) {
+                    console.error("Error syncing cart item:", error);
+                }
+            });
+            localStorage.removeItem('cart');
+
+            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            localFavorites.forEach(async (favorite) => {
+                if (favorite && favorite.id) {
+                    try {
+                        await toggleFavorite(favorite.id, false, "product");
+                    } catch (error) {
+                        console.error("Error syncing favorite:", error);
+                    }
+                }
+            });
+            localStorage.removeItem('favorites');
+        }
+    }, [isLoggedIn, email, token, guestToken]);
 
     // Extract email from JWT token
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         if (storedToken) {
             const decoded = jwtDecode(storedToken);
-            setEmail(decoded.sub); // ✅ Extract email instead of username
+            setEmail(decoded.sub);
         }
     }, []);
 
@@ -73,50 +114,88 @@ const ProductDetails = () => {
             })
             .catch((error) => {
                 console.error('Error fetching product:', error);
-                showSnackbar("Ürün yüklenemedi! ❌", "error");
+                showSnackbar(t("Failed to load product") + " ❌", "error");
             });
     }, [id, title, baseURL]);
 
-    // Once product is loaded, set the default selectedImage
+    // Set default selected image
     useEffect(() => {
         if (product && product.photos && product.photos.length > 0) {
             setSelectedImage(product.photos[0].photo);
         }
     }, [product]);
 
-
-
-    // --- NEW: Fetch similar products whenever `product` changes ---
+    // Fetch similar products
     useEffect(() => {
         if (product && product.category) {
             fetchSimilarProducts(product.category);
         }
     }, [product]);
 
-    // Example: fetch "similar" items by the same `type` or `category`.
     const fetchSimilarProducts = async (typeValue) => {
         if (!typeValue) return;
         try {
-            // For example, get up to 5 items of the same type (or category).
             const response = await Axios.get(`${baseURL}/products/${typeValue}?page=0&size=5`);
             const fetched = response.data.content || [];
-
-            // Exclude the current product from the "similar" list
             const filtered = fetched.filter((p) => p.id !== product.id);
-
             setSimilarProducts(filtered);
         } catch (error) {
             console.error('Error fetching similar products:', error);
         }
     };
 
-    const handleFavoriteClick = () => {
-        if (!isLoggedIn) {
-            showSnackbar("Favorilere eklemek için giriş yapmalısınız! 🔐", "warning");
+    const handleFavoriteClick = async () => {
+        if (!product || !product.id) {
+            showSnackbar(t("Cannot add to favorites: Product not loaded"), "error");
             return;
         }
-        toggleFavorite(product.id, isAlreadyFavorited, "product");
-        showSnackbar(isAlreadyFavorited ? "Favorilerden kaldırıldı! ❌" : "Favorilere eklendi! ❤️", "success");
+
+        if (isLoggedIn && token) {
+            // Logged-in user: Use toggleFavorite
+            const isAlreadyFavorited = favorites.favoriteProducts?.some((fav) => fav.id === product.id);
+            toggleFavorite(product.id, isAlreadyFavorited, "product");
+            showSnackbar(isAlreadyFavorited ? t("Removed from favorites") + " ❌" : t("Added to favorites") + " ❤️", "success");
+        } else {
+            // Guest user: Update localStorage and sync with backend
+            let localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            const isAlreadyFavorited = localFavorites.some(fav => fav.id === product.id);
+
+            if (isAlreadyFavorited) {
+                // Remove from favorites
+                localFavorites = localFavorites.filter(fav => fav.id !== product.id);
+                try {
+                    await axios.delete(`${baseURL}/users/guest/favorites/${product.id}`, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    showSnackbar(t("Removed from favorites") + " ❌", "success");
+                } catch (error) {
+                    console.error("Error removing guest favorite:", error.response?.data || error.message);
+                    showSnackbar(t("Error removing from favorites"), "error");
+                }
+            } else {
+                // Add to favorites
+                const favoriteItem = {
+                    id: product.id,
+                    title: product.title || product.name || "Unknown",
+                    price: product.price || 0,
+                    photos: product.photos || [],
+                    date: product.date || "",
+                    activity_location: product.activityLocation || product.location || "",
+                };
+                localFavorites.push(favoriteItem);
+                try {
+                    await axios.post(`${baseURL}/users/guest/favorites/${product.id}`, {}, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    showSnackbar(t("Added to favorites") + " ❤️", "success");
+                } catch (error) {
+                    console.error("Error adding guest favorite:", error.response?.data || error.message);
+                    showSnackbar(t("Error adding to favorites"), "error");
+                }
+            }
+        }
     };
 
     const handleSnackbarClose = () => setSnackbarOpen(false);
@@ -129,40 +208,60 @@ const ProductDetails = () => {
         );
     }
 
-    const addToCart = async (quantity) => {
-        if (!isLoggedIn) {
-            showSnackbar("Sepete eklemek için giriş yapmalısınız! 🔐", "warning");
+    const addToCart = debounce(async () => {
+        if (!product || quantity <= 0) {
+            showSnackbar(t('Invalid quantity'), 'warning');
             return;
         }
 
-        if (!email) {
-            console.error("User email is missing.");
-            showSnackbar("Kullanıcı e-posta adresi eksik! ❌", "error");
-            return;
-        }
+        const cartItem = {
+            productId: product.id,
+            quantity,
+            price: product.price * quantity,
+            title: product.name || product.title,
+            image: product.imageUrl || (product.photos && product.photos[0]?.photo),
+            orderNote,
+        };
 
         try {
-            const cartItem = {
-                productId: product.id,
-                quantity,
-                price: product.price,
-                note: orderNote, // Include the customer's note
-            };
+            const token = localStorage.getItem('token');
+            const guestToken = localStorage.getItem('guestToken');
+            const requestId = crypto.randomUUID();
 
-            const response = await axios.post(`${baseURL}/cart/${email}`, cartItem, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (response.status === 200) {
-                showSnackbar(`${quantity} adet "${product.title}" sepete eklendi! 🛒`, "success");
+            if (token) {
+                const email = jwtDecode(token).sub;
+                await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'X-Request-ID': requestId
+                    },
+                });
             } else {
-                showSnackbar("Ürün sepete eklenemedi! ❌", "error");
+                let localCart = JSON.parse(localStorage.getItem('cart')) || [];
+                const existingItem = localCart.find(item => item.productId === cartItem.productId);
+                if (existingItem) {
+                    existingItem.quantity += cartItem.quantity;
+                    existingItem.price = product.price * existingItem.quantity;
+                    existingItem.orderNote = orderNote || existingItem.orderNote;
+                } else {
+                    localCart.push(cartItem);
+                }
+                localStorage.setItem('cart', JSON.stringify(localCart));
+
+                await axios.post(`${baseURL}/cart/guest`, localCart, {
+                    headers: {
+                        'X-Guest-Token': guestToken,
+                        'X-Request-ID': requestId
+                    },
+                });
             }
+
+            showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
-            console.error("Error adding to cart:", error);
-            showSnackbar("Sepete eklerken hata oluştu! ⚠️", "error");
+            console.error('Error adding to cart:', error);
+            showSnackbar(t('Error adding to cart'), 'error');
         }
-    };
+    }, 500);
 
     const showSnackbar = (message, severity) => {
         setSnackbarMessage(message);
@@ -172,9 +271,9 @@ const ProductDetails = () => {
     const shareUrl = window.location.href;
     const shareMessage = `${product.title} - Check out this product!`;
 
-    const isAlreadyFavorited = favorites.favoriteProducts?.some(
-        (fav) => fav.id === product.id
-    );
+    const isAlreadyFavorited = isLoggedIn
+        ? favorites.favoriteProducts?.some((fav) => fav.id === product.id)
+        : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === product.id);
 
     // Modal open/close
     const openModal = () => setIsModalOpen(true);
@@ -185,10 +284,7 @@ const ProductDetails = () => {
         ? product.description.split("\n").filter((line) => line.trim() !== "")
         : [];
 
-    // ----------------------
-    // Discount Logic Example
-    // ----------------------
-    // Define a discount rate of 20% (this can be dynamic)
+    // Discount Logic
     const discountPercent = 20;
     const originalPrice = Math.floor(product.price);
     const discountedPrice = Math.floor(product.price * (1 - discountPercent / 100));
@@ -199,14 +295,12 @@ const ProductDetails = () => {
                 <title>{product.title} - Product Details | Kina Sepeti</title>
                 <meta
                     name="description"
-                    content={`Discover more about ${product.title}. 
-            Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
+                    content={`Discover more about ${product.title}. Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
                 />
                 <link
                     rel="canonical"
                     href={`${window.location.origin}${window.location.pathname}`}
                 />
-                {/* Open Graph / Facebook */}
                 <meta property="og:title" content={product.title} />
                 <meta
                     property="og:description"
@@ -215,7 +309,7 @@ const ProductDetails = () => {
                 <meta
                     property="og:image"
                     content={
-                        product.photos.length > 0
+                        product.photos && product.photos.length > 0
                             ? getPrefixedImage(product.photos[0].photo, 'small')
                             : undefined
                     }
@@ -225,7 +319,6 @@ const ProductDetails = () => {
                     content={`${window.location.origin}${window.location.pathname}`}
                 />
                 <meta property="og:type" content="website" />
-                {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={product.title} />
                 <meta
@@ -235,19 +328,18 @@ const ProductDetails = () => {
                 <meta
                     name="twitter:image"
                     content={
-                        product.photos.length > 0
+                        product.photos && product.photos.length > 0
                             ? getPrefixedImage(product.photos[0].photo, 'small')
                             : undefined
                     }
                 />
-                {/* Structured Data */}
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "http://schema.org",
                         "@type": "TouristAttraction",
                         "name": product.title,
                         "description": product.description,
-                        "image": product.photos.map(photo => photo.photo),
+                        "image": product.photos ? product.photos.map(photo => photo.photo) : [],
                         "location": {
                             "@type": "Place",
                             "name": product.location,
@@ -271,15 +363,12 @@ const ProductDetails = () => {
                 </script>
             </Helmet>
 
-            {/* Header */}
             <Header />
             <h2>
                 {type ? `${type} - ${t(product.category)}` : t("All Products")}
             </h2>
 
-
             <div className="activity-details-wrapper">
-                {/* Left Section: single main image with srcSet */}
                 <div className="left-section">
                     {selectedImage && (
                         <img
@@ -297,12 +386,10 @@ const ProductDetails = () => {
                     )}
                 </div>
 
-                {/* Right Section: Product Info + Description Accordion */}
                 <div className="right-section">
                     <h1 className="product-title">{product.title}</h1>
 
-                    {/* Thumbnail Row with srcSet */}
-                    {product.photos.length > 0 && (
+                    {product.photos && product.photos.length > 0 && (
                         <div className="thumbnail-container">
                             {product.photos.map((photo, index) => (
                                 <img
@@ -322,7 +409,6 @@ const ProductDetails = () => {
                         </div>
                     )}
 
-                    {/* Price with Discount */}
                     {product.price && (
                         <div
                             className="product-price"
@@ -365,7 +451,6 @@ const ProductDetails = () => {
                         </div>
                     )}
 
-                    {/* Quantity Controls */}
                     <div className="quantity-control">
                         <Button
                             variant="outlined"
@@ -409,7 +494,6 @@ const ProductDetails = () => {
                         />
                     </div>
 
-                    {/* Add to Cart Button */}
                     <Button
                         onClick={() => addToCart(quantity)}
                         variant="contained"
@@ -420,14 +504,12 @@ const ProductDetails = () => {
                         {t('Add to Cart')}
                     </Button>
 
-                    {/* Type (if exists) */}
                     {product.type && (
                         <p className="product-type">
                             <strong>Type:</strong> {product.type}
                         </p>
                     )}
 
-                    {/* Share Buttons */}
                     <div
                         className="share-buttons"
                         style={{ marginTop: '10px', marginLeft: '25px' }}
@@ -456,7 +538,6 @@ const ProductDetails = () => {
                         </FacebookShareButton>
                     </div>
 
-                    {/* Favorite Button */}
                     <IconButton
                         aria-label="add to favorites"
                         onClick={handleFavoriteClick}
@@ -469,7 +550,6 @@ const ProductDetails = () => {
                         )}
                     </IconButton>
 
-                    {/* Description (Accordion) */}
                     {descriptionLines.length > 0 && (
                         <div
                             className="description-accordion"
@@ -514,7 +594,6 @@ const ProductDetails = () => {
                 </div>
             </div>
 
-            {/* IMAGE MODAL (lightbox) with srcSet */}
             {isModalOpen && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content">
@@ -534,7 +613,6 @@ const ProductDetails = () => {
                 </div>
             )}
 
-            {/* SIMILAR PRODUCTS SECTION with srcSet */}
             {similarProducts.length > 0 && (
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
                     <h2>{t("Similar Products")}</h2>
@@ -591,19 +669,20 @@ const ProductDetails = () => {
                                 </Card>
                             );
                         })}
-                        <Snackbar
-                            open={snackbarOpen}
-                            autoHideDuration={4000}
-                            onClose={handleSnackbarClose}
-                            anchorOrigin={{ vertical: 'top', horizontal: 'center' }} // Moved to top-center
-                        >
-                            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-                                {snackbarMessage}
-                            </Alert>
-                        </Snackbar>
                     </div>
                 </div>
             )}
+
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };

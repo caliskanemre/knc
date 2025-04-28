@@ -15,25 +15,47 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Header from '../header/Header';
-import { useAuth } from '../auth/AuthProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {t} from "i18next";
+import { useTranslation } from 'react-i18next';
 
 const Payment = () => {
-    const { email } = useAuth(); // ✅ Use email instead of username
+    const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Received from Cart (without shipping)
-    const basePrice = location.state?.totalPrice || 0;
-    const discountRate = 20; // %20 indirim
-    const discountedBasePrice = basePrice * (1 - discountRate / 100);
+    // Initialize from location.state or localStorage
+    const { totalPrice: basePrice = 0, cartItems = [], email: userEmail = '', guestToken = '' } = location.state || {};
+    const checkoutData = JSON.parse(localStorage.getItem('checkoutData')) || {};
+    const initialBasePrice = basePrice || checkoutData.totalPrice || 0;
+    const initialCartItems = cartItems.length > 0 ? cartItems : checkoutData.cartItems || [];
+    const initialGuestToken = guestToken || checkoutData.guestToken || localStorage.getItem('guestToken') || '';
+
+    const discountRate = 20;
+    const discountedBasePrice = parseFloat(initialBasePrice) * (1 - discountRate / 100);
 
     const [shippingCost, setShippingCost] = useState(0);
-
     const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
 
+    // Shipping address state
+    const [shippingAddress, setShippingAddress] = useState({
+        name: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        guestEmail: userEmail || '',
+    });
 
+    const [currency] = useState('EUR');
+    const [revolutOrderId, setRevolutOrderId] = useState(null);
+
+    // Snackbar State
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
     // List of shipping countries & costs
     const shippingCountries = [
@@ -84,31 +106,17 @@ const Payment = () => {
         { code: 'US', name: 'USA', cost: 14.99 },
     ];
 
-    // Shipping address state
-    const [shippingAddress, setShippingAddress] = useState({
-        name: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        postalCode: '',
-        country: '',
-    });
-
-    // Final computed price (basePrice + shippingCost)
-    const [currency] = useState('EUR');
-
-    const [revolutOrderId, setRevolutOrderId] = useState(null); // ✅ Stores Revolut Order ID
-
     useEffect(() => {
-        setFinalPrice(basePrice + shippingCost);
-    }, [basePrice, shippingCost]);
+        console.log("Payment.jsx loaded with state:", location.state);
+        console.log("Checkout data from localStorage:", checkoutData);
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+        setFinalPrice(parseFloat(initialBasePrice) + parseFloat(shippingCost));
 
-    // Snackbar State
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+        if (initialCartItems.length === 0) {
+            showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
+            setTimeout(() => navigate('/cart'), 2000);
+        }
+    }, [initialBasePrice, shippingCost, initialCartItems, navigate]);
 
     // Handle form changes
     const handleShippingAddressChange = (event) => {
@@ -116,7 +124,7 @@ const Payment = () => {
         setShippingAddress((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Handle country selection from the dropdown
+    // Handle country selection
     const handleCountrySelect = (event) => {
         const selectedCountryCode = event.target.value;
         const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
@@ -132,6 +140,7 @@ const Payment = () => {
         if (!shippingAddress.city) missingFields.push(t('City'));
         if (!shippingAddress.postalCode) missingFields.push(t('Postal Code'));
         if (!shippingAddress.country) missingFields.push(t('Country'));
+        if (!userEmail && !shippingAddress.guestEmail) missingFields.push(t('Email'));
 
         if (missingFields.length > 0) {
             showSnackbar(`${t('Please fill in the missing fields')}: ${missingFields.join(', ')}`, 'warning');
@@ -141,8 +150,8 @@ const Payment = () => {
     };
 
     const handlePaymentSubmit = async () => {
-        if (!email) {
-            showSnackbar(t('User not found. Please log in!'), 'warning');
+        if (initialCartItems.length === 0) {
+            showSnackbar(t('Cart is empty'), 'warning');
             return;
         }
 
@@ -152,25 +161,32 @@ const Payment = () => {
         const paymentData = {
             amount: amountInCents,
             currency,
-            shippingAddress,
-            email, // ✅ Use email in request payload
+            shippingAddress: {
+                name: shippingAddress.name,
+                addressLine1: shippingAddress.addressLine1,
+                addressLine2: shippingAddress.addressLine2,
+                city: shippingAddress.city,
+                postalCode: shippingAddress.postalCode,
+                country: shippingAddress.country,
+            },
+            email: userEmail || shippingAddress.guestEmail,
         };
 
-    try {
-        const response = await axios.post(`${baseURL}/api/payment`, paymentData);
+        try {
+            const headers = userEmail ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : { 'X-Guest-Token': initialGuestToken };
+            const response = await axios.post(`${baseURL}/api/payment`, paymentData, { headers });
+            console.log("🚀 Payment API Response:", response.data);
 
-        console.log("🚀 Payment API Response:", response.data); // ✅ Debug Log
-
-        if (response.status === 200 && response.data.checkout_url) {
-            const revolutOrderId = new URL(response.data.checkout_url).searchParams.get("order_id"); // ✅ Extract order_id
-            setRevolutOrderId(revolutOrderId);
-            console.log("✅ Revolut Order ID:", revolutOrderId); // ✅ Debug Log
+            if (response.status === 200 && response.data.checkout_url) {
+                const revolutOrderId = new URL(response.data.checkout_url).searchParams.get("order_id");
+                setRevolutOrderId(revolutOrderId);
+                console.log("✅ Revolut Order ID:", revolutOrderId);
 
                 showSnackbar(t('Payment process started!'), 'success');
                 window.location.href = response.data.checkout_url;
             } else {
                 showSnackbar(t('Payment created but checkout_url not received!'), 'error');
-                console.error("❌ checkout_url alınamadı, response:", response.data);
+                console.error("❌ checkout_url not received, response:", response.data);
             }
         } catch (error) {
             console.error('Error processing payment:', error);
@@ -178,13 +194,10 @@ const Payment = () => {
         }
     };
 
-    /**
-     * ✅ Step 2: Places Order in Backend After Payment is Authorized
-     */
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
         const revolutOrderIdFromURL = queryParams.get('order_id');
-        const paymentStatus = queryParams.get('status'); // "success" or "failed"
+        const paymentStatus = queryParams.get('status');
 
         if (revolutOrderIdFromURL && paymentStatus === "success") {
             setRevolutOrderId(revolutOrderIdFromURL);
@@ -193,22 +206,53 @@ const Payment = () => {
     }, []);
 
     const placeOrderAfterPayment = async (revolutOrderId) => {
-        if (!email || !revolutOrderId) return;
+        if (!revolutOrderId) return;
+
+        // Normalize cart items
+        const normalizedCartItems = initialCartItems.map(item => ({
+            ...item,
+            price: parseFloat(item.price) || 0,
+        }));
 
         const orderData = {
+            guestEmail: userEmail || shippingAddress.guestEmail,
+            shippingAddressLine1: shippingAddress.addressLine1,
+            shippingAddressLine2: shippingAddress.addressLine2 || "",
+            city: shippingAddress.city,
+            postalCode: shippingAddress.postalCode,
+            country: shippingAddress.country,
             totalPrice: finalPrice,
             paymentMethod: "Revolut",
-            orderItems: [],
+            items: normalizedCartItems,
         };
 
         try {
-            const response = await axios.post(
-                `${baseURL}/orders/${email}?revolutOrderId=${revolutOrderId}`,
-                orderData
-            );
+            const url = userEmail ? `${baseURL}/orders/${userEmail}` : `${baseURL}/orders/guest`;
+            const headers = userEmail ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : { 'X-Guest-Token': initialGuestToken };
+            const response = await axios.post(url, orderData, {
+                headers,
+                params: { revolutOrderId }
+            });
 
             if (response.status === 200) {
+                // Check payment status to trigger guest cart clearing
+                if (!userEmail) {
+                    await axios.get(`${baseURL}/api/payment/status?orderId=${revolutOrderId}`, {
+                        headers: { 'X-Guest-Token': initialGuestToken }
+                    });
+                }
+
                 showSnackbar(t('Your order has been successfully created!'), 'success');
+                // Clear carts
+                if (userEmail) {
+                    await axios.delete(`${baseURL}/cart/${userEmail}`, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                    });
+                } else {
+                    localStorage.removeItem('cart');
+                    localStorage.removeItem('guestToken');
+                    localStorage.removeItem('checkoutData');
+                }
                 navigate('/my-orders');
             }
         } catch (error) {
@@ -230,7 +274,6 @@ const Payment = () => {
             <Header />
             <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 2 }}>
                 <Grid container spacing={3}>
-                    {/* Shipping Information Section */}
                     <Grid item xs={12} md={6}>
                         <section id="shipping-information">
                             <Typography variant="h4" component="h1" gutterBottom>
@@ -250,6 +293,17 @@ const Payment = () => {
                                     sx={{ mb: 1 }}
                                     required
                                 />
+                                {!userEmail && (
+                                    <TextField
+                                        fullWidth
+                                        label={t('Email')}
+                                        name="guestEmail"
+                                        value={shippingAddress.guestEmail}
+                                        onChange={handleShippingAddressChange}
+                                        sx={{ mb: 1 }}
+                                        required
+                                    />
+                                )}
                                 <TextField
                                     fullWidth
                                     label={t('Address Line 1')}
@@ -294,7 +348,7 @@ const Payment = () => {
                                         label={t('Country')}
                                         value={shippingAddress.country}
                                         onChange={handleCountrySelect}
-                                        variant={'outlined'}
+                                        variant="outlined"
                                     >
                                         <MenuItem value="">
                                             <em>{t('Select')}</em>
@@ -310,7 +364,6 @@ const Payment = () => {
                         </section>
                     </Grid>
 
-                    {/* Payment Information Section */}
                     <Grid item xs={12} md={6}>
                         <section id="payment-information">
                             <Typography variant="h4" component="h1" gutterBottom>
@@ -322,15 +375,15 @@ const Payment = () => {
                                     {t('Order Summary')}
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Items Total')}: <s>{basePrice.toFixed(2)} €</s> →
-                                    <strong>{discountedBasePrice.toFixed(2)} €</strong>
+                                    {t('Items Total')}: {parseFloat(initialBasePrice).toFixed(2)} €
+
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Shipping Cost')}: <strong>{shippingCost.toFixed(2)} €</strong>
+                                    {t('Shipping Cost')}: <strong>{parseFloat(shippingCost).toFixed(2)} €</strong>
                                 </Typography>
                                 <Divider sx={{ my: 1 }} />
                                 <Typography variant="h6">
-                                    {t('Total')}: <strong>{finalPrice.toFixed(2)} €</strong>
+                                    {t('Total')}: <strong>{parseFloat(finalPrice).toFixed(2)} €</strong>
                                 </Typography>
                                 <Button
                                     variant="contained"
@@ -338,6 +391,7 @@ const Payment = () => {
                                     fullWidth
                                     sx={{ mt: 2 }}
                                     onClick={handlePaymentSubmit}
+                                    disabled={initialCartItems.length === 0}
                                 >
                                     {t('Proceed to Payment')}
                                 </Button>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Axios from 'axios';
+import axios from 'axios';
 import Header from "../header/Header";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
@@ -7,54 +8,49 @@ import CardMedia from '@mui/material/CardMedia';
 import {
     Button,
     Chip,
-    DialogContent,
-    DialogTitle,
     IconButton,
     Snackbar,
     Stack,
     SwipeableDrawer,
     useMediaQuery,
     useTheme,
-    Box
+    Box,
+    Alert
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import { useNavigate, useParams } from "react-router-dom";
-import veil from "../images/veil.jpg";
-import tamborine from "../images/tamborine.jpg";
-import hennaset from "../images/hennaset.jpg";
-import gift from "../images/gift.jpg";
-import ornament from "../images/ornament.jpg";
-import handkerchief from "../images/mendil.jpg";
-import souvenir from "../images/souvenir.jpg";
-import flower from "../images/flower.jpg";
+import { useParams } from "react-router-dom";
 import { ActivityFilter } from "../filter/ActivityFilter";
 import { Helmet } from "react-helmet";
 import { useAuth } from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import Dialog from "@mui/material/Dialog";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
+
+// Generate UUID for guest token
+const generateUUID = () => {
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+};
 
 const ProductList = () => {
     const { type } = useParams();
     const [activities, setActivities] = useState([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
-    const { t} = useTranslation();
+    const { t } = useTranslation();
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-    const [filters, setFilters] = useState([]);
+    const [filters, setFilters] = useState({});
     const listRef = useRef(null);
-    const { toggleFavorite, favorites, isLoggedIn } = useAuth();
-    const [openDialog, setOpenDialog] = useState(false);
+    const { toggleFavorite, favorites, isLoggedIn, token } = useAuth();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    useNavigate();
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
     const applyFilter = (filterType, filterValue) => {
         setFilters(currentFilters => ({
@@ -70,23 +66,86 @@ const ProductList = () => {
         setSnackbarOpen(false);
     };
 
-    const handleFavoriteClick = (productId) => {
-        if (isLoggedIn) {
-            const isFavorite = favorites.favoriteProducts?.map(product => product.id).includes(productId) || false;
-            toggleFavorite(productId, isFavorite, "activity");
-            setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+    const handleFavoriteClick = async (productId) => {
+        if (!productId || typeof productId !== 'number') {
+            setSnackbarMessage(t('Cannot add to favorites: Invalid product'));
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
-        } else {
-            handleOpenDialog();
+            return;
         }
-    };
 
-    const handleOpenDialog = () => {
-        setOpenDialog(true);
-    };
+        // Find the product to get its details
+        const product = activities.find(p => p.id === productId);
+        if (!product) {
+            setSnackbarMessage(t('Cannot add to favorites: Product not found'));
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
+        if (isLoggedIn && token) {
+            // Logged-in user: Use toggleFavorite
+            const isAlreadyFavorited = favorites.favoriteProducts?.some(p => p.id === productId);
+            try {
+                await toggleFavorite(productId, isAlreadyFavorited, 'product');
+                setSnackbarMessage(isAlreadyFavorited ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️');
+                setSnackbarSeverity('success');
+                setSnackbarOpen(true);
+            } catch (error) {
+                console.error('Error syncing favorite to server:', error);
+                setSnackbarMessage(t('Error syncing favorites'));
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+            }
+        } else {
+            // Guest user: Update localStorage and sync with backend
+            let localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            const isAlreadyFavorited = localFavorites.some(fav => fav.id === productId);
+
+            if (isAlreadyFavorited) {
+                // Remove from favorites
+                localFavorites = localFavorites.filter(fav => fav.id !== productId);
+                try {
+                    await axios.delete(`${baseURL}/users/guest/favorites/${productId}`, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbarMessage(t('Removed from favorites') + ' ❌');
+                    setSnackbarSeverity('success');
+                    setSnackbarOpen(true);
+                } catch (error) {
+                    console.error('Error removing guest favorite:', error.response?.data || error.message);
+                    setSnackbarMessage(t('Error removing from favorites'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                }
+            } else {
+                // Add to favorites
+                const favoriteItem = {
+                    id: product.id,
+                    title: product.title || product.name || 'Unknown',
+                    price: product.price || 0,
+                    photos: product.photos || [],
+                    date: product.date || '',
+                    activity_location: product.activityLocation || product.location || '',
+                };
+                localFavorites.push(favoriteItem);
+                try {
+                    await axios.post(`${baseURL}/users/guest/favorites/${productId}`, {}, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbarMessage(t('Added to favorites') + ' ❤️');
+                    setSnackbarSeverity('success');
+                    setSnackbarOpen(true);
+                } catch (error) {
+                    console.error('Error adding guest favorite:', error.response?.data || error.message);
+                    setSnackbarMessage(t('Error adding to favorites'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                }
+            }
+        }
     };
 
     const removeFilter = (filterType) => {
@@ -110,10 +169,15 @@ const ProductList = () => {
             setHasMore(response.data.totalPages > 1);
         } catch (error) {
             console.error('Error fetching activities with photos:', error);
+            setSnackbarMessage(t('Error fetching products'));
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
         }
     };
 
     useEffect(() => {
+        localStorage.setItem('guestToken', guestToken);
+
         const fetchActivities = async () => {
             setActivities([]);
             setPage(0);
@@ -127,7 +191,7 @@ const ProductList = () => {
         };
 
         fetchActivities();
-    }, [type]);
+    }, [type, guestToken]);
 
     useEffect(() => {
         const saveScrollPosition = () => {
@@ -141,6 +205,27 @@ const ProductList = () => {
             window.removeEventListener('beforeunload', saveScrollPosition);
         };
     }, []);
+
+    // Sync local favorites to server on login
+    useEffect(() => {
+        if (isLoggedIn && token) {
+            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            localFavorites.forEach(async (favorite) => {
+                if (favorite && favorite.id && !favorites.favoriteProducts?.some(product => product.id === favorite.id)) {
+                    try {
+                        await toggleFavorite(favorite.id, false, "product");
+                    } catch (error) {
+                        console.error("Error syncing favorite:", error);
+                        setSnackbarMessage(t('Error syncing favorites'));
+                        setSnackbarSeverity("error");
+                        setSnackbarOpen(true);
+                    }
+                }
+            });
+            // Clear local favorites after syncing
+            localStorage.removeItem('favorites');
+        }
+    }, [isLoggedIn, token, favorites, toggleFavorite, t]);
 
     const handleCloseFilterDialog = () => {
         setOpenFilterDialog(false);
@@ -159,16 +244,26 @@ const ProductList = () => {
             setPage(nextPage);
         } catch (error) {
             console.error('Error fetching more activities:', error);
+            setSnackbarMessage(t('Error fetching more products'));
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
         }
     };
 
-    // Optional: If you still need category icons elsewhere, keep this.
+    // Helper function to get a prefixed image URL
+    const getPrefixedImage = (url, prefix) => {
+        if (!url) return url;
+        return url.replace(/([^/]+)$/, `${prefix}_$1`);
+    };
+
     return (
         <div className="activity-list" ref={listRef}>
             <Helmet>
-                <title>{type ? `${type} Products` : 'All Products'} - Kina Sepeti</title>
-                <meta name="description"
-                      content={`Explore ${type ? type : 'all'} products on Kina Sepeti. Find henna nights, products.`} />
+                <title>{type ? `${type} Products` : t('All Products')} - Kina Sepeti</title>
+                <meta
+                    name="description"
+                    content={`Explore ${type ? type : 'all'} products on Kina Sepeti. Find henna nights, products.`}
+                />
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
@@ -176,7 +271,7 @@ const ProductList = () => {
 
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
-                    {type} {Object.keys(filters).length > 0 ?
+                    {type || t('All Products')} {Object.keys(filters).length > 0 ?
                     Object.entries(filters).map(([filterType, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
                             return filterValue.name;
@@ -190,7 +285,7 @@ const ProductList = () => {
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
                             key={filterType}
-                            label={`${filterType}: ${filterValue}`}
+                            label={`${filterType}: ${typeof filterValue === 'object' ? filterValue.name : filterValue}`}
                             onDelete={() => removeFilter(filterType)}
                             color="secondary"
                         />
@@ -198,17 +293,20 @@ const ProductList = () => {
                 </Stack>
                 <Grid container spacing={4}>
                     {activities.map((item) => {
-                        const isAlreadyFavorited = favorites.favoriteProducts?.map(product => product.id).includes(item.id);
+                        const isAlreadyFavorited = isLoggedIn
+                            ? favorites.favoriteProducts?.some(product => product.id === item.id)
+                            : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
-                        // Pricing and discount logic (adjust if needed)
-                        const discountPercent = 20; // Example: fixed 20% discount
+                        // Pricing and discount logic
+                        const discountPercent = 20;
                         const originalPrice = Number(item.price).toFixed(2);
                         const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
+
                         // Build image URLs with prefixes
                         const originalImageUrl = item.photos[0]?.photo || '';
-                        const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
-                        const mediumImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'medium_$1') : '';
-                        const largeImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'large_$1') : '';
+                        const smallImageUrl = getPrefixedImage(originalImageUrl, 'small');
+                        const mediumImageUrl = getPrefixedImage(originalImageUrl, 'medium');
+                        const largeImageUrl = getPrefixedImage(originalImageUrl, 'large');
 
                         return (
                             <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
@@ -218,91 +316,90 @@ const ProductList = () => {
                                     flexDirection: 'column',
                                     position: 'relative'
                                 }}>
-                                    <a href={`/products/detail/${item.id}`}
+                                    <a href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
                                        style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
-                                            image={smallImageUrl} // Default to small image
+                                            image={smallImageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
                                             srcSet={`
                                                 ${smallImageUrl} 400w,
                                                 ${mediumImageUrl} 800w,
                                                 ${largeImageUrl} 1200w
                                             `}
                                             sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                            alt={item.title}
+                                            alt={item.title || 'Product'}
                                             sx={{
                                                 width: '100%',
                                                 height: { xs: 140, md: 200 },
                                                 objectFit: 'cover'
                                             }}
                                         />
-
-                                    <Box sx={{ padding: 2, flex: 1 }}>
-                                        <Typography
-                                            sx={{
-                                                textAlign: 'left',
-                                                fontSize: '1rem',
-                                                fontWeight: 500,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                            }}
-                                        >
-                                            {item.title}
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                textAlign: 'left',
-                                                fontSize: '0.85rem',
-                                                color: 'text.secondary',
-                                                mt: 1,
-                                                overflow: 'hidden',
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical',
-                                            }}
-                                        >
-                                            {item.short_description || 'No description available.'}
-                                        </Typography>
-                                        {/* Pricing & Discount Section */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                        <Box sx={{ padding: 2, flex: 1 }}>
                                             <Typography
                                                 sx={{
-                                                    textDecoration: 'line-through',
-                                                    color: 'gray',
-                                                    mr: 1,
-                                                    fontSize: '0.9rem'
+                                                    textAlign: 'left',
+                                                    fontSize: '1rem',
+                                                    fontWeight: 500,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
                                                 }}
                                             >
-                                                {originalPrice} €
+                                                {item.title || 'Unknown'}
                                             </Typography>
                                             <Typography
                                                 sx={{
-                                                    color: '#1976d2',
-                                                    fontWeight: 'bold',
-                                                    fontSize: '0.9rem'
+                                                    textAlign: 'left',
+                                                    fontSize: '0.85rem',
+                                                    color: 'text.secondary',
+                                                    mt: 1,
+                                                    overflow: 'hidden',
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {discountedPrice} €
+                                                {item.short_description || t('No description available.')}
                                             </Typography>
-                                            {discountPercent >= 20 && (
-                                                <Box
+                                            {/* Pricing & Discount Section */}
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                                <Typography
                                                     sx={{
-                                                        backgroundColor: 'red',
-                                                        color: 'white',
-                                                        px: 1,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        ml: 1,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'bold',
+                                                        textDecoration: 'line-through',
+                                                        color: 'gray',
+                                                        mr: 1,
+                                                        fontSize: '0.9rem'
                                                     }}
                                                 >
-                                                    {discountPercent}%
-                                                </Box>
-                                            )}
+                                                    {originalPrice} €
+                                                </Typography>
+                                                <Typography
+                                                    sx={{
+                                                        color: '#1976d2',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.9rem'
+                                                    }}
+                                                >
+                                                    {discountedPrice} €
+                                                </Typography>
+                                                {discountPercent >= 20 && (
+                                                    <Box
+                                                        sx={{
+                                                            backgroundColor: 'red',
+                                                            color: 'white',
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            ml: 1,
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    >
+                                                        {discountPercent}%
+                                                    </Box>
+                                                )}
+                                            </Box>
                                         </Box>
-                                    </Box>
                                     </a>
                                     <IconButton
                                         aria-label="add to favorites"
@@ -345,31 +442,30 @@ const ProductList = () => {
             />
             <SwipeableDrawer
                 anchor="bottom"
-                fullScreen={fullScreen}
+                open={openFilterDialog}
+                onClose={handleCloseFilterDialog}
+                onOpen={() => setOpenFilterDialog(true)}
                 ModalProps={{
                     keepMounted: true,
                 }}
             >
-                <Snackbar
-                    open={snackbarOpen}
-                    autoHideDuration={6000}
-                    onClose={handleSnackbarClose}
-                    message={snackbarMessage}
+                <ActivityFilter
+                    openFilterDialog={openFilterDialog}
+                    handleCloseFilterDialog={handleCloseFilterDialog}
+                    type={type}
+                    applyFilter={applyFilter}
                 />
             </SwipeableDrawer>
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>{"Just a moment!"}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        {t("We noticed you're interested in saving favorites. That's great! To keep track of your favorite events and activities, please log in or sign up. It's quick and easy!")}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog} color="primary" autoFocus>
-                        Got it, thanks!
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
