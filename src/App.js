@@ -52,6 +52,19 @@ const LanguageRedirect = () => {
     return null;
 };
 
+const ProtectedRoute = ({ children }) => {
+    const location = useLocation();
+    const token = localStorage.getItem('token');
+    const hasTotalPrice = location.state?.totalPrice != null;
+
+    if (!token || !hasTotalPrice) {
+        console.log('ProtectedRoute: Redirecting to cart due to missing token or totalPrice');
+        return <Navigate to={`/${location.pathname.split('/')[1] || 'tr'}/cart`} replace />;
+    }
+
+    return children ? children : <Outlet />;
+};
+
 function App() {
   const { i18n } = useTranslation();
   const [, setIsAuthenticated] = useState(false);
@@ -159,7 +172,14 @@ function App() {
 
               {/* Cart and Payment Routes */}
               <Route path="/:lang/cart" element={<Cart />} />
-              <Route path="/:lang/payment" element={<Payment />} />
+                <Route
+                    path="/:lang/payment"
+                    element={
+                        <ProtectedRoute>
+                            <Payment />
+                        </ProtectedRoute>
+                    }
+                />
               <Route path="/:lang/payment-success" element={<PaymentSuccess />} />
               <Route path="/:lang/payment-failure" element={<PaymentFailure />} />
 

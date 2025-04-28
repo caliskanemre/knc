@@ -102,7 +102,19 @@ const Payment = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-    // Update finalPrice when cartTotal or shippingCost changes
+    // Debug logging
+    useEffect(() => {
+        console.log('Payment Component - location.state:', location.state);
+        console.log('Payment Component - cartTotal:', cartTotal);
+        if (cartTotal === 0) {
+            console.log('cartTotal is 0, redirecting to cart');
+            const lang = location.pathname.split('/')[1] || 'tr';
+            showSnackbar(t('No cart total provided. Redirecting to cart.'), 'warning');
+            navigate(`/${lang}/cart`);
+        }
+    }, [cartTotal, location, navigate]);
+
+    // Update finalPrice
     useEffect(() => {
         setFinalPrice(cartTotal + shippingCost);
     }, [cartTotal, shippingCost]);

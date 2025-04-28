@@ -12,22 +12,21 @@ import {
     Snackbar,
     Alert,
 } from '@mui/material';
-import Header from "../header/Header";
-import { useNavigate } from 'react-router-dom';
+import Header from '../header/Header';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { jwtDecode } from "jwt-decode";
-import {t} from "i18next";
+import { jwtDecode } from 'jwt-decode';
+import { t } from 'i18next';
 
 const Cart = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
-    const [previousCartItems, setPreviousCartItems] = useState([]); // To track changes
-
-    // Toast Message State
+    const [previousCartItems, setPreviousCartItems] = useState([]);
     const [toastMessage, setToastMessage] = useState('');
-    const [toastSeverity, setToastSeverity] = useState("success");
+    const [toastSeverity, setToastSeverity] = useState('success');
     const [toastOpen, setToastOpen] = useState(false);
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -38,17 +37,17 @@ const Cart = () => {
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);
-                if (decodedToken?.sub && decodedToken.sub.includes('@')) { // ✅ Check if valid email
+                if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                     setEmail(decodedToken.sub);
                 }
             } catch (error) {
-                console.error("Error decoding JWT token:", error);
+                console.error('Error decoding JWT token:', error);
             }
         }
     }, []);
 
     useEffect(() => {
-        if (email) { // ✅ Only fetch when email is set
+        if (email) {
             fetchCartItems();
         }
     }, [email]);
@@ -63,24 +62,9 @@ const Cart = () => {
             const items = response.data ?? [];
             setCartItems(items);
             calculateTotalPrice(items);
-
-            // Check for new items to trigger "Add to Cart" conversion
-            if (previousCartItems.length < items.length) {
-                const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
-                if (newItem && window.gtag) {
-                    window.gtag('event', 'conversion', {
-                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', // Replace with your Conversion ID/Label
-                        'value': newItem.price, // Optional: Send the item price
-                        'currency': 'EUR', // Match your currency (e.g., €)
-                        'event_callback': () => {
-                            console.log('Add to Cart conversion tracked');
-                        }
-                    });
-                }
-            }
-            setPreviousCartItems(items); // Update previous state
+            setPreviousCartItems(items);
         } catch (error) {
-            console.error("Error fetching cart items:", error);
+            console.error('Error fetching cart items:', error);
             setCartItems([]);
             setTotalPrice(0);
         }
@@ -90,6 +74,7 @@ const Cart = () => {
         const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
         const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
+        console.log('Calculated Total Price:', discountedTotal); // Debug log
     };
 
     const handleRemoveItem = async (id) => {
@@ -100,12 +85,12 @@ const Cart = () => {
             });
             const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
             setCartItems(updatedItems);
-            setPreviousCartItems(updatedItems); // Update previous state
+            setPreviousCartItems(updatedItems);
             calculateTotalPrice(updatedItems);
-            showToast("Ürün sepetten kaldırıldı! 🗑️", "success");
+            showToast('Ürün sepetten kaldırıldı! 🗑️', 'success');
         } catch (error) {
-            console.error("Error removing item:", error);
-            showToast("Ürün kaldırılamadı! ❌", "error");
+            console.error('Error removing item:', error);
+            showToast('Ürün kaldırılamadı! ❌', 'error');
         }
     };
 
@@ -116,9 +101,8 @@ const Cart = () => {
         const product = cartItems[productIndex];
         const updatedQuantity = product.quantity + (action === 'increment' ? 1 : -1);
 
-        if (updatedQuantity <= 0) return; // Prevent negative or zero quantities
+        if (updatedQuantity <= 0) return;
 
-        // Optimistically update the local state
         const updatedItems = [...cartItems];
         updatedItems[productIndex] = { ...product, quantity: updatedQuantity };
         setCartItems(updatedItems);
@@ -128,18 +112,18 @@ const Cart = () => {
             await axios.put(`${baseURL}/cart/${email}/item/${id}`, { quantity: updatedQuantity }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            showToast(`Ürün miktarı güncellendi! 🛒`, "success");
-            // No need to call fetchCartItems since we updated locally
+            showToast('Ürün miktarı güncellendi! 🛒', 'success');
         } catch (error) {
-            console.error("Error updating quantity:", error);
-            // Revert to server state on failure
+            console.error('Error updating quantity:', error);
             fetchCartItems();
-            showToast("Miktar güncellenemedi! ❌", "error");
+            showToast('Miktar güncellenemedi! ❌', 'error');
         }
     };
 
     const handleCheckout = () => {
-        navigate('/payment', { state: { totalPrice } });
+        console.log('Navigating to payment with totalPrice:', totalPrice); // Debug log
+        const lang = location.pathname.split('/')[1] || 'tr'; // Extract language
+        navigate(`/${lang}/payment`, { state: { totalPrice } });
     };
 
     const showToast = (message, severity) => {
@@ -152,8 +136,8 @@ const Cart = () => {
         <div>
             <Header />
             <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    {t("My Cart")}
+                <Typography variant='h4' component='h1' gutterBottom>
+                    {t('My Cart')}
                 </Typography>
                 <Divider sx={{ marginBottom: 2 }} />
 
@@ -163,49 +147,30 @@ const Cart = () => {
                             const id = item.productId || item.id;
                             const originalImageUrl = item.image;
                             const smallImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'small_$1') : '';
-                            const mediumImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'medium_$1') : '';
-                            const largeImageUrl = originalImageUrl ? originalImageUrl.replace(/([^/]+)$/, 'large_$1') : '';
-
                             return (
                                 <Card key={id} sx={{ marginBottom: 2 }}>
                                     <CardContent>
-                                        <a href={`/products/detail/${id}`}>
-                                            <CardMedia
-                                                component="img"
-                                                image={smallImageUrl}
-                                                srcSet={`
-                                                    ${smallImageUrl} 100w,
-                                                    ${mediumImageUrl} 200w,
-                                                    ${largeImageUrl} 300w
-                                                `}
-                                                sizes="(max-width: 600px) 100px, 300px"
-                                                alt={item.title || "Ürün Resmi"}
-                                                sx={{ width: '100px', height: '100px' }}
-                                            />
-                                            <Typography variant="h6">{item.title}</Typography>
-                                        </a>
-                                        <Typography color="textSecondary">
+                                        <CardMedia
+                                            component='img'
+                                            image={smallImageUrl}
+                                            alt={item.title || 'Ürün Resmi'}
+                                            sx={{ width: '100px', height: '100px' }}
+                                        />
+                                        <Typography variant='h6'>{item.title}</Typography>
+                                        <Typography color='textSecondary'>
                                             Birim Fiyat: {(item.price).toFixed(2)} €
                                         </Typography>
-                                        <Typography color="textSecondary">
+                                        <Typography color='textSecondary'>
                                             Miktar: {item.quantity}
                                         </Typography>
-                                        <Typography color="textSecondary">
-                                            Toplam Fiyat: <s>{(item.price * item.quantity).toFixed(2)} €</s> →
-                                            <strong>{((item.price * item.quantity) * (1 - discountRate / 100)).toFixed(2)} €</strong>
+                                        <Typography color='textSecondary'>
+                                            Toplam Fiyat: <strong>{((item.price * item.quantity) * (1 - discountRate / 100)).toFixed(2)} €</strong>
                                         </Typography>
-
-                                        {/* Display order note if exists */}
-                                        {item.note && (
-                                            <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
-                                                Not: {item.note}
-                                            </Typography>
-                                        )}
                                     </CardContent>
                                     <CardActions>
-                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
-                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
-                                        <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>Ürünü Kaldır</Button>
+                                        <Button size='small' onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
+                                        <Button size='small' onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
+                                        <Button size='small' color='error' onClick={() => handleRemoveItem(id)}>Ürünü Kaldır</Button>
                                     </CardActions>
                                 </Card>
                             );
@@ -217,13 +182,13 @@ const Cart = () => {
 
                 <Divider sx={{ marginY: 2 }} />
 
-                <Typography variant="h5" component="h2">
+                <Typography variant='h5' component='h2'>
                     Toplam: {totalPrice.toFixed(2)} €
                 </Typography>
 
                 <Button
-                    variant="contained"
-                    color="primary"
+                    variant='contained'
+                    color='primary'
                     fullWidth
                     sx={{ marginTop: 2 }}
                     disabled={cartItems.length === 0}
@@ -233,7 +198,6 @@ const Cart = () => {
                 </Button>
             </Box>
 
-            {/* Toast Notification */}
             <Snackbar
                 open={toastOpen}
                 autoHideDuration={3000}
