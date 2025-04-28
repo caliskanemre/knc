@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Main from "./Main";
-import {BrowserRouter as Router, Route, Routes, useLocation, useNavigate} from 'react-router-dom';
+import {BrowserRouter as Router, Navigate, Outlet, Route, Routes, useLocation, useNavigate} from 'react-router-dom';
 import ProductList from "./activity/ProductList";
 import ProductDetails from "./activity/ProductDetails";
 import SearchPage from "./search/SearchPage";
