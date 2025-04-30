@@ -36,16 +36,20 @@ const LanguageRedirect = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const validLangs = ['en', 'tr'];
         const pathSegments = location.pathname.split('/').filter(Boolean);
         const lang = pathSegments[0];
 
-        // Eğer dil öneki yoksa veya geçersizse, varsayılan dile yönlendir
-        if (!['en', 'tr'].includes(lang)) {
-            const defaultLang = i18n.language || 'tr'; // Varsayılan dil 'tr'
+        if (!validLangs.includes(lang)) {
+            const defaultLang = i18n.language || 'tr';
             navigate(`/${defaultLang}${location.pathname}`, { replace: true });
         } else {
-            // URL'deki dil ile i18n dilini senkronize et
             i18n.changeLanguage(lang);
+        }
+
+        // www kontrolü
+        if (window.location.hostname === 'kinasepeti.com') {
+            navigate(`https://www.kinasepeti.com${location.pathname}`, { replace: true });
         }
     }, [location.pathname, i18n, navigate]);
 
