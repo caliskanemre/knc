@@ -27,11 +27,15 @@ const Payment = () => {
     const { totalPrice: basePrice = 0, cartItems = [], email: userEmail = '', guestToken = '' } = location.state || {};
     const checkoutData = JSON.parse(localStorage.getItem('checkoutData')) || {};
     const initialBasePrice = basePrice || checkoutData.totalPrice || 0;
-    const initialCartItems = cartItems.length > 0 ? cartItems : checkoutData.cartItems || [];
     const initialGuestToken = guestToken || checkoutData.guestToken || localStorage.getItem('guestToken') || '';
 
+    const [cartItemsState, setCartItemsState] = useState(
+        cartItems.length > 0 ? cartItems : checkoutData.cartItems || []
+    );
+    const [basePriceState, setBasePriceState] = useState(initialBasePrice);
+
     const discountRate = 20;
-    const discountedBasePrice = parseFloat(initialBasePrice) * (1 - discountRate / 100);
+    const discountedBasePrice = parseFloat(basePriceState) * (1 - discountRate / 100);
 
     const [shippingCost, setShippingCost] = useState(0);
     const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
@@ -106,25 +110,11 @@ const Payment = () => {
         { code: 'US', name: 'USA', cost: 14.99 },
     ];
 
-    useEffect(() => {
-        console.log("Payment.jsx loaded with state:", location.state);
-        console.log("Checkout data from localStorage:", checkoutData);
 
-        setFinalPrice(parseFloat(initialBasePrice) + parseFloat(shippingCost));
-
-        if (initialCartItems.length === 0) {
-            showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
-            setTimeout(() => navigate('/cart'), 2000);
-        }
-    }, [initialBasePrice, shippingCost, initialCartItems, navigate]);
-
-    // Handle form changes
     const handleShippingAddressChange = (event) => {
         const { name, value } = event.target;
         setShippingAddress((prev) => ({ ...prev, [name]: value }));
     };
-
-    // Handle country selection
     const handleCountrySelect = (event) => {
         const selectedCountryCode = event.target.value;
         const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
@@ -132,6 +122,50 @@ const Payment = () => {
         setShippingAddress((prev) => ({ ...prev, country: selectedCountryCode }));
         setShippingCost(cost);
     };
+
+
+    useEffect(() => {
+        const fetchGuestCart = async () => {
+            if (!userEmail && initialGuestToken && cartItemsState.length === 0) {
+                try {
+                    const response = await axios.get(`${baseURL}/cart/guest`, {
+                        headers: { 'X-Guest-Token': initialGuestToken },
+                    });
+                    const guestCartItems = response.data || [];
+                    if (guestCartItems.length > 0) {
+                        const newTotalPrice = guestCartItems.reduce(
+                            (total, item) => total + item.price * item.quantity,
+                            0
+                        );
+                        setCartItemsState(guestCartItems);
+                        setBasePriceState(newTotalPrice);
+                        setFinalPrice(newTotalPrice * (1 - discountRate / 100) + shippingCost);
+                        localStorage.setItem(
+                            'checkoutData',
+                            JSON.stringify({
+                                ...checkoutData,
+                                cartItems: guestCartItems,
+                                totalPrice: newTotalPrice,
+                                guestToken: initialGuestToken,
+                            })
+                        );
+                    } else {
+                        showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
+                        setTimeout(() => navigate('/cart'), 2000);
+                    }
+                } catch (error) {
+                    console.error('Error fetching guest cart:', error);
+                    showSnackbar(t('Error fetching cart. Please try again.'), 'error');
+                    setTimeout(() => navigate('/cart'), 2000);
+                }
+            } else if (cartItemsState.length === 0) {
+                showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
+                setTimeout(() => navigate('/cart'), 2000);
+            }
+        };
+
+        fetchGuestCart();
+    }, [cartItemsState, basePriceState, shippingCost, initialGuestToken, userEmail, navigate]);
 
     const validateFields = () => {
         const missingFields = [];
@@ -149,8 +183,13 @@ const Payment = () => {
         return true;
     };
 
+    useEffect(() => {
+        setFinalPrice(parseFloat(basePriceState) * (1 - discountRate / 100) + parseFloat(shippingCost));
+    }, [basePriceState, shippingCost]);
+
+    // Update handlePaymentSubmit to use cartItemsState
     const handlePaymentSubmit = async () => {
-        if (initialCartItems.length === 0) {
+        if (cartItemsState.length === 0) {
             showSnackbar(t('Cart is empty'), 'warning');
             return;
         }
@@ -173,7 +212,9 @@ const Payment = () => {
         };
 
         try {
-            const headers = userEmail ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : { 'X-Guest-Token': initialGuestToken };
+            const headers = userEmail
+                ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                : { 'X-Guest-Token': initialGuestToken };
             const response = await axios.post(`${baseURL}/api/payment`, paymentData, { headers });
             console.log("🚀 Payment API Response:", response.data);
 
@@ -194,22 +235,11 @@ const Payment = () => {
         }
     };
 
-    useEffect(() => {
-        const queryParams = new URLSearchParams(window.location.search);
-        const revolutOrderIdFromURL = queryParams.get('order_id');
-        const paymentStatus = queryParams.get('status');
-
-        if (revolutOrderIdFromURL && paymentStatus === "success") {
-            setRevolutOrderId(revolutOrderIdFromURL);
-            placeOrderAfterPayment(revolutOrderIdFromURL);
-        }
-    }, []);
-
+    // Update placeOrderAfterPayment to use cartItemsState
     const placeOrderAfterPayment = async (revolutOrderId) => {
         if (!revolutOrderId) return;
 
-        // Normalize cart items
-        const normalizedCartItems = initialCartItems.map(item => ({
+        const normalizedCartItems = cartItemsState.map((item) => ({
             ...item,
             price: parseFloat(item.price) || 0,
         }));
@@ -228,7 +258,9 @@ const Payment = () => {
 
         try {
             const url = userEmail ? `${baseURL}/orders/${userEmail}` : `${baseURL}/orders/guest`;
-            const headers = userEmail ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : { 'X-Guest-Token': initialGuestToken };
+            const headers = userEmail
+                ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                : { 'X-Guest-Token': initialGuestToken };
             const response = await axios.post(url, orderData, {
                 headers,
                 params: { revolutOrderId }
@@ -375,8 +407,7 @@ const Payment = () => {
                                     {t('Order Summary')}
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Items Total')}: {parseFloat(initialBasePrice).toFixed(2)} €
-
+                                    {t('Items Total')}: {parseFloat(basePriceState).toFixed(2)} €
                                 </Typography>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     {t('Shipping Cost')}: <strong>{parseFloat(shippingCost).toFixed(2)} €</strong>
@@ -391,7 +422,7 @@ const Payment = () => {
                                     fullWidth
                                     sx={{ mt: 2 }}
                                     onClick={handlePaymentSubmit}
-                                    disabled={initialCartItems.length === 0}
+                                    disabled={cartItemsState.length === 0}
                                 >
                                     {t('Proceed to Payment')}
                                 </Button>
@@ -413,5 +444,4 @@ const Payment = () => {
         </div>
     );
 };
-
 export default Payment;
