@@ -11,12 +11,14 @@ import {
     CardMedia,
     Snackbar,
     Alert,
+    CircularProgress,
 } from '@mui/material';
 import Header from "../header/Header";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 const Cart = () => {
     const { t } = useTranslation();
@@ -27,6 +29,7 @@ const Cart = () => {
     const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -36,127 +39,126 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
-    // Generate UUID for guest token
-    function generateUUID() {
-        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-        );
-    }
+       // Generate UUID for guest token
+       function generateUUID() {
+           return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+               (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+           );
+       }
 
-    useEffect(() => {
-        const initializeCart = async () => {
-            // Store guest token
-            localStorage.setItem('guestToken', guestToken);
+       useEffect(() => {
+           // Ensure guest token is stored
+           if (!localStorage.getItem('guestToken')) {
+               localStorage.setItem('guestToken', guestToken);
+           }
 
-            // Check for logged-in user
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const decodedToken = jwtDecode(token);
-                    if (decodedToken?.sub && decodedToken.sub.includes('@')) {
-                        setEmail(decodedToken.sub);
-                        await syncLocalCartToServer();
-                        await fetchCartItems();
-                    }
-                } catch (error) {
-                    console.error("Error decoding JWT token:", error);
-                }
-            } else {
-                // Load guest cart from localStorage
-                const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-                const normalizedCart = localCart.map(item => ({
-                    ...item,
-                    price: parseFloat(item.price) || 0,
-                }));
-                setCartItems(normalizedCart);
-                calculateTotalPrice(normalizedCart);
-                await syncGuestCart(normalizedCart);
-            }
-        };
+           const initializeCart = async () => {
+               setIsLoading(true);
+               const token = localStorage.getItem('token');
+               if (token) {
+                   try {
+                       const decodedToken = jwtDecode(token);
+                       if (decodedToken?.sub && decodedToken.sub.includes('@')) {
+                           setEmail(decodedToken.sub);
+                           await syncLocalCartToServer(decodedToken.sub);
+                           await fetchCartItems();
+                       }
+                   } catch (error) {
+                       console.error("Error decoding JWT token:", error);
+                       showToast(t("Error initializing cart"), "error");
+                       await fetchGuestCart(); // Fallback to guest cart
+                   }
+               } else {
+                   await fetchGuestCart();
+               }
+               setIsLoading(false);
+           };
 
-        initializeCart();
-    }, [guestToken]);
+           initializeCart();
+       }, []);
 
-    const syncGuestCart = async (items) => {
-        if (isSyncing) return;
-        setIsSyncing(true);
-        try {
-            console.log("Syncing guest cart with items:", items);
-            const normalizedItems = items.map(item => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                price: parseFloat(item.price) || 0, // Ensure total price
-                title: item.title,
-                image: item.image,
-                orderNote: item.orderNote,
-            }));
-            const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
-                headers: { 'X-Guest-Token': guestToken },
-            });
-            console.log("Sync response:", response.data);
-            const serverCart = response.data || [];
-            const normalizedServerCart = serverCart.map(item => ({
-                ...item,
-                price: parseFloat(item.price) || 0,
-            }));
-            const mergedCart = mergeCarts(JSON.parse(localStorage.getItem('cart')) || [], normalizedServerCart);
-            localStorage.setItem('cart', JSON.stringify(mergedCart));
-            setCartItems(mergedCart);
-            calculateTotalPrice(mergedCart);
-        } catch (error) {
-            console.error("Error syncing guest cart:", error.response?.data || error.message);
-            showToast(error.response?.data || t("Error syncing guest cart"), "error");
-        } finally {
-            setIsSyncing(false);
-        }
-    };
+       const fetchGuestCart = async () => {
+           try {
+               const response = await axios.get(`${baseURL}/cart/guest`, {
+                   headers: { 'X-Guest-Token': guestToken },
+               });
+               const serverCart = response.data || [];
+               const normalizedServerCart = serverCart.map(item => ({
+                   ...item,
+                   price: parseFloat(item.price) || 0,
+               }));
+               setCartItems(normalizedServerCart);
+               calculateTotalPrice(normalizedServerCart);
+               localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
+           } catch (error) {
+               console.error("Error fetching guest cart:", error.response?.data || error.message);
+               const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+               const normalizedCart = localCart.map(item => ({
+                   ...item,
+                   price: parseFloat(item.price) || 0,
+               }));
+               setCartItems(normalizedCart);
+               calculateTotalPrice(normalizedCart);
+               if (localCart.length > 0) {
+                   await syncGuestCart(normalizedCart);
+               }
+           }
+       };
 
-    const syncLocalCartToServer = async () => {
-        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-        if (localCart.length === 0) return;
+       const syncGuestCart = async (items) => {
+           if (isSyncing) return;
+           setIsSyncing(true);
+           try {
+               const normalizedItems = items.map(item => ({
+                   productId: item.productId,
+                   quantity: item.quantity,
+                   price: parseFloat(item.price) || 0,
+                   title: item.title,
+                   image: item.image,
+                   orderNote: item.orderNote,
+               }));
+               const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
+                   headers: { 'X-Guest-Token': guestToken },
+               });
+               const serverCart = response.data || [];
+               const normalizedServerCart = serverCart.map(item => ({
+                   ...item,
+                   price: parseFloat(item.price) || 0,
+               }));
+               setCartItems(normalizedServerCart);
+               calculateTotalPrice(normalizedServerCart);
+               localStorage.setItem('cart', JSON.stringify(normalizedServerCart));
+           } catch (error) {
+               console.error("Error syncing guest cart:", error.response?.data || error.message);
+               showToast(t("Error syncing guest cart"), "error");
+           } finally {
+               setIsSyncing(false);
+           }
+       };
 
-        try {
-            for (const item of localCart) {
-                await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, {
-                    ...item,
-                    price: parseFloat(item.price) || 0,
-                }, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
-            }
-            localStorage.removeItem('cart');
-            localStorage.removeItem('guestToken');
-            setGuestToken(generateUUID());
-        } catch (error) {
-            console.error("Error syncing local cart to server:", error);
-            showToast(t("Error syncing cart"), "error");
-        }
-    };
+       const syncLocalCartToServer = async (userEmail) => {
+           const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+           if (localCart.length === 0) return;
 
-    const mergeCarts = (localCart, serverCart) => {
-        const merged = [];
-        const itemMap = new Map();
+           try {
+               for (const item of localCart) {
+                   const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
+                   const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
+                   await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
+                       ...item,
+                       quantity,
+                       price: parseFloat(item.price) || 0,
+                   }, {
+                       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                   });
+               }
+               localStorage.removeItem('cart');
+           } catch (error) {
+               console.error("Error syncing local cart to server:", error.response?.data || error.message);
+               showToast(t("Error syncing cart"), "error");
+           }
+       };
 
-        [...localCart, ...serverCart].forEach(item => {
-            const key = item.productId || item.id;
-            if (!itemMap.has(key)) {
-                const unitPrice = parseFloat(item.price) / (item.quantity || 1) || 0;
-                itemMap.set(key, {
-                    ...item,
-                    price: unitPrice * (item.quantity || 1), // Store total price
-                    quantity: item.quantity || 1,
-                });
-            } else {
-                const existing = itemMap.get(key);
-                const unitPrice = parseFloat(item.price) / (item.quantity || 1) || parseFloat(existing.price) / (existing.quantity || 1) || 0;
-                existing.quantity = email ? existing.quantity : Math.max(existing.quantity, item.quantity);
-                existing.price = unitPrice * existing.quantity; // Update total price
-                existing.orderNote = item.orderNote || existing.orderNote;
-            }
-        });
-
-        return Array.from(itemMap.values());
-    };
     const fetchCartItems = async () => {
         if (!email) return;
 
@@ -195,7 +197,7 @@ const Cart = () => {
 
     const calculateTotalPrice = (items) => {
         const total = items.reduce((acc, item) => {
-            const unitPrice = parseFloat(item.price) / item.quantity || 0; // Calculate unit price
+            const unitPrice = parseFloat(item.price) / item.quantity || 0;
             return acc + unitPrice * item.quantity;
         }, 0);
         const discountedTotal = total * (1 - discountRate / 100);
@@ -203,41 +205,38 @@ const Cart = () => {
     };
 
     const handleRemoveItem = async (id) => {
-        const originalItems = [...cartItems]; // Backup current state
+        const originalItems = [...cartItems];
         const updatedItems = cartItems.filter(item => (item.productId || item.id) !== id);
 
         if (email) {
             try {
-                console.log(`Removing item for user: ${email}, productId: ${id}`);
-                const response = await axios.delete(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, {
+                await axios.delete(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
-                console.log(`Delete response: ${response.status}`);
                 setCartItems(updatedItems);
                 setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 showToast(t("Item removed from cart"), "success");
             } catch (error) {
                 console.error("Error removing item:", error.response?.data || error.message);
-                setCartItems(originalItems); // Revert on failure
-                showToast(error.response?.data || t("Error removing item"), "error");
+                setCartItems(originalItems);
+                showToast(error.response?.data?.message || t("Error removing item"), "error");
             }
         } else {
             try {
-                console.log(`Removing item for guest, productId: ${id}, guestToken: ${guestToken}`);
                 await axios.delete(`${baseURL}/cart/guest/item/${id}`, {
                     headers: { 'X-Guest-Token': guestToken },
                 });
-                localStorage.setItem('cart', JSON.stringify(updatedItems));
                 setCartItems(updatedItems);
                 setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
+                localStorage.setItem('cart', JSON.stringify(updatedItems));
                 showToast(t("Item removed from cart"), "success");
             } catch (error) {
                 console.error("Error removing guest item:", error.response?.data || error.message);
                 setCartItems(originalItems);
                 localStorage.setItem('cart', JSON.stringify(originalItems));
-                showToast(error.response?.data || t("Error removing item"), "error");
+                showToast(error.response?.data?.message || t("Error removing item"), "error");
             }
         }
     };
@@ -281,14 +280,45 @@ const Cart = () => {
                 showToast(error.response?.data || t("Error updating quantity"), "error");
             }
         } else {
-            localStorage.setItem('cart', JSON.stringify(updatedItems));
-            await syncGuestCart(updatedItems);
-            showToast(t("Quantity updated"), "success");
+            try {
+                await syncGuestCart(updatedItems);
+                showToast(t("Quantity updated"), "success");
+            } catch (error) {
+                console.error("Error updating guest quantity:", error);
+                fetchGuestCart();
+                showToast(t("Error updating quantity"), "error");
+            }
         }
     };
 
-    const handleCheckout = () => {
-        navigate('/payment', { state: { totalPrice, cartItems, email, guestToken } });
+    const handleCheckout = async () => {
+        if (cartItems.length === 0) {
+            showToast(t("Cart is empty. Please add items to your cart."), "warning");
+            return;
+        }
+
+        try {
+            const headers = email
+                ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                : { 'X-Guest-Token': guestToken };
+            const validateUrl = email
+                ? `${baseURL}/cart/validate/${encodeURIComponent(email)}`
+                : `${baseURL}/cart/guest/validate`;
+            console.log("Validating cart with URL:", validateUrl, "Headers:", headers); // Debug log
+            const response = await axios.post(validateUrl, cartItems, { headers });
+            console.log("Validation response:", response.data); // Debug log
+            if (response.data.valid) {
+                const lang = i18n.language || 'tr';
+                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken }); // Debug log
+                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken } });
+                console.log("Guest checkout - Navigation called successfully"); // Debug log
+            } else {
+                showToast(response.data.message || t("Cart validation failed"), "error");
+            }
+        } catch (error) {
+            console.error("Error validating guest cart:", error.response?.data || error.message);
+            showToast(error.response?.data?.message || t("Error validating cart"), "error");
+        }
     };
 
     const showToast = (message, severity) => {
@@ -301,84 +331,92 @@ const Cart = () => {
         <div>
             <Header />
             <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    {t("My Cart")}
-                </Typography>
-                <Divider sx={{ marginBottom: 2 }} />
-
-                {cartItems.length > 0 ? (
-                    <List>
-                        {cartItems.map((item) => {
-                            const id = item.productId || item.id;
-                            const price = parseFloat(item.price) || 0;
-                            const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
-                            const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
-                            const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
-                            const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
-
-                            return (
-                                <Card key={id} sx={{ marginBottom: 2 }}>
-                                    <CardContent>
-                                        <a href={`/products/detail/${id}/${encodeURIComponent(item.title || '')}`}>
-                                            <CardMedia
-                                                component="img"
-                                                image={smallImageUrl}
-                                                srcSet={`
-                                                    ${smallImageUrl} 100w,
-                                                    ${mediumImageUrl} 200w,
-                                                    ${largeImageUrl} 300w
-                                                `}
-                                                sizes="(max-width: 600px) 100px, 300px"
-                                                alt={item.title || t("Product Image")}
-                                                sx={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                                            />
-                                            <Typography variant="h6">{item.title}</Typography>
-                                        </a>
-                                        <Typography color="textSecondary">
-                                            {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
-                                        </Typography>
-                                        <Typography color="textSecondary">
-                                            {t("Quantity")}: {item.quantity}
-                                        </Typography>
-                                        <Typography color="textSecondary">
-                                            {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
-                                            <strong>{(price * (1 - discountRate / 100)).toFixed(2)} €</strong>
-                                        </Typography>
-                                        {item.orderNote && (
-                                            <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
-                                                {t("Note")}: {item.orderNote}
-                                            </Typography>
-                                        )}
-                                    </CardContent>
-                                    <CardActions>
-                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
-                                        <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
-                                        <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t("Remove Item")}</Button>
-                                    </CardActions>
-                                </Card>
-                            );
-                        })}
-                    </List>
+                {isLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                        <CircularProgress />
+                    </Box>
                 ) : (
-                    <Typography>{t("Your cart is empty")}</Typography>
+                    <>
+                        <Typography variant="h4" component="h1" gutterBottom>
+                            {t("My Cart")}
+                        </Typography>
+                        <Divider sx={{ marginBottom: 2 }} />
+
+                        {cartItems.length > 0 ? (
+                            <List>
+                                {cartItems.map((item) => {
+                                    const id = item.productId || item.id;
+                                    const price = parseFloat(item.price) || 0;
+                                    const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
+                                    const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
+                                    const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
+                                    const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
+
+                                    return (
+                                        <Card key={id} sx={{ marginBottom: 2 }}>
+                                            <CardContent>
+                                                <a href={`/products/detail/${id}/${encodeURIComponent(item.title || '')}`}>
+                                                    <CardMedia
+                                                        component="img"
+                                                        image={smallImageUrl}
+                                                        srcSet={`
+                                                            ${smallImageUrl} 100w,
+                                                            ${mediumImageUrl} 200w,
+                                                            ${largeImageUrl} 300w
+                                                        `}
+                                                        sizes="(max-width: 600px) 100px, 300px"
+                                                        alt={item.title || t("Product Image")}
+                                                        sx={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                                                    />
+                                                    <Typography variant="h6">{item.title}</Typography>
+                                                </a>
+                                                <Typography color="textSecondary">
+                                                    {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
+                                                </Typography>
+                                                <Typography color="textSecondary">
+                                                    {t("Quantity")}: {item.quantity}
+                                                </Typography>
+                                                <Typography color="textSecondary">
+                                                    {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
+                                                    <strong>{(price * (1 - discountRate / 100)).toFixed(2)} €</strong>
+                                                </Typography>
+                                                {item.orderNote && (
+                                                    <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
+                                                        {t("Note")}: {item.orderNote}
+                                                    </Typography>
+                                                )}
+                                            </CardContent>
+                                            <CardActions>
+                                                <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
+                                                <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
+                                                <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t("Remove Item")}</Button>
+                                            </CardActions>
+                                        </Card>
+                                    );
+                                })}
+                            </List>
+                        ) : (
+                            <Typography>{t("Your cart is empty")}</Typography>
+                        )}
+
+                        <Divider sx={{ marginY: 2 }} />
+
+                        <Typography variant="h5" component="h2">
+                            {t("Total")}: {totalPrice.toFixed(2)} €
+                        </Typography>
+
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            sx={{ marginTop: 2 }}
+                            disabled={cartItems.length === 0}
+                            onClick={handleCheckout}
+                        >
+                            {t("Proceed to Checkout")}
+                        </Button>
+                    </>
                 )}
-
-                <Divider sx={{ marginY: 2 }} />
-
-                <Typography variant="h5" component="h2">
-                    {t("Total")}: {totalPrice.toFixed(2)} €
-                </Typography>
-
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ marginTop: 2 }}
-                    disabled={cartItems.length === 0}
-                    onClick={handleCheckout}
-                >
-                    {t("Proceed to Checkout")}
-                </Button>
             </Box>
 
             <Snackbar

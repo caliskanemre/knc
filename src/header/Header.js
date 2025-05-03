@@ -5,7 +5,6 @@ import SearchImage from '../images/urunAra.png';
 import ProductsSubHeader from '../activity/ProductsSubHeader';
 import Login from '../login/Login';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
-import FavoriteIcon from '@mui/icons-material/FavoriteBorder';
 import {
   AppBar,
   Box,
@@ -21,14 +20,17 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  Avatar,
+  Badge,
 } from '@mui/material';
 import Register from '../login/Register';
-import LoginIcon from '@mui/icons-material/Login';
 import { useAuth } from '../auth/AuthProvider';
 import MenuIcon from '@mui/icons-material/Menu';
+import LoginIcon from '@mui/icons-material/Login'
 import ProductsSubHeaderMobile from '../activity/ProductsSubHeaderMobile';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
@@ -44,9 +46,39 @@ export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+  const [cartItemCount, setCartItemCount] = useState(0);
 
   // Mevcut dil parametresini al
   const currentLang = location.pathname.split('/')[1] || 'tr';
+
+  // Fetch cart item count
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        let count = 0;
+        if (isLoggedIn && username) {
+          const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(username)}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          });
+          count = response.data.reduce((acc, item) => acc + (item.quantity || 0), 0);
+        } else {
+          const guestToken = localStorage.getItem('guestToken');
+          if (guestToken) {
+            const response = await axios.get(`${baseURL}/cart/guest`, {
+              headers: { 'X-Guest-Token': guestToken },
+            });
+            count = response.data.reduce((acc, item) => acc + (item.quantity || 0), 0);
+          }
+        }
+        setCartItemCount(count);
+      } catch (error) {
+        console.error('Error fetching cart count:', error.response?.data || error.message);
+        setCartItemCount(0);
+      }
+    };
+
+    fetchCartCount();
+  }, [isLoggedIn, username]);
 
   const changeLanguage = (language) => {
     i18n.changeLanguage(language);
@@ -68,22 +100,17 @@ export default function Header() {
   const handleNavigation = (path) => {
     navigate(`/${currentLang}${path}`);
     setMobileMenuOpen(false);
+    setAnchorEl(null);
   };
 
-  const handleFetchFavorites = async () => {
-    try {
-      navigate(`/${currentLang}/users/favorites`);
-    } catch (error) {
-      console.error('Failed to fetch favorites:', error);
-    }
+  const handleFetchFavorites = () => {
+    handleNavigation('/users/favorites');
+    setAnchorEl(null);
   };
 
-  const handleMyOrders = async () => {
-    try {
-      navigate(`/${currentLang}/my-orders`);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-    }
+  const handleMyOrders = () => {
+    handleNavigation('/my-orders');
+    setAnchorEl(null);
   };
 
   // Register dialog
@@ -91,7 +118,10 @@ export default function Header() {
   const handleCloseRegisterDialog = () => setOpenRegisterDialog(false);
 
   // Login dialog
-  const handleOpenLoginDialog = () => setOpenLoginDialog(true);
+  const handleOpenLoginDialog = () => {
+    setOpenLoginDialog(true);
+    setAnchorEl(null);
+  };
   const handleCloseLoginDialog = () => setOpenLoginDialog(false);
 
   // User menu
@@ -115,12 +145,15 @@ export default function Header() {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
     setUsername('');
+    setCartItemCount(0); // Reset cart count on logout
     handleMenuClose();
+    handleNavigation('/');
   };
 
   const handleLoginSuccess = (data) => {
     console.log('Login successful with data:', data);
     setIsLoggedIn(true);
+    setUsername(data.email || ''); // Assuming login response includes email
     setOpenLoginDialog(false);
   };
 
@@ -271,10 +304,10 @@ export default function Header() {
                     {t('Contact Us')}
                   </NavLink>
                   {/* Language Switch - Desktop */}
-                  <Tooltip title={t('select_language')}>
+                  <Tooltip title={"Select Language"}>
                     <IconButton
                         onClick={handleLanguageMenuClick}
-                        aria-label={t('select_language')}
+                        aria-label={"Select Language"}
                         sx={{
                           padding: '4px',
                           marginLeft: '16px',
@@ -303,7 +336,7 @@ export default function Header() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
                         <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          {t('English')}
+                          English
                         </Typography>
                       </Box>
                     </MenuItem>
@@ -311,7 +344,7 @@ export default function Header() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
                         <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          {t('Türkçe')}
+                          Türkçe
                         </Typography>
                       </Box>
                     </MenuItem>
@@ -321,43 +354,93 @@ export default function Header() {
 
             <Box flexGrow={1} />
 
-            {/* Cart Icon */}
-            <IconButton
-                aria-label="cart"
-                sx={{
-                  color: 'black',
-                  marginLeft: '10px',
-                  '&:hover': { color: '#8B0000' },
-                }}
-                onClick={() => handleNavigation('/cart')}
-            >
+          {/* Cart Icon with Count */}
+          <IconButton
+            aria-label="cart"
+            sx={{
+              color: 'black',
+              marginLeft: '10px',
+              '&:hover': { color: '#8B0000' },
+            }}
+            onClick={() => handleNavigation('/cart')}
+          >
+            <Badge badgeContent={cartItemCount} color="error">
               <ShoppingBagOutlinedIcon sx={{ fontSize: 30 }} />
-            </IconButton>
+            </Badge>
+          </IconButton>
 
-            {/* Login/Heart Icon */}
-            {false ? (
-                <IconButton
-                    aria-label="login"
-                    sx={{ color: 'black' }}
-                    onClick={handleOpenLoginDialog}
-                >
-                  <LoginIcon />
-                </IconButton>
-            ) : (
-                <IconButton
-                    aria-label="favorites"
+          {/* Avatar with Menu */}
+            {/* Avatar with Menu */}
+            <Tooltip title={isLoggedIn ? username : t('user_menu')}>
+              <IconButton
+                  onClick={handleMenuClick}
+                  aria-label="user menu"
+              >
+                <Avatar
                     sx={{
-                      color: 'black',
-                      marginLeft: '8px',
-                      '&:hover': { color: '#8B0000' },
+                      bgcolor: 'white', // White background for both logged-in and logged-out states
+                      color: 'black', // Black text/icon color
+                      width: 40,
+                      height: 40,
+                      border: '1px solid #8B0000', // Optional: subtle border to match menu
                     }}
-                    onClick={handleFetchFavorites}
                 >
-                  <FavoriteIcon sx={{ fontSize: 30 }} />
-                </IconButton>
-            )}
-          </Toolbar>
-        </AppBar>
+                  {username ? (
+                      username.charAt(0).toUpperCase() // Black letter for logged-in user
+                  ) : (
+                      <LoginIcon sx={{ color: 'black' }} /> // Black LoginIcon for logged-out user
+                  )}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                  sx: {
+                    border: '1px solid #8B0000', // Matches Avatar border
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Subtle shadow
+                    bgcolor: 'white', // White background for menu
+                    '& .MuiMenuItem-root': {
+                      color: 'black', // Black text for menu items
+                      fontFamily: "'Playfair Display', serif", // Consistent typography
+                      '&:hover': {
+                        bgcolor: '#f5f5f5', // Light gray hover effect
+                        color: '#8B0000', // Optional: red tint on hover to match theme
+                      },
+                    },
+                  },
+                }}
+            >
+              <MenuItem onClick={handleFetchFavorites}>
+                <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                  {t('Favorites')}
+                </Typography>
+              </MenuItem>
+              {isLoggedIn ? (
+                  <>
+                    <MenuItem onClick={handleMyOrders}>
+                      <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                        {t('My Orders')}
+                      </Typography>
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>
+                      <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                        {t('Logout')}
+                      </Typography>
+                    </MenuItem>
+                  </>
+              ) : (
+                  <MenuItem onClick={handleOpenLoginDialog}>
+                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                      {t('Login')}
+                    </Typography>
+                  </MenuItem>
+              )}
+            </Menu>
+        </Toolbar>
+      </AppBar>
 
         {/* Mobile Drawer */}
         {isMobile && (
@@ -496,65 +579,94 @@ export default function Header() {
                   />
                 </ListItem>
 
-                {/* Contact Us */}
-                <ListItem button onClick={() => handleNavigation('/contact-us')}>
+            <ListItem button onClick={() => handleNavigation('/contact-us')}>
+              <ListItemText
+                primary={t('Contact Us')}
+                primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
+              />
+            </ListItem>
+
+            <ListItem button onClick={handleFetchFavorites}>
+              <ListItemText
+                primary={t('Favorites')}
+                primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
+              />
+            </ListItem>
+
+            {isLoggedIn ? (
+              <>
+                <ListItem button onClick={handleMyOrders}>
                   <ListItemText
-                      primary={t('Contact Us')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
+                    primary={t('My Orders')}
+                    primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
                   />
                 </ListItem>
-
-                {/* Language Switch - Mobile */}
-                <ListItem>
-                  <Tooltip title={t('select_language')}>
-                    <IconButton
-                        onClick={handleLanguageMenuClick}
-                        aria-label={t('select_language')}
-                        sx={{
-                          padding: '4px',
-                          border: '2px solid #8B0000',
-                          '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
-                        }}
-                    >
-                      <img
-                          src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
-                          alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
-                          style={{ width: '24px', height: '24px' }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                  <Menu
-                      anchorEl={languageAnchorEl}
-                      open={Boolean(languageAnchorEl)}
-                      onClose={handleLanguageMenuClose}
-                      PaperProps={{
-                        sx: {
-                          border: '1px solid #8B0000',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                        },
-                      }}
-                  >
-                    <MenuItem onClick={() => changeLanguage('en')}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
-                        <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          {t('English')}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                    <MenuItem onClick={() => changeLanguage('tr')}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
-                        <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          {t('Türkçe')}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  </Menu>
+                <ListItem button onClick={handleLogout}>
+                  <ListItemText
+                    primary={t('Logout')}
+                    primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
+                  />
                 </ListItem>
-              </List>
-            </Drawer>
-        )}
+              </>
+            ) : (
+              <ListItem button onClick={handleOpenLoginDialog}>
+                <ListItemText
+                  primary={t('Login')}
+                  primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
+                />
+              </ListItem>
+            )}
+
+            <ListItem>
+              <Tooltip title={t('select_language')}>
+                <IconButton
+                  onClick={handleLanguageMenuClick}
+                  aria-label={t('select_language')}
+                  sx={{
+                    padding: '4px',
+                    border: '2px solid #8B0000',
+                    '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
+                  }}
+                >
+                  <img
+                    src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
+                    alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={languageAnchorEl}
+                open={Boolean(languageAnchorEl)}
+                onClose={handleLanguageMenuClose}
+                PaperProps={{
+                  sx: {
+                    border: '1px solid #8B0000',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  },
+                }}
+              >
+                <MenuItem onClick={() => changeLanguage('en')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
+                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
+                      {t('English')}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem onClick={() => changeLanguage('tr')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
+                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
+                      {t('Türkçe')}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              </Menu>
+            </ListItem>
+          </List>
+        </Drawer>
+      )}
 
         {/* Register Dialog */}
         <Dialog open={openRegisterDialog} onClose={handleCloseRegisterDialog}>

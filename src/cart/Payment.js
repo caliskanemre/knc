@@ -1,65 +1,71 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Box,
-    Typography,
-    TextField,
-    Button,
-    Divider,
-    Snackbar,
-    Alert,
-    Select,
-    MenuItem,
-    InputLabel,
-    FormControl,
-    Grid,
-} from '@mui/material';
-import axios from 'axios';
-import Header from '../header/Header';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+   import {
+       Box,
+       Typography,
+       TextField,
+       Button,
+       Divider,
+       Snackbar,
+       Alert,
+       Select,
+       MenuItem,
+       InputLabel,
+       FormControl,
+       Grid,
+       CircularProgress,
+   } from '@mui/material';
+   import axios from 'axios';
+   import Header from '../header/Header';
+   import { useLocation, useNavigate } from 'react-router-dom';
+   import { useTranslation } from 'react-i18next';
 
-const Payment = () => {
-    const { t } = useTranslation();
-    const location = useLocation();
-    const navigate = useNavigate();
+   const Payment = () => {
+       const { t } = useTranslation();
+       const location = useLocation();
+       const navigate = useNavigate();
 
-    // Initialize from location.state or localStorage
-    const { totalPrice: basePrice = 0, cartItems = [], email: userEmail = '', guestToken = '' } = location.state || {};
-    const checkoutData = JSON.parse(localStorage.getItem('checkoutData')) || {};
-    const initialBasePrice = basePrice || checkoutData.totalPrice || 0;
-    const initialGuestToken = guestToken || checkoutData.guestToken || localStorage.getItem('guestToken') || '';
-
-    const [cartItemsState, setCartItemsState] = useState(
-        cartItems.length > 0 ? cartItems : checkoutData.cartItems || []
-    );
-    const [basePriceState, setBasePriceState] = useState(initialBasePrice);
+       const { totalPrice: basePrice = 0, cartItems: initialCartItems = [], email: userEmail = '', guestToken = '' } = location.state || {};
+       const initialGuestToken = guestToken || localStorage.getItem('guestToken') || '';
 
     const discountRate = 20;
-    const discountedBasePrice = parseFloat(basePriceState) * (1 - discountRate / 100);
-
+    const [cartItems, setCartItems] = useState(initialCartItems);
+    const [totalPrice, setTotalPrice] = useState(parseFloat(basePrice) * (1 - discountRate / 100));
     const [shippingCost, setShippingCost] = useState(0);
-    const [finalPrice, setFinalPrice] = useState(discountedBasePrice + shippingCost);
+    const [finalPrice, setFinalPrice] = useState(totalPrice + shippingCost);
+    const [isLoading, setIsLoading] = useState(false);
+    const [guestTokenState, setGuestToken] = useState(initialGuestToken);
 
-    // Shipping address state
-    const [shippingAddress, setShippingAddress] = useState({
-        name: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        guestEmail: userEmail || '',
-    });
+       const [shippingAddress, setShippingAddress] = useState({
+           name: '',
+           addressLine1: '',
+           addressLine2: '',
+           city: '',
+           postalCode: '',
+           country: '',
+           guestEmail: userEmail || '',
+       });
 
-    const [currency] = useState('EUR');
-    const [revolutOrderId, setRevolutOrderId] = useState(null);
+       const [currency] = useState('EUR');
+       const [revolutOrderId, setRevolutOrderId] = useState(null);
 
-    // Snackbar State
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+       const [snackbarOpen, setSnackbarOpen] = useState(false);
+       const [snackbarMessage, setSnackbarMessage] = useState('');
+       const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+       const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+    // Debug log for component mount and state
+    useEffect(() => {
+        console.log("Payment component mounted with location.state:", location.state);
+        console.log("Initial cartItems:", initialCartItems, "userEmail:", userEmail, "guestToken:", initialGuestToken);
+    }, []);
+
+    // Generate UUID for guest token
+    const generateUUID = () => {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    };
 
     // List of shipping countries & costs
     const shippingCountries = [
@@ -110,164 +116,194 @@ const Payment = () => {
         { code: 'US', name: 'USA', cost: 14.99 },
     ];
 
-
-    const handleShippingAddressChange = (event) => {
-        const { name, value } = event.target;
-        setShippingAddress((prev) => ({ ...prev, [name]: value }));
-    };
-    const handleCountrySelect = (event) => {
-        const selectedCountryCode = event.target.value;
-        const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
-        const cost = foundCountry ? foundCountry.cost : 0;
-        setShippingAddress((prev) => ({ ...prev, country: selectedCountryCode }));
-        setShippingCost(cost);
-    };
-
-
     useEffect(() => {
         const fetchGuestCart = async () => {
-            if (!userEmail && initialGuestToken && cartItemsState.length === 0) {
+            if (!userEmail && initialGuestToken) {
+                setIsLoading(true);
                 try {
+                    console.log("Guest checkout - Fetching guest cart with token:", initialGuestToken);
                     const response = await axios.get(`${baseURL}/cart/guest`, {
                         headers: { 'X-Guest-Token': initialGuestToken },
                     });
                     const guestCartItems = response.data || [];
-                    if (guestCartItems.length > 0) {
-                        const newTotalPrice = guestCartItems.reduce(
-                            (total, item) => total + item.price * item.quantity,
-                            0
-                        );
-                        setCartItemsState(guestCartItems);
-                        setBasePriceState(newTotalPrice);
-                        setFinalPrice(newTotalPrice * (1 - discountRate / 100) + shippingCost);
-                        localStorage.setItem(
-                            'checkoutData',
-                            JSON.stringify({
-                                ...checkoutData,
-                                cartItems: guestCartItems,
-                                totalPrice: newTotalPrice,
-                                guestToken: initialGuestToken,
-                            })
-                        );
-                    } else {
+                    console.log("Guest checkout - Guest cart response:", guestCartItems);
+                    const normalizedCartItems = guestCartItems.map(item => ({
+                        ...item,
+                        price: parseFloat(item.price) || 0,
+                    }));
+                    setCartItems(normalizedCartItems);
+                    calculateTotalPrice(normalizedCartItems);
+                    if (normalizedCartItems.length === 0) {
+                        console.log("Guest checkout - Redirecting to /cart: Guest cart is empty");
                         showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
                         setTimeout(() => navigate('/cart'), 2000);
                     }
                 } catch (error) {
-                    console.error('Error fetching guest cart:', error);
-                    showSnackbar(t('Error fetching cart. Please try again.'), 'error');
+                    console.error('Guest checkout - Error fetching guest cart:', error.response?.data || error.message);
+                    console.log("Guest checkout - Redirecting to /cart: Error fetching guest cart");
+                    showSnackbar(t('Error fetching cart data'), 'error');
+                    setTimeout(() => navigate('/cart'), 2000);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                console.log("Guest checkout - Using initialCartItems:", initialCartItems);
+                setCartItems(initialCartItems);
+                calculateTotalPrice(initialCartItems);
+                if (initialCartItems.length === 0 && !initialGuestToken) {
+                    console.log("Guest checkout - Redirecting to /cart: No cart items and no guest token");
+                    showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
                     setTimeout(() => navigate('/cart'), 2000);
                 }
-            } else if (cartItemsState.length === 0) {
-                showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
-                setTimeout(() => navigate('/cart'), 2000);
             }
         };
 
-        fetchGuestCart();
-    }, [cartItemsState, basePriceState, shippingCost, initialGuestToken, userEmail, navigate]);
+           fetchGuestCart();
+       }, [initialGuestToken, userEmail, initialCartItems, navigate]);
 
-    const validateFields = () => {
-        const missingFields = [];
-        if (!shippingAddress.name) missingFields.push(t('Full Name'));
-        if (!shippingAddress.addressLine1) missingFields.push(t('Address Line 1'));
-        if (!shippingAddress.city) missingFields.push(t('City'));
-        if (!shippingAddress.postalCode) missingFields.push(t('Postal Code'));
-        if (!shippingAddress.country) missingFields.push(t('Country'));
-        if (!userEmail && !shippingAddress.guestEmail) missingFields.push(t('Email'));
+       useEffect(() => {
+           setFinalPrice(totalPrice + parseFloat(shippingCost));
+       }, [totalPrice, shippingCost]);
 
-        if (missingFields.length > 0) {
-            showSnackbar(`${t('Please fill in the missing fields')}: ${missingFields.join(', ')}`, 'warning');
-            return false;
-        }
-        return true;
-    };
+       const calculateTotalPrice = (items) => {
+           const total = items.reduce((acc, item) => acc + parseFloat(item.price), 0);
+           const discountedTotal = total * (1 - discountRate / 100);
+           setTotalPrice(discountedTotal);
+       };
 
-    useEffect(() => {
-        setFinalPrice(parseFloat(basePriceState) * (1 - discountRate / 100) + parseFloat(shippingCost));
-    }, [basePriceState, shippingCost]);
+       const handleShippingAddressChange = (event) => {
+           const { name, value } = event.target;
+           setShippingAddress((prev) => ({ ...prev, [name]: value }));
+       };
 
-    // Update handlePaymentSubmit to use cartItemsState
-    const handlePaymentSubmit = async () => {
-        if (cartItemsState.length === 0) {
-            showSnackbar(t('Cart is empty'), 'warning');
-            return;
-        }
+       const handleCountrySelect = (event) => {
+           const selectedCountryCode = event.target.value;
+           const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
+           const cost = foundCountry ? foundCountry.cost : 0;
+           setShippingAddress((prev) => ({ ...prev, country: selectedCountryCode }));
+           setShippingCost(cost);
+       };
 
-        if (!validateFields()) return;
+       const validateEmail = (email) => {
+           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+           return emailRegex.test(email);
+       };
 
-        const amountInCents = Math.round(finalPrice * 100);
-        const paymentData = {
-            amount: amountInCents,
-            currency,
-            shippingAddress: {
-                name: shippingAddress.name,
-                addressLine1: shippingAddress.addressLine1,
-                addressLine2: shippingAddress.addressLine2,
-                city: shippingAddress.city,
-                postalCode: shippingAddress.postalCode,
-                country: shippingAddress.country,
-            },
-            email: userEmail || shippingAddress.guestEmail,
-        };
+       const validateFields = () => {
+           const missingFields = [];
+           if (!shippingAddress.name) missingFields.push(t('Full Name'));
+           if (!shippingAddress.addressLine1) missingFields.push(t('Address Line 1'));
+           if (!shippingAddress.city) missingFields.push(t('City'));
+           if (!shippingAddress.postalCode) missingFields.push(t('Postal Code'));
+           if (!shippingAddress.country) missingFields.push(t('Country'));
+           if (!userEmail && !shippingAddress.guestEmail) missingFields.push(t('Email'));
+           if (!userEmail && shippingAddress.guestEmail && !validateEmail(shippingAddress.guestEmail)) {
+               showSnackbar(t('Invalid email format'), 'warning');
+               return false;
+           }
+
+           if (missingFields.length > 0) {
+               showSnackbar(`${t('Please fill in the missing fields')}: ${missingFields.join(', ')}`, 'warning');
+               return false;
+           }
+           return true;
+       };
+
+       const handlePaymentSubmit = async () => {
+           if (cartItems.length === 0) {
+               showSnackbar(t('Cart is empty'), 'warning');
+               return;
+           }
+
+           if (!validateFields()) return;
 
         try {
             const headers = userEmail
                 ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 : { 'X-Guest-Token': initialGuestToken };
-            const response = await axios.post(`${baseURL}/api/payment`, paymentData, { headers });
-            console.log("🚀 Payment API Response:", response.data);
+            const validateUrl = userEmail
+                ? `${baseURL}/cart/validate/${encodeURIComponent(userEmail)}`
+                : `${baseURL}/cart/guest/validate`;
+            console.log("Guest checkout - Validating cart with URL:", validateUrl, "Headers:", headers, "Payload:", cartItems);
+            const response = await axios.post(validateUrl, cartItems, { headers });
+            console.log("Guest checkout - Validation response:", response.data);
+            if (!response.data.valid) {
+                showSnackbar(response.data.message, 'error');
+                return;
+            }
 
-            if (response.status === 200 && response.data.checkout_url) {
-                const revolutOrderId = new URL(response.data.checkout_url).searchParams.get("order_id");
+               const amountInCents = Math.round(finalPrice * 100);
+               const paymentData = {
+                   amount: amountInCents,
+                   currency,
+                   shippingAddress: {
+                       name: shippingAddress.name,
+                       addressLine1: shippingAddress.addressLine1,
+                       addressLine2: shippingAddress.addressLine2,
+                       city: shippingAddress.city,
+                       postalCode: shippingAddress.postalCode,
+                       country: shippingAddress.country,
+                   },
+                   email: userEmail || shippingAddress.guestEmail,
+               };
+
+            console.log("Guest checkout - Initiating payment with data:", paymentData);
+            const paymentResponse = await axios.post(`${baseURL}/api/payment`, paymentData, { headers });
+            if (paymentResponse.status === 200 && paymentResponse.data.checkout_url) {
+                const revolutOrderId = new URL(paymentResponse.data.checkout_url).searchParams.get("order_id");
                 setRevolutOrderId(revolutOrderId);
-                console.log("✅ Revolut Order ID:", revolutOrderId);
-
                 showSnackbar(t('Payment process started!'), 'success');
-                window.location.href = response.data.checkout_url;
+                window.location.href = paymentResponse.data.checkout_url;
             } else {
                 showSnackbar(t('Payment created but checkout_url not received!'), 'error');
-                console.error("❌ checkout_url not received, response:", response.data);
             }
         } catch (error) {
-            console.error('Error processing payment:', error);
-            showSnackbar(t('Error occurred during payment!'), 'error');
+            console.error('Guest checkout - Error processing payment:', error.response?.data || error.message);
+            showSnackbar(error.response?.data?.message || t('Error occurred during payment!'), 'error');
         }
     };
 
-    // Update placeOrderAfterPayment to use cartItemsState
-    const placeOrderAfterPayment = async (revolutOrderId) => {
-        if (!revolutOrderId) return;
+       useEffect(() => {
+           const queryParams = new URLSearchParams(window.location.search);
+           const revolutOrderIdFromURL = queryParams.get('order_id');
+           const paymentStatus = queryParams.get('status');
 
-        const normalizedCartItems = cartItemsState.map((item) => ({
-            ...item,
-            price: parseFloat(item.price) || 0,
-        }));
+           if (revolutOrderIdFromURL && paymentStatus === "success") {
+               setRevolutOrderId(revolutOrderIdFromURL);
+               placeOrderAfterPayment(revolutOrderIdFromURL);
+           }
+       }, []);
 
-        const orderData = {
-            guestEmail: userEmail || shippingAddress.guestEmail,
-            shippingAddressLine1: shippingAddress.addressLine1,
-            shippingAddressLine2: shippingAddress.addressLine2 || "",
-            city: shippingAddress.city,
-            postalCode: shippingAddress.postalCode,
-            country: shippingAddress.country,
-            totalPrice: finalPrice,
-            paymentMethod: "Revolut",
-            items: normalizedCartItems,
-        };
+       const placeOrderAfterPayment = async (revolutOrderId) => {
+           if (!revolutOrderId) return;
+
+           const normalizedCartItems = cartItems.map(item => ({
+               ...item,
+               price: parseFloat(item.price) || 0,
+           }));
+
+           const orderData = {
+               guestEmail: userEmail || shippingAddress.guestEmail,
+               shippingAddressLine1: shippingAddress.addressLine1,
+               shippingAddressLine2: shippingAddress.addressLine2 || "",
+               city: shippingAddress.city,
+               postalCode: shippingAddress.postalCode,
+               country: shippingAddress.country,
+               totalPrice: finalPrice,
+               paymentMethod: "Revolut",
+               items: normalizedCartItems,
+           };
 
         try {
             const url = userEmail ? `${baseURL}/orders/${userEmail}` : `${baseURL}/orders/guest`;
-            const headers = userEmail
-                ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                : { 'X-Guest-Token': initialGuestToken };
+            const headers = userEmail ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : { 'X-Guest-Token': initialGuestToken };
+            console.log("Guest checkout - Placing order with URL:", url, "Data:", orderData);
             const response = await axios.post(url, orderData, {
                 headers,
                 params: { revolutOrderId }
             });
 
             if (response.status === 200) {
-                // Check payment status to trigger guest cart clearing
                 if (!userEmail) {
                     await axios.get(`${baseURL}/api/payment/status?orderId=${revolutOrderId}`, {
                         headers: { 'X-Guest-Token': initialGuestToken }
@@ -275,7 +311,6 @@ const Payment = () => {
                 }
 
                 showSnackbar(t('Your order has been successfully created!'), 'success');
-                // Clear carts
                 if (userEmail) {
                     await axios.delete(`${baseURL}/cart/${userEmail}`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -283,165 +318,176 @@ const Payment = () => {
                 } else {
                     localStorage.removeItem('cart');
                     localStorage.removeItem('guestToken');
-                    localStorage.removeItem('checkoutData');
+                    const newGuestToken = generateUUID();
+                    setGuestToken(newGuestToken);
+                    localStorage.setItem('guestToken', newGuestToken);
                 }
                 navigate('/my-orders');
             }
         } catch (error) {
-            console.error('Error placing order:', error);
-            showSnackbar(t('Error occurred while creating order!'), 'error');
+            console.error('Error placing order:', error.response?.data || error.message);
+            showSnackbar(error.response?.data?.message || t('Error occurred while creating order!'), 'error');
         }
     };
 
-    const showSnackbar = (message, severity) => {
-        setSnackbarMessage(message);
-        setSnackbarSeverity(severity);
-        setSnackbarOpen(true);
-    };
+       const showSnackbar = (message, severity) => {
+           setSnackbarMessage(message);
+           setSnackbarSeverity(severity);
+           setSnackbarOpen(true);
+       };
 
-    const handleSnackbarClose = () => setSnackbarOpen(false);
+       const handleSnackbarClose = () => setSnackbarOpen(false);
 
-    return (
-        <div>
-            <Header />
-            <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 2 }}>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                        <section id="shipping-information">
-                            <Typography variant="h4" component="h1" gutterBottom>
-                                {t('Shipping Information')}
-                            </Typography>
-                            <Divider sx={{ marginBottom: 2 }} />
-                            <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
-                                <Typography variant="h6" gutterBottom>
-                                    {t('Shipping Address')}
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    label={t('Full Name')}
-                                    name="name"
-                                    value={shippingAddress.name}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ mb: 1 }}
-                                    required
-                                />
-                                {!userEmail && (
-                                    <TextField
-                                        fullWidth
-                                        label={t('Email')}
-                                        name="guestEmail"
-                                        value={shippingAddress.guestEmail}
-                                        onChange={handleShippingAddressChange}
-                                        sx={{ mb: 1 }}
-                                        required
-                                    />
-                                )}
-                                <TextField
-                                    fullWidth
-                                    label={t('Address Line 1')}
-                                    name="addressLine1"
-                                    value={shippingAddress.addressLine1}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ mb: 1 }}
-                                    required
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('Address Line 2')}
-                                    name="addressLine2"
-                                    value={shippingAddress.addressLine2}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ mb: 1 }}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('City')}
-                                    name="city"
-                                    value={shippingAddress.city}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ mb: 1 }}
-                                    required
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('Postal Code')}
-                                    name="postalCode"
-                                    value={shippingAddress.postalCode}
-                                    onChange={handleShippingAddressChange}
-                                    sx={{ mb: 1 }}
-                                    required
-                                />
-                                <FormControl fullWidth sx={{ mb: 2 }} required>
-                                    <InputLabel id="country-select-label">{t('Country')}</InputLabel>
-                                    <Select
-                                        labelId="country-select-label"
-                                        id="country-select"
-                                        name="country"
-                                        label={t('Country')}
-                                        value={shippingAddress.country}
-                                        onChange={handleCountrySelect}
-                                        variant="outlined"
-                                    >
-                                        <MenuItem value="">
-                                            <em>{t('Select')}</em>
-                                        </MenuItem>
-                                        {shippingCountries.map((country) => (
-                                            <MenuItem key={country.code} value={country.code}>
-                                                {country.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                        </section>
-                    </Grid>
+       return (
+           <div>
+               <Header />
+               <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 2 }}>
+                   {isLoading ? (
+                       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                           <CircularProgress />
+                       </Box>
+                   ) : (
+                       <Grid container spacing={3}>
+                           <Grid item xs={12} md={6}>
+                               <section id="shipping-information">
+                                   <Typography variant="h4" component="h1" gutterBottom>
+                                       {t('Shipping Information')}
+                                   </Typography>
+                                   <Divider sx={{ marginBottom: 2 }} />
+                                   <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
+                                       <Typography variant="h6" gutterBottom>
+                                           {t('Shipping Address')}
+                                       </Typography>
+                                       <TextField
+                                           fullWidth
+                                           label={t('Full Name')}
+                                           name="name"
+                                           value={shippingAddress.name}
+                                           onChange={handleShippingAddressChange}
+                                           sx={{ mb: 1 }}
+                                           required
+                                       />
+                                       {!userEmail && (
+                                           <TextField
+                                               fullWidth
+                                               label={t('Email')}
+                                               name="guestEmail"
+                                               value={shippingAddress.guestEmail}
+                                               onChange={handleShippingAddressChange}
+                                               sx={{ mb: 1 }}
+                                               required
+                                               error={shippingAddress.guestEmail && !validateEmail(shippingAddress.guestEmail)}
+                                               helperText={shippingAddress.guestEmail && !validateEmail(shippingAddress.guestEmail) ? t('Invalid email format') : ''}
+                                           />
+                                       )}
+                                       <TextField
+                                           fullWidth
+                                           label={t('Address Line 1')}
+                                           name="addressLine1"
+                                           value={shippingAddress.addressLine1}
+                                           onChange={handleShippingAddressChange}
+                                           sx={{ mb: 1 }}
+                                           required
+                                       />
+                                       <TextField
+                                           fullWidth
+                                           label={t('Address Line 2')}
+                                           name="addressLine2"
+                                           value={shippingAddress.addressLine2}
+                                           onChange={handleShippingAddressChange}
+                                           sx={{ mb: 1 }}
+                                       />
+                                       <TextField
+                                           fullWidth
+                                           label={t('City')}
+                                           name="city"
+                                           value={shippingAddress.city}
+                                           onChange={handleShippingAddressChange}
+                                           sx={{ mb: 1 }}
+                                           required
+                                       />
+                                       <TextField
+                                           fullWidth
+                                           label={t('Postal Code')}
+                                           name="postalCode"
+                                           value={shippingAddress.postalCode}
+                                           onChange={handleShippingAddressChange}
+                                           sx={{ mb: 1 }}
+                                           required
+                                       />
+                                       <FormControl fullWidth sx={{ mb: 2 }} required>
+                                           <InputLabel id="country-select-label">{t('Country')}</InputLabel>
+                                           <Select
+                                               labelId="country-select-label"
+                                               id="country-select"
+                                               name="country"
+                                               label={t('Country')}
+                                               value={shippingAddress.country}
+                                               onChange={handleCountrySelect}
+                                               variant="outlined"
+                                           >
+                                               <MenuItem value="">
+                                                   <em>{t('Select')}</em>
+                                               </MenuItem>
+                                               {shippingCountries.map((country) => (
+                                                   <MenuItem key={country.code} value={country.code}>
+                                                       {country.name}
+                                                   </MenuItem>
+                                               ))}
+                                           </Select>
+                                       </FormControl>
+                                   </Box>
+                               </section>
+                           </Grid>
 
-                    <Grid item xs={12} md={6}>
-                        <section id="payment-information">
-                            <Typography variant="h4" component="h1" gutterBottom>
-                                {t('Payment Information')}
-                            </Typography>
-                            <Divider sx={{ marginBottom: 2 }} />
-                            <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
-                                <Typography variant="h6" gutterBottom>
-                                    {t('Order Summary')}
-                                </Typography>
-                                <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Items Total')}: {parseFloat(basePriceState).toFixed(2)} €
-                                </Typography>
-                                <Typography variant="body1" sx={{ mb: 1 }}>
-                                    {t('Shipping Cost')}: <strong>{parseFloat(shippingCost).toFixed(2)} €</strong>
-                                </Typography>
-                                <Divider sx={{ my: 1 }} />
-                                <Typography variant="h6">
-                                    {t('Total')}: <strong>{parseFloat(finalPrice).toFixed(2)} €</strong>
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    fullWidth
-                                    sx={{ mt: 2 }}
-                                    onClick={handlePaymentSubmit}
-                                    disabled={cartItemsState.length === 0}
-                                >
-                                    {t('Proceed to Payment')}
-                                </Button>
-                            </Box>
-                        </section>
-                    </Grid>
-                </Grid>
-            </Box>
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={4000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
-        </div>
-    );
-};
-export default Payment;
+                           <Grid item xs={12} md={6}>
+                               <section id="payment-information">
+                                   <Typography variant="h4" component="h1" gutterBottom>
+                                       {t('Payment Information')}
+                                   </Typography>
+                                   <Divider sx={{ marginBottom: 2 }} />
+                                   <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
+                                       <Typography variant="h6" gutterBottom>
+                                           {t('Order Summary')}
+                                       </Typography>
+                                       <Typography variant="body1" sx={{ mb: 1 }}>
+                                           {t('Items Total')}: {parseFloat(totalPrice).toFixed(2)} €
+                                       </Typography>
+                                       <Typography variant="body1" sx={{ mb: 1 }}>
+                                           {t('Shipping Cost')}: <strong>{parseFloat(shippingCost).toFixed(2)} €</strong>
+                                       </Typography>
+                                       <Divider sx={{ my: 1 }} />
+                                       <Typography variant="h6">
+                                           {t('Total')}: <strong>{parseFloat(finalPrice).toFixed(2)} €</strong>
+                                       </Typography>
+                                       <Button
+                                           variant="contained"
+                                           color="primary"
+                                           fullWidth
+                                           sx={{ mt: 2 }}
+                                           onClick={handlePaymentSubmit}
+                                           disabled={cartItems.length === 0 || isLoading}
+                                       >
+                                           {t('Proceed to Payment')}
+                                       </Button>
+                                   </Box>
+                               </section>
+                           </Grid>
+                       </Grid>
+                   )}
+               </Box>
+               <Snackbar
+                   open={snackbarOpen}
+                   autoHideDuration={4000}
+                   onClose={handleSnackbarClose}
+                   anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+               >
+                   <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                       {snackbarMessage}
+                   </Alert>
+               </Snackbar>
+           </div>
+       );
+   };
+
+   export default Payment;

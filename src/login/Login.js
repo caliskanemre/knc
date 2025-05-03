@@ -1,91 +1,103 @@
+// Login.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField } from '@mui/material';
-import { useAuth } from "../auth/AuthProvider";
-import { jwtDecode } from "jwt-decode";
-import DialogActions from "@mui/material/DialogActions";
-import { useTranslation } from "react-i18next";
-import { ClipLoader } from 'react-spinners'; // Import a spinner
+import { Button, Dialog, DialogContent, DialogTitle, Snackbar, TextField, DialogActions } from '@mui/material';
+import { useAuth } from '../auth/AuthProvider';
+import { jwtDecode } from 'jwt-decode';
+import { useTranslation } from 'react-i18next';
+import { ClipLoader } from 'react-spinners';
+
+const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) {
-    const { setUsername } = useAuth();
+    const { setIsLoggedIn, setUsername, setToken } = useAuth(); // Added setToken
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [success, setSuccess] = useState(false);
-    const [email, setEmail] = useState('');
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-    const [loading, setLoading] = useState(false); // Add loading state
+    const [loading, setLoading] = useState(false);
     const { t } = useTranslation();
 
     const handleForgotPassword = async () => {
         try {
             const response = await axios.post(`${baseURL}/auth/forgot-password`, { email });
-            console.log("Forgot password response:", response.data);
+            console.log('Forgot password response:', response.data);
             setShowForgotPassword(false);
+            setSuccess(true);
         } catch (error) {
-            console.error("Forgot password error:", error.response || error.message);
+            console.error('Forgot password error:', error.response?.data || error.message);
+            setError(t('forgot_password_failed'));
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true); // Show spinner
+        setLoading(true);
+        setError('');
+
         try {
-            const response = await axios.post(`${baseURL}/auth/login`, { email, password }); // Changed to use email
+            const response = await axios.post(`${baseURL}/auth/login`, { email, password });
             if (response.data && response.data.accessToken) {
                 const { accessToken } = response.data;
-                localStorage.setItem('token', accessToken);
+                localStorage.setItem('token', accessToken); // Store token
+                setToken(accessToken); // Update context token
 
                 const decodedToken = jwtDecode(accessToken);
-                const userEmail = decodedToken.sub; // Extract email instead of username
+                const userEmail = decodedToken.sub; // Extract email as username
 
-                onLoginSuccess(response.data);
+                // Update context state
+                setIsLoggedIn(true);
                 setUsername(userEmail);
-                setError('');
+
+                // Call onLoginSuccess
+                onLoginSuccess({ accessToken, email: userEmail });
+
                 setSuccess(true);
 
-                // Simulate a delay to show the animation, then close
+                // Simulate delay for animation
                 setTimeout(() => {
                     setLoading(false);
                     handleClose();
-                }, 1000); // 1-second delay for animation
+                }, 1000);
             } else {
-                setError('Failed to login - No data received');
+                setError(t('login_failed_no_data'));
                 setLoading(false);
             }
         } catch (error) {
-            console.error('Login error:', error.response || error.message);
-            setError('Failed to login');
+            console.error('Login error:', error.response?.data || error.message);
+            setError(t('login_failed'));
             setLoading(false);
         }
     };
 
     return (
         <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>{t("Login")}</DialogTitle>
+            <DialogTitle>{t('Login')}</DialogTitle>
             <DialogContent>
                 <form onSubmit={handleSubmit}>
                     <TextField
                         autoFocus
                         margin="dense"
                         id="email"
-                        label="Email"
+                        label={t('Email')}
                         type="email"
                         fullWidth
                         variant="outlined"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                     />
                     <TextField
                         margin="dense"
                         id="password"
-                        label="Password"
+                        label={t('Password')}
                         type="password"
                         fullWidth
                         variant="outlined"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        required
                     />
                     <Button
                         type="submit"
@@ -93,11 +105,11 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                         variant="contained"
                         fullWidth
                         style={{ marginTop: '20px' }}
-                        disabled={loading} // Disable button while loading
+                        disabled={loading}
                     >
-                        {loading ? <ClipLoader size={20} color="#fff" /> : t("Login")}
+                        {loading ? <ClipLoader size={20} color="#fff" /> : t('Login')}
                     </Button>
-                    <p style={{ textAlign: 'center', marginTop: '10px' }}>{t("Not a member yet?")}</p>
+                    <p style={{ textAlign: 'center', marginTop: '10px' }}>{t('Not a member yet?')}</p>
                     <Button
                         color="primary"
                         variant="contained"
@@ -108,7 +120,7 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
                         }}
                         disabled={loading}
                     >
-                        {t("Sign Up")}
+                        {t('Sign Up')}
                     </Button>
                     {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
                 </form>
@@ -116,46 +128,46 @@ function Login({ open, handleClose, onLoginSuccess, handleOpenRegisterDialog }) 
 
             <DialogActions>
                 <Button color="primary" onClick={() => setShowForgotPassword(true)} disabled={loading}>
-                    {t("Forgot Password")}
+                    {t('Forgot Password')}
                 </Button>
                 <Button onClick={handleClose} color="primary" disabled={loading}>
-                    {t("Close")}
+                    {t('Close')}
                 </Button>
             </DialogActions>
 
-            {/* Forgot Password Dialog */}
             <Dialog open={showForgotPassword} onClose={() => setShowForgotPassword(false)}>
-                <DialogTitle>{t("Forgot Password")}</DialogTitle>
+                <DialogTitle>{t('Forgot Password')}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         margin="dense"
                         id="forgot-email"
-                        label="Email Address"
+                        label={t('Email Address')}
                         type="email"
                         fullWidth
                         variant="outlined"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                     />
                 </DialogContent>
                 <DialogActions>
                     <Button color="primary" variant="contained" onClick={handleForgotPassword}>
-                        {t("Send Reset Link")}
+                        {t('Send Reset Link')}
                     </Button>
                     <Button onClick={() => setShowForgotPassword(false)} color="primary">
-                        {t("Cancel")}
+                        {t('Cancel')}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             <Snackbar
-                open={success && !loading} // Only show when loading is done
+                open={success && !loading}
                 autoHideDuration={6000}
-                message={t("Login successful!")}
+                message={t('Login successful!')}
                 action={
                     <Button color="secondary" size="small" onClick={() => setSuccess(false)}>
-                        {t("Close")}
+                        {t('Close')}
                     </Button>
                 }
             />
