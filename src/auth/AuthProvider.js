@@ -1,6 +1,7 @@
+// AuthProvider.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import {jwtDecode} from 'jwt-decode'; // Ensure correct import
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
 const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -8,24 +9,26 @@ const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(''); // Renamed from email to username
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
 
-  // ✅ On component mount, check localStorage for a token
+  // On component mount, check localStorage for a token
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       try {
         const decoded = jwtDecode(storedToken);
         setToken(storedToken);
-        setEmail(decoded.sub); // ✅ Assumes JWT `sub` contains email
+        setUsername(decoded.sub); // Store email in username
         setIsLoggedIn(true);
         fetchFavorites(storedToken);
         fetchCart(storedToken);
       } catch (error) {
-        console.error("Invalid token:", error);
+        console.error('Invalid token:', error);
+        localStorage.removeItem('token'); // Clear invalid token
         setToken('');
+        setUsername('');
         setIsLoggedIn(false);
       }
     }
@@ -33,12 +36,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchCart = async (authToken) => {
     try {
-      const response = await axios.get(`${baseURL}/cart/${email}`, {
+      const response = await axios.get(`${baseURL}/cart/${username}`, {
+        // Use username (contains email) for API call
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
       setCart(response.data || []);
     } catch (error) {
-      console.error("Error fetching cart items:", error);
+      console.error('Error fetching cart items:', error.response?.data || error.message);
     }
   };
 
@@ -47,29 +51,29 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(`${baseURL}/users/favorites`, {
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
-      setFavorites(response.data);
+      setFavorites(response.data || []);
     } catch (error) {
-      console.error("Error fetching favorites:", error);
+      console.error('Error fetching favorites:', error.response?.data || error.message);
     }
   };
 
   const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
     try {
       if (isInCart) {
-        // ✅ Remove from cart using email
-        await axios.delete(`${baseURL}/cart/${email}/item/${itemId}`, {
+        // Remove from cart using username (contains email)
+        await axios.delete(`${baseURL}/cart/${username}/item/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        // ✅ Add to cart using email
+        // Add to cart using username (contains email)
         const cartItem = { productId: itemId, quantity, price };
-        await axios.post(`${baseURL}/cart/${email}`, cartItem, {
+        await axios.post(`${baseURL}/cart/${username}`, cartItem, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
       fetchCart(token);
     } catch (error) {
-      console.error(`Error toggling cart item ${itemId}:`, error);
+      console.error(`Error toggling cart item ${itemId}:`, error.response?.data || error.message);
     }
   };
 
@@ -89,26 +93,34 @@ export const AuthProvider = ({ children }) => {
       // Refresh the favorites list
       fetchFavorites(token);
     } catch (error) {
-      console.error(`Error toggling favorite ${itemType}:`, error);
+      console.error(`Error toggling favorite ${itemType}:`, error.response?.data || error.message);
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      isLoggedIn,
-      setIsLoggedIn,
-      token,
-      setToken,
-      email, // ✅ Updated from `username` to `email`
-      setEmail, // ✅ Ensure we have a setter for email
-      favorites,
-      toggleFavorite,
-      cart,
-      toggleCartItem,
-    }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider
+          value={{
+            isLoggedIn,
+            setIsLoggedIn,
+            token,
+            setToken,
+            username, // Renamed from email to username
+            setUsername, // Renamed from setEmail to setUsername
+            favorites,
+            toggleFavorite,
+            cart,
+            toggleCartItem,
+          }}
+      >
+        {children}
+      </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

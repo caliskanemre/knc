@@ -10,20 +10,17 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
+import Alert from '@mui/material/Alert';
 import { Helmet } from 'react-helmet';
 import Axios from 'axios';
-
+import axios from 'axios';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 const defaultTheme = createTheme();
 const PAGE_SIZE = 20;
@@ -34,23 +31,25 @@ const getPrefixedImage = (url, prefix) => {
     return url.replace(/([^/]+)$/, `${prefix}_$1`);
 };
 
+// Generate UUID for guest token
+const generateUUID = () => {
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+};
+
 export default function Main() {
     const [products, setProducts] = useState([]);
-    const [localFavorites, setLocalFavorites] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
-    const [openDialog, setOpenDialog] = useState(false);
-    const { t} = useTranslation();
-    const { favorites, isLoggedIn, toggleFavorite } = useAuth();
+    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const { t } = useTranslation();
+    const { favorites, isLoggedIn, toggleFavorite, token } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-
-    // Sync local favorites with global favorites
-    useEffect(() => {
-        setLocalFavorites(favorites.favoriteProducts?.map((fav) => fav.id) || []);
-    }, [favorites]);
 
     // Fetch products
     const fetchProducts = async (pageNum) => {
@@ -70,12 +69,38 @@ export default function Main() {
             }
         } catch (error) {
             console.error('Error fetching products:', error);
+            setSnackbarMessage(t('Error fetching products'));
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
         }
     };
 
     useEffect(() => {
         fetchProducts(0); // Initial fetch
     }, []);
+
+    useEffect(() => {
+        // Store guest token
+        localStorage.setItem('guestToken', guestToken);
+
+        // Sync local favorites to server on login
+        if (isLoggedIn && token) {
+            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            localFavorites.forEach(async (favorite) => {
+                if (favorite && favorite.id && !favorites.favoriteProducts?.some(product => product.id === favorite.id)) {
+                    try {
+                        await toggleFavorite(favorite.id, false, 'product');
+                    } catch (error) {
+                        console.error('Error syncing favorite:', error);
+                        setSnackbarMessage(t('Error syncing favorites'));
+                        setSnackbarSeverity('error');
+                        setSnackbarOpen(true);
+                    }
+                }
+            });
+            localStorage.removeItem('favorites');
+        }
+    }, [isLoggedIn, token, favorites, toggleFavorite, t, guestToken]);
 
     const handleLoadMore = () => {
         if (!loading && hasMore) {
@@ -85,33 +110,124 @@ export default function Main() {
         }
     };
 
-    const handleFavoriteClick = (productId) => {
-        if (!isLoggedIn) {
-            setOpenDialog(true);
+    const handleFavoriteClick = async (productId) => {
+        if (!productId || typeof productId !== 'number') {
+            setSnackbarMessage(t('Cannot add to favorites: Invalid product'));
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
             return;
         }
 
-        const isFavorite = localFavorites.includes(productId);
-        toggleFavorite(productId, isFavorite, 'product');
-        setLocalFavorites((prev) =>
-            isFavorite ? prev.filter((id) => id !== productId) : [...prev, productId]
-        );
+        // Find the product to get its details
+        const product = products.find(p => p.id === productId);
+        if (!product) {
+            setSnackbarMessage(t('Cannot add to favorites: Product not found'));
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
 
-        setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+        if (isLoggedIn && token) {
+            // Logged-in user: Use toggleFavorite
+            const isAlreadyFavorited = favorites.favoriteProducts?.some(p => p.id === productId);
+            try {
+                await toggleFavorite(productId, isAlreadyFavorited, 'product');
+                setSnackbarMessage(isAlreadyFavorited ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️');
+                setSnackbarSeverity('success');
+                setSnackbarOpen(true);
+            } catch (error) {
+                console.error('Error syncing favorite to server:', error);
+                setSnackbarMessage(t('Error syncing favorites'));
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+            }
+        } else {
+            // Guest user: Update localStorage and sync with backend
+            let localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            const isAlreadyFavorited = localFavorites.some(fav => fav.id === productId);
+
+            if (isAlreadyFavorited) {
+                // Remove from favorites
+                localFavorites = localFavorites.filter(fav => fav.id !== productId);
+                try {
+                    await axios.delete(`${baseURL}/users/guest/favorites/${productId}`, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbarMessage(t('Removed from favorites') + ' ❌');
+                    setSnackbarSeverity('success');
+                    setSnackbarOpen(true);
+                } catch (error) {
+                    console.error('Error removing guest favorite:', error.response?.data || error.message);
+                    setSnackbarMessage(t('Error removing from favorites'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                }
+            } else {
+                // Add to favorites
+                const favoriteItem = {
+                    id: product.id,
+                    title: product.title || product.name || 'Unknown',
+                    price: product.price || 0,
+                    photos: product.photos || [],
+                    date: product.date || '',
+                    activity_location: product.activityLocation || product.location || '',
+                };
+                localFavorites.push(favoriteItem);
+                try {
+                    await axios.post(`${baseURL}/users/guest/favorites/${productId}`, {}, {
+                        headers: { 'X-Guest-Token': guestToken },
+                    });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbarMessage(t('Added to favorites') + ' ❤️');
+                    setSnackbarSeverity('success');
+                    setSnackbarOpen(true);
+                } catch (error) {
+                    console.error('Error adding guest favorite:', error.response?.data || error.message);
+                    setSnackbarMessage(t('Error adding to favorites'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                }
+            }
+        }
+    };
+
+    const addToCart = (productId, price, title, quantity) => {
+        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+        const cartItem = { productId, quantity, price, title, note: '' };
+        const existingItemIndex = localCart.findIndex(item => item.productId === productId);
+        if (existingItemIndex >= 0) {
+            localCart[existingItemIndex].quantity += quantity;
+        } else {
+            localCart.push(cartItem);
+        }
+        localStorage.setItem('cart', JSON.stringify(localCart));
+        setSnackbarMessage(t(`${quantity} adet "${title}" sepete eklendi!`));
+        setSnackbarSeverity('success');
         setSnackbarOpen(true);
+
+        if (isLoggedIn && token) {
+            // Sync to server (requires email from useAuth)
+            // Note: You'll need to add email to useAuth or fetch it from localStorage
+            // Axios.post(`${baseURL}/cart/${email}`, cartItem, {
+            //     headers: { Authorization: `Bearer ${token}` },
+            // }).catch(error => {
+            //     console.error('Error syncing cart:', error);
+            //     setSnackbarMessage(t('Error syncing cart'));
+            //     setSnackbarSeverity('error');
+            //     setSnackbarOpen(true);
+            // });
+        }
     };
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
-    };
-
     return (
         <ThemeProvider theme={defaultTheme}>
             <Helmet>
+                <title>{t('Kına Sepeti - Home')}</title>
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
@@ -119,22 +235,22 @@ export default function Main() {
             <Header />
 
             <main>
-                {/* 💫 NEW Responsive Hero Section */}
                 <HeroSection />
-                {/* Product Grid */}
                 <Container sx={{ py: 9 }} maxWidth="xl">
                     <Grid container spacing={4}>
                         {products.map((item) => {
-                            // Define the discount percentage (can be dynamic per product)
-                            const discountPercent = 20; // Example: fixed 20% discount
+                            const discountPercent = 20;
                             const originalPrice = Number(item.price).toFixed(2);
                             const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
 
-                            // Build image URLs using prefixes
-                            const originalPhoto = item.photos[0]?.photo || '';
+                            const originalPhoto = item.photos[0]?.photo || 'https://via.placeholder.com/300x200?text=No+Image';
                             const smallImageUrl = getPrefixedImage(originalPhoto, 'small');
                             const mediumImageUrl = getPrefixedImage(originalPhoto, 'medium');
                             const largeImageUrl = getPrefixedImage(originalPhoto, 'large');
+
+                            const isAlreadyFavorited = isLoggedIn
+                                ? favorites.favoriteProducts?.some(product => product.id === item.id)
+                                : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
                             return (
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
@@ -147,20 +263,20 @@ export default function Main() {
                                         }}
                                     >
                                         <a
-                                            href={`/products/detail/${item.id}`}
+                                            href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                         >
                                             <CardMedia
                                                 component="img"
                                                 image={smallImageUrl}
                                                 srcSet={`
-                          ${smallImageUrl} 400w,
-                          ${mediumImageUrl} 800w,
-                          ${largeImageUrl} 1200w
-                        `}
+                                                    ${smallImageUrl} 400w,
+                                                    ${mediumImageUrl} 800w,
+                                                    ${largeImageUrl} 1200w
+                                                `}
                                                 sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                                alt={item.short_description}
-                                                title={item.title}
+                                                alt={item.short_description || item.title || 'Product'}
+                                                title={item.title || 'Product'}
                                                 sx={{
                                                     width: '100%',
                                                     height: { xs: 140, md: 200 },
@@ -179,7 +295,7 @@ export default function Main() {
                                                     whiteSpace: 'nowrap',
                                                 }}
                                             >
-                                                {item.title}
+                                                {item.title || 'Unknown'}
                                             </Typography>
                                             <Typography
                                                 sx={{
@@ -193,10 +309,9 @@ export default function Main() {
                                                     WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {item.short_description || 'No description available.'}
+                                                {item.short_description || t('No description available.')}
                                             </Typography>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                                                {/* Original Price with Strikethrough */}
                                                 <Typography
                                                     sx={{
                                                         textDecoration: 'line-through',
@@ -206,7 +321,6 @@ export default function Main() {
                                                 >
                                                     {originalPrice} €
                                                 </Typography>
-                                                {/* Discounted Price */}
                                                 <Typography
                                                     sx={{
                                                         color: '#1976d2',
@@ -215,7 +329,6 @@ export default function Main() {
                                                 >
                                                     {discountedPrice} €
                                                 </Typography>
-                                                {/* Discount Badge */}
                                                 {discountPercent >= 20 && (
                                                     <Box
                                                         sx={{
@@ -233,6 +346,15 @@ export default function Main() {
                                                     </Box>
                                                 )}
                                             </Box>
+                                            {/* <Button
+                                                variant="outlined"
+                                                color="success"
+                                                startIcon={<ShoppingCartIcon />}
+                                                onClick={() => addToCart(item.id, item.price, item.title, 1)}
+                                                sx={{ mt: 1 }}
+                                            >
+                                                {t('Add to Cart')}
+                                            </Button> */}
                                         </Box>
                                         <IconButton
                                             aria-label="add to favorites"
@@ -247,7 +369,7 @@ export default function Main() {
                                                 zIndex: 3,
                                             }}
                                         >
-                                            {localFavorites.includes(item.id) ? (
+                                            {isAlreadyFavorited ? (
                                                 <FavoriteIcon color="error" />
                                             ) : (
                                                 <FavoriteBorderIcon />
@@ -261,35 +383,23 @@ export default function Main() {
 
                     {hasMore && (
                         <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
-                            {t("Load More")}
+                            {t('Load More')}
                         </Button>
                     )}
                 </Container>
 
                 <Snackbar
                     open={snackbarOpen}
-                    autoHideDuration={6000}
+                    autoHideDuration={4000}
                     onClose={handleSnackbarClose}
-                    message={snackbarMessage}
-                />
-
-                <Dialog open={openDialog} onClose={handleCloseDialog}>
-                    <DialogTitle>{"Login Required"}</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            {t('Please log in to add this product to your favorites')}
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDialog} autoFocus>
-                            Close
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
             </main>
 
-            {/* Footer */}
-            {/* Footer */}
             <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
                 <Typography variant="h6" align="center" gutterBottom>
                     Kına Sepeti
@@ -300,18 +410,17 @@ export default function Main() {
                     </Typography>
                     <IconButton
                         aria-label="Instagram"
-                        href="https://www.instagram.com/knc_kina_organizasyon" // Buraya kendi Instagram URL'nizi ekleyin
+                        href="https://www.instagram.com/knc_kina_organizasyon"
                         target="_blank"
                         rel="noopener noreferrer"
                         sx={{ color: 'text.secondary' }}
                     >
-                        {/* Instagram SVG İkonu */}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
                             height="24"
                             viewBox="0 0 24 24"
-                            style={{ marginRight: '10px' }} // İkon ve metin arasında boşluk
+                            style={{ marginRight: '10px' }}
                         >
                             <defs>
                                 <linearGradient id="instaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
