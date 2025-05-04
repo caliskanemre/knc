@@ -33,43 +33,43 @@ function ProductsSubHeaderMobile() {
                         <ListItemIcon>
                             <img src={hennaSet} alt="hennaSet" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('HennaSet')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('HennaSet')}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/handkerchief">
                         <ListItemIcon>
                             <img src={handkerchief} alt="handkerchief" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Handkerchief')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Handkerchief')} />
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/tamborine">
                         <ListItemIcon>
                             <img src={tamborine} alt="tamborine" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Tambourine')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Tambourine')}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/ornament">
                         <ListItemIcon>
                             <img src={ornament} alt="Ornament" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Ornament')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Ornament')} />
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/gift">
                         <ListItemIcon>
                             <img src={gift} alt="Gift" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Gift')} style={{ marginLeft: '-16px' }} />
+                        <ListItemText primary={t('Gift')} />
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/veil">
                         <ListItemIcon>
                             <img src={veil} alt="Veil" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Veil')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Veil')}/>
                     </ListItem>
                     <ListItem button component={NavLink} to="/products/souvenir">
                         <ListItemIcon>
                             <img src={souvenir} alt="Souvenir" style={{ width: '24px', height: '24px' }} />
                         </ListItemIcon>
-                        <ListItemText primary={t('Souvenir')} style={{ marginLeft: '-16px' }}/>
+                        <ListItemText primary={t('Souvenir')} />
                     </ListItem>
                 </List>
             </Collapse>
