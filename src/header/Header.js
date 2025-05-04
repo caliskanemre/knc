@@ -26,7 +26,7 @@ import {
 import Register from '../login/Register';
 import { useAuth } from '../auth/AuthProvider';
 import MenuIcon from '@mui/icons-material/Menu';
-import LoginIcon from '@mui/icons-material/Login'
+import LoginIcon from '@mui/icons-material/Login';
 import ProductsSubHeaderMobile from '../activity/ProductsSubHeaderMobile';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +45,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
+  const [policiesAnchorEl, setPoliciesAnchorEl] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
   const [cartItemCount, setCartItemCount] = useState(0);
 
@@ -101,6 +102,7 @@ export default function Header() {
     navigate(`/${currentLang}${path}`);
     setMobileMenuOpen(false);
     setAnchorEl(null);
+    setPoliciesAnchorEl(null);
   };
 
   const handleFetchFavorites = () => {
@@ -138,6 +140,14 @@ export default function Header() {
   };
   const handleLanguageMenuClose = () => {
     setLanguageAnchorEl(null);
+  };
+
+  // Policies menu
+  const handlePoliciesMenuOpen = (event) => {
+    setPoliciesAnchorEl(event.currentTarget);
+  };
+  const handlePoliciesMenuClose = () => {
+    setPoliciesAnchorEl(null);
   };
 
   // Logout
@@ -227,7 +237,7 @@ export default function Header() {
                       cursor: 'pointer',
                       color: '#8B0000',
                       fontFamily: "'Dancing Script', cursive",
-                      fontSize: '1.8rem', // Slightly smaller for mobile
+                      fontSize: '1.8rem',
                       fontWeight: 500,
                       letterSpacing: '0.03em',
                       lineHeight: 1.2,
@@ -282,92 +292,154 @@ export default function Header() {
                     <img src={SearchImage} alt="Search events" style={{ cursor: 'pointer' }} />
                   </NavLink>
                   <ProductsSubHeader />
-                  <NavLink to={`/${currentLang}/articles`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <NavLink to={`/${currentLang}/articles`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
                     {t('Articles')}
                   </NavLink>
-                  <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
                     {t('How it works')}
                   </NavLink>
-                  <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {t('Privacy Policy')}
+                  <NavLink
+                      to="#"
+                      className="nav-link"
+                      onMouseEnter={handlePoliciesMenuOpen}
+                  >
+                    {t('Policies')}
                   </NavLink>
-                  <NavLink to={`/${currentLang}/shipping-policy`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {t('shipping_policy.title')}
-                  </NavLink>
-                  <NavLink to={`/${currentLang}/return-policy`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {t('return_policy.title')}
-                  </NavLink>
-                  <NavLink to={`/${currentLang}/sales-agreement`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {t('sales_agreement.title')}
-                  </NavLink>
-                  <NavLink to={`/${currentLang}/contact-us`} className="nav-link" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    {t('Contact Us')}
-                  </NavLink>
-                  {/* Language Switch - Desktop */}
-                  <Tooltip title={"Select Language"}>
-                    <IconButton
-                        onClick={handleLanguageMenuClick}
-                        aria-label={"Select Language"}
-                        sx={{
-                          padding: '4px',
-                          marginLeft: '16px',
-                          '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
-                        }}
-                    >
-                      <img
-                          src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
-                          alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
-                          style={{ width: '24px', height: '24px' }}
-                      />
-                    </IconButton>
-                  </Tooltip>
                   <Menu
-                      anchorEl={languageAnchorEl}
-                      open={Boolean(languageAnchorEl)}
-                      onClose={handleLanguageMenuClose}
+                      anchorEl={policiesAnchorEl}
+                      keepMounted
+                      open={Boolean(policiesAnchorEl)}
+                      onClose={handlePoliciesMenuClose}
+                      onMouseLeave={handlePoliciesMenuClose}
                       PaperProps={{
                         sx: {
                           border: '1px solid #8B0000',
                           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          borderRadius: '8px',
+                          bgcolor: 'white',
+                          '& .MuiMenuItem-root': {
+                            color: 'black',
+                            fontFamily: "'Lora', serif !important",
+                            padding: '8px 16px',
+                            '&:hover': {
+                              bgcolor: '#f5f5f5',
+                              color: '#8B0000',
+                            },
+                          },
                         },
                       }}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                      }}
                   >
-                    <MenuItem onClick={() => changeLanguage('en')}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
-                        <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          English
-                        </Typography>
-                      </Box>
+                    <MenuItem onClick={() => handleNavigation('/privacy-policy')}>
+                      <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link">
+                        {t('Privacy Policy')}
+                      </NavLink>
                     </MenuItem>
-                    <MenuItem onClick={() => changeLanguage('tr')}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
-                        <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                          Türkçe
-                        </Typography>
-                      </Box>
+                    <MenuItem onClick={() => handleNavigation('/shipping-policy')}>
+                      <NavLink to={`/${currentLang}/shipping-policy`} className="nav-link">
+                        {t('shipping_policy.title')}
+                      </NavLink>
+                    </MenuItem>
+                    <MenuItem onClick={() => handleNavigation('/return-policy')}>
+                      <NavLink to={`/${currentLang}/return-policy`} className="nav-link">
+                        {t('return_policy.title')}
+                      </NavLink>
+                    </MenuItem>
+                    <MenuItem onClick={() => handleNavigation('/sales-agreement')}>
+                      <NavLink to={`/${currentLang}/sales-agreement`} className="nav-link">
+                        {t('sales_agreement.title')}
+                      </NavLink>
                     </MenuItem>
                   </Menu>
+                  <NavLink to={`/${currentLang}/contact-us`} className="nav-link">
+                    {t('Contact Us')}
+                  </NavLink>
                 </>
             )}
 
             <Box flexGrow={1} />
 
-          {/* Cart Icon with Count */}
-          <IconButton
-            aria-label="cart"
-            sx={{
-              color: 'black',
-              marginLeft: '10px',
-              '&:hover': { color: '#8B0000' },
-            }}
-            onClick={() => handleNavigation('/cart')}
-          >
-            <Badge badgeContent={cartItemCount} color="error">
-              <ShoppingBagOutlinedIcon sx={{ fontSize: 30 }} />
-            </Badge>
-          </IconButton>
+            {/* Language Selector */}
+            {!isMobile && (
+                <Tooltip title="Select Language">
+                  <IconButton
+                      onClick={handleLanguageMenuClick}
+                      aria-label="Select Language"
+                      sx={{
+                        padding: '4px',
+                        marginLeft: '10px',
+                        '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
+                      }}
+                  >
+                    <img
+                        src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
+                        alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
+                        style={{ width: '24px', height: '24px' }}
+                    />
+                  </IconButton>
+                </Tooltip>
+            )}
+            <Menu
+                anchorEl={languageAnchorEl}
+                open={Boolean(languageAnchorEl)}
+                onClose={handleLanguageMenuClose}
+                PaperProps={{
+                  sx: {
+                    border: '1px solid #8B0000',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    borderRadius: '8px',
+                    bgcolor: 'white',
+                    '& .MuiMenuItem-root': {
+                      color: 'black',
+                      fontFamily: "'Lora', serif !important",
+                      padding: '8px 16px',
+                      '&:hover': {
+                        bgcolor: '#f5f5f5',
+                        color: '#8B0000',
+                      },
+                    },
+                  },
+                }}
+            >
+              <MenuItem onClick={() => changeLanguage('en')}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
+                  <Typography>
+                    English
+                  </Typography>
+                </Box>
+              </MenuItem>
+              <MenuItem onClick={() => changeLanguage('tr')}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
+                  <Typography>
+                    Türkçe
+                  </Typography>
+                </Box>
+              </MenuItem>
+            </Menu>
+
+            {/* Cart Icon with Count */}
+            <IconButton
+                aria-label="cart"
+                sx={{
+                  color: 'black',
+                  marginLeft: '10px',
+                  '&:hover': { color: '#8B0000' },
+                }}
+                onClick={() => handleNavigation('/cart')}
+            >
+              <Badge badgeContent={cartItemCount} color="error">
+                <ShoppingBagOutlinedIcon sx={{ fontSize: 30 }} />
+              </Badge>
+            </IconButton>
 
           {/* Avatar with Menu */}
             {/* Avatar with Menu */}
@@ -403,8 +475,9 @@ export default function Header() {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Subtle shadow
                     bgcolor: 'white', // White background for menu
                     '& .MuiMenuItem-root': {
-                      color: 'black', // Black text for menu items
-                      fontFamily: "'Playfair Display', serif", // Consistent typography
+                      color: 'black',
+                      fontFamily: "'Lora', serif !important",
+                      padding: '8px 16px',
                       '&:hover': {
                         bgcolor: '#f5f5f5', // Light gray hover effect
                         color: '#8B0000', // Optional: red tint on hover to match theme
@@ -414,33 +487,33 @@ export default function Header() {
                 }}
             >
               <MenuItem onClick={handleFetchFavorites}>
-                <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
                   {t('Favorites')}
                 </Typography>
               </MenuItem>
               {isLoggedIn ? (
                   <>
                     <MenuItem onClick={handleMyOrders}>
-                      <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                      <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
                         {t('My Orders')}
                       </Typography>
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
-                      <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                      <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
                         {t('Logout')}
                       </Typography>
                     </MenuItem>
                   </>
               ) : (
                   <MenuItem onClick={handleOpenLoginDialog}>
-                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: 'black' }}>
+                    <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
                       {t('Login')}
                     </Typography>
                   </MenuItem>
               )}
             </Menu>
-        </Toolbar>
-      </AppBar>
+          </Toolbar>
+        </AppBar>
 
         {/* Mobile Drawer */}
         {isMobile && (
@@ -508,10 +581,7 @@ export default function Header() {
                       />
                       <circle fill="url(#instaGradient)" cx="18.406" cy="5.594" r="1.44" />
                     </svg>
-                    <ListItemText
-                        primary="Instagram"
-                        primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                    />
+                    <ListItemText primary="Instagram" />
                   </Box>
                 </ListItem>
 
@@ -519,12 +589,7 @@ export default function Header() {
                 <ListItem button onClick={() => handleNavigation('/search')}>
                   <Box display="flex" alignItems="center">
                     <i className="fas fa-search" style={{ marginRight: '10px' }}></i>
-                    <ListItemText
-                        primary={t('Search')}
-                        primaryTypographyProps={{
-                          style: { fontSize: '1.1rem' },
-                        }}
-                    />
+                    <ListItemText primary={t('Search')} />
                   </Box>
                 </ListItem>
 
@@ -533,140 +598,149 @@ export default function Header() {
 
                 {/* Articles */}
                 <ListItem button onClick={() => handleNavigation('/articles')}>
-                  <ListItemText
-                      primary={t('Articles')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
+                  <ListItemText primary={t('Articles')} />
                 </ListItem>
 
                 {/* About Us */}
                 <ListItem button onClick={() => handleNavigation('/about-us')}>
-                  <ListItemText
-                      primary={t('How it works')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
+                  <ListItemText primary={t('How it works')} />
                 </ListItem>
 
-                {/* Privacy Policy */}
-                <ListItem button onClick={() => handleNavigation('/privacy-policy')}>
-                  <ListItemText
-                      primary={t('Privacy Policy')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
+                {/* Policies Submenu */}
+                <ListItem button onClick={handlePoliciesMenuOpen}>
+                  <ListItemText primary={t('Policies')} />
                 </ListItem>
-
-                {/* Shipping Policy */}
-                <ListItem button onClick={() => handleNavigation('/shipping-policy')}>
-                  <ListItemText
-                      primary={t('shipping_policy.title')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
-                </ListItem>
-
-                {/* Return Policy */}
-                <ListItem button onClick={() => handleNavigation('/return-policy')}>
-                  <ListItemText
-                      primary={t('return_policy.title')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
-                </ListItem>
-
-                {/* Sales Agreement */}
-                <ListItem button onClick={() => handleNavigation('/sales-agreement')}>
-                  <ListItemText
-                      primary={t('sales_agreement.title')}
-                      primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
-                </ListItem>
-
-            <ListItem button onClick={() => handleNavigation('/contact-us')}>
-              <ListItemText
-                primary={t('Contact Us')}
-                primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-              />
-            </ListItem>
-
-            <ListItem button onClick={handleFetchFavorites}>
-              <ListItemText
-                primary={t('Favorites')}
-                primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-              />
-            </ListItem>
-
-            {isLoggedIn ? (
-              <>
-                <ListItem button onClick={handleMyOrders}>
-                  <ListItemText
-                    primary={t('My Orders')}
-                    primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
-                </ListItem>
-                <ListItem button onClick={handleLogout}>
-                  <ListItemText
-                    primary={t('Logout')}
-                    primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                  />
-                </ListItem>
-              </>
-            ) : (
-              <ListItem button onClick={handleOpenLoginDialog}>
-                <ListItemText
-                  primary={t('Login')}
-                  primaryTypographyProps={{ style: { fontSize: '1.1rem' } }}
-                />
-              </ListItem>
-            )}
-
-            <ListItem>
-              <Tooltip title={t('select_language')}>
-                <IconButton
-                  onClick={handleLanguageMenuClick}
-                  aria-label={t('select_language')}
-                  sx={{
-                    padding: '4px',
-                    border: '2px solid #8B0000',
-                    '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
-                  }}
+                <Menu
+                    anchorEl={policiesAnchorEl}
+                    keepMounted
+                    open={Boolean(policiesAnchorEl)}
+                    onClose={handlePoliciesMenuClose}
+                    PaperProps={{
+                      sx: {
+                        border: '1px solid #8B0000',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                        borderRadius: '8px',
+                        bgcolor: 'white',
+                        '& .MuiMenuItem-root': {
+                          color: 'black',
+                          fontFamily: "'Lora', serif !important",
+                          padding: '8px 16px',
+                          '&:hover': {
+                            bgcolor: '#f5f5f5',
+                            color: '#8B0000',
+                          },
+                        },
+                      },
+                    }}
                 >
-                  <img
-                    src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
-                    alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
-                    style={{ width: '24px', height: '24px' }}
-                  />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={languageAnchorEl}
-                open={Boolean(languageAnchorEl)}
-                onClose={handleLanguageMenuClose}
-                PaperProps={{
-                  sx: {
-                    border: '1px solid #8B0000',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                  },
-                }}
-              >
-                <MenuItem onClick={() => changeLanguage('en')}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
-                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                      {t('English')}
-                    </Typography>
-                  </Box>
-                </MenuItem>
-                <MenuItem onClick={() => changeLanguage('tr')}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
-                    <Typography sx={{ fontFamily: "'Playfair Display', serif", color: '#5D4037' }}>
-                      {t('Türkçe')}
-                    </Typography>
-                  </Box>
-                </MenuItem>
-              </Menu>
-            </ListItem>
-          </List>
-        </Drawer>
-      )}
+                  <MenuItem onClick={() => handleNavigation('/privacy-policy')}>
+                    <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link">
+                      {t('Privacy Policy')}
+                    </NavLink>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleNavigation('/shipping-policy')}>
+                    <NavLink to={`/${currentLang}/shipping-policy`} className="nav-link">
+                      {t('shipping_policy.title')}
+                    </NavLink>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleNavigation('/return-policy')}>
+                    <NavLink to={`/${currentLang}/return-policy`} className="nav-link">
+                      {t('return_policy.title')}
+                    </NavLink>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleNavigation('/sales-agreement')}>
+                    <NavLink to={`/${currentLang}/sales-agreement`} className="nav-link">
+                      {t('sales_agreement.title')}
+                    </NavLink>
+                  </MenuItem>
+                </Menu>
+
+                {/* Contact Us */}
+                <ListItem button onClick={() => handleNavigation('/contact-us')}>
+                  <ListItemText primary={t('Contact Us')} />
+                </ListItem>
+
+                {/* Favorites */}
+                <ListItem button onClick={handleFetchFavorites}>
+                  <ListItemText primary={t('Favorites')} />
+                </ListItem>
+
+                {isMobile && isLoggedIn ? (
+                    <>
+                      <ListItem button onClick={handleMyOrders}>
+                        <ListItemText primary={t('My Orders')} />
+                      </ListItem>
+                      <ListItem button onClick={handleLogout}>
+                        <ListItemText primary={t('Logout')} />
+                      </ListItem>
+                    </>
+                ) : (
+                    <ListItem button onClick={handleOpenLoginDialog}>
+                      <ListItemText primary={t('Login')} />
+                    </ListItem>
+                )}
+
+                <ListItem>
+                  <Tooltip title={t('select_language')}>
+                    <IconButton
+                        onClick={handleLanguageMenuClick}
+                        aria-label={t('select_language')}
+                        sx={{
+                          padding: '4px',
+                          border: '2px solid #8B0000',
+                          '&:hover': { backgroundColor: 'rgba(139, 0, 0, 0.1)' },
+                        }}
+                    >
+                      <img
+                          src={selectedLanguage === 'en' ? 'https://flagcdn.com/24x18/gb.png' : 'https://flagcdn.com/24x18/tr.png'}
+                          alt={selectedLanguage === 'en' ? 'English' : 'Türkçe'}
+                          style={{ width: '24px', height: '24px' }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                  <Menu
+                      anchorEl={languageAnchorEl}
+                      open={Boolean(languageAnchorEl)}
+                      onClose={handleLanguageMenuClose}
+                      PaperProps={{
+                        sx: {
+                          border: '1px solid #8B0000',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          borderRadius: '8px',
+                          bgcolor: 'white',
+                          '& .MuiMenuItem-root': {
+                            color: 'black',
+                            fontFamily: "'Lora', serif !important",
+                            padding: '8px 16px',
+                            '&:hover': {
+                              bgcolor: '#f5f5f5',
+                              color: '#8B0000',
+                            },
+                          },
+                        },
+                      }}
+                  >
+                    <MenuItem onClick={() => changeLanguage('en')}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
+                        <Typography>
+                          English
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                    <MenuItem onClick={() => changeLanguage('tr')}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
+                        <Typography>
+                          Türkçe
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  </Menu>
+                </ListItem>
+              </List>
+            </Drawer>
+        )}
 
         {/* Register Dialog */}
         <Dialog open={openRegisterDialog} onClose={handleCloseRegisterDialog}>

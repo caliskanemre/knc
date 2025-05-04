@@ -12,6 +12,7 @@
 .nav-link.active a {
     text-decoration: none !important; /* Removes text decoration */
     color: black; /* Text color */
+    font-family: 'Lora', serif !important; /* Apply Lora font */
 }
 
 /* Hover and active link styles */
@@ -25,6 +26,12 @@
 .navbar-brand {
     font-weight: bold; /* Makes text bold */
     font-size: 1.5rem; /* Set font size */
+    font-family: 'Dancing Script', cursive !important; /* Keep brand font */
+}
+
+/* Ensure Material-UI ListItemText uses Lora */
+.MuiListItemText-primary {
+    font-family: 'Lora', serif !important; /* Apply Lora font */
 }
 
 .navbar-icons {

@@ -40,7 +40,6 @@ const LanguageRedirect = () => {
         const pathSegments = location.pathname.split('/').filter(Boolean);
         const lang = pathSegments[0];
 
-        // Language redirect
         if (!validLangs.includes(lang)) {
             const defaultLang = i18n.language || 'tr';
             navigate(`/${defaultLang}${location.pathname}`, { replace: true });
@@ -48,13 +47,12 @@ const LanguageRedirect = () => {
             i18n.changeLanguage(lang);
         }
 
-        // Fallback for HTTPS and www (only if server-side redirect fails)
-        if (window.location.protocol !== 'https:') {
-            window.location.replace(`https://${window.location.host}${window.location.pathname}${window.location.search}`);
-        } else if (window.location.hostname === 'kinasepeti.com') {
-            window.location.replace(`https://www.kinasepeti.com${window.location.pathname}${window.location.search}`);
+        // www kontrolü
+        if (window.location.hostname === 'kinasepeti.com') {
+            navigate(`https://www.kinasepeti.com${location.pathname}`, { replace: true });
         }
     }, [location.pathname, i18n, navigate]);
+
     return null;
 };
 

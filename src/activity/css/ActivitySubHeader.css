@@ -9,29 +9,32 @@
     color: #333333; /* Darker grey for inactive links */
     margin-left: 40px;
     font-size: 1.3rem;
-    transition: color 0.3s; /* Smooth transition for color changes */
+    font-family: 'Lora', serif !important;
+    transition: color 0.3s, border-bottom 0.3s; /* Smooth transition for color and border */
 }
 
 /* NavLink Hover State */
 .nav-link:hover {
-    color: #f77f50; /* Lighter shade of orange for hover */
+    color: #8B0000; /* Matches Header's hover color */
     cursor: pointer;
 }
 
 /* NavLink Active State */
 .nav-link.active {
-    color: #f15a24; /* Vibrant orange for the active link */
-    border-bottom: 2px solid #f15a24; /* Border to indicate active link */
+    color: #8B0000; /* Matches Header's active color */
+    border-bottom: 2px solid #8B0000; /* Border to indicate active link */
 }
 
-/* Additional states for focus and visited if needed */
+/* Additional states for focus and visited */
 .nav-link:focus {
     outline: none; /* Removes the default focus outline */
 }
 
 .nav-link:visited {
-    color: #333333; /* Optional: Changes color for visited links */
+    color: #333333; /* Maintains color for visited links */
 }
+
+/* Scrollable Toolbar */
 .scrollable-toolbar {
     display: flex;
     overflow-x: auto; /* Allows horizontal scrolling */
@@ -42,4 +45,23 @@
 
 .scrollable-toolbar::-webkit-scrollbar {
     display: none; /* Hides scrollbar for Chrome, Safari, and Opera */
+}
+
+/* Menu Item Styling */
+.MuiMenuItem-root {
+    font-family: 'Lora', serif !important;
+    color: #333333;
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+}
+
+.MuiMenuItem-root .nav-link {
+    margin-left: 0; /* Override margin for menu items */
+    font-size: 1.2rem; /* Slightly smaller for menu items */
+}
+
+/* ListItemIcon Styling */
+.MuiListItemIcon-root {
+    min-width: 32px !important; /* Ensure consistent icon spacing */
 }
