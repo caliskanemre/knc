@@ -32,7 +32,6 @@ export default function HeroSection() {
                     position: 'absolute',
                     width: '100%',
                     height: '100%',
-                    bgcolor: 'rgba(0, 0, 0, 0.4)', // translucent black
                     top: 0,
                     left: 0
                 }}
