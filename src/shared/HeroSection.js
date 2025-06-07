@@ -1,12 +1,14 @@
 import React from 'react';
 import { Box, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
 // YENİ: Örnek video ve poster (kendi dosyalarınızla değiştirin)
-import heroVideo from '../kina-video-2.mp4';
 import videoPoster from './../images/kapak2.png'// Video yüklenemezse görünecek resim
 
 export default function HeroSection() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // S3'teki videonun URL'si (kendi bucket URL'nizle değiştirin)
+    const heroVideo = 'https://kinasepeti.s3.eu-north-1.amazonaws.com/kina-video-2.mp4';
 
     return (
         <Box sx={{ position: 'relative', height: { xs: '30vh', md: '50vh' }, width: '100%', overflow: 'hidden' }}>
