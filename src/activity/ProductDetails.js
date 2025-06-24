@@ -256,6 +256,20 @@ const ProductDetails = () => {
                 });
             }
 
+            if (window.gtag) {
+                window.gtag('event', 'add_to_cart', {
+                    'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', // Google Ads etiketiniz
+                    'value': parseFloat(cartItem.price), // Ürün fiyatını sayısal değere çevir
+                    'currency': 'EUR', // Ürünün para birimi
+                    'items': [{
+                        'id': productId,
+                        'name': title,
+                        'quantity': quantity
+                    }]
+                });
+                console.log("Google Ads 'add_to_cart' dönüşümü gönderildi:", { productId, price, currency });
+            }
+
             showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
             console.error('Error adding to cart:', error);
