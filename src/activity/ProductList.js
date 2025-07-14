@@ -26,6 +26,7 @@ import { useAuth } from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useTranslation } from "react-i18next";
+import Footer from "../Footer";
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -466,6 +467,7 @@ const ProductList = () => {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
+            <Footer />
         </div>
     );
 };

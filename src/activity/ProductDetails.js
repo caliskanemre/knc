@@ -34,6 +34,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "react-i18next";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import Footer from "../Footer";
 
 const ProductDetails = () => {
     const { id, title, type } = useParams();
@@ -703,6 +704,8 @@ const ProductDetails = () => {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
+
+            <Footer />
         </div>
     );
 };

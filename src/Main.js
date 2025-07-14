@@ -23,7 +23,36 @@ import HeroSection from './shared/HeroSection';
 import { useTranslation } from "react-i18next";
 import Footer from "./Footer";
 
-const defaultTheme = createTheme();
+const theme = createTheme({
+    typography: {
+        // Ana gövde fontu olarak Montserrat'ı belirliyoruz.
+        fontFamily: '"Montserrat", "Helvetica", "Arial", sans-serif',
+
+        // Ürün başlığı gibi alanlar için özel stil
+        // Not: Bu varyantları doğrudan Typography component'inde kullanabilirsiniz.
+        // Örnek: <Typography variant="h6">
+        h6: {
+            fontFamily: '"Playfair Display", serif',
+            fontWeight: 700,
+            fontSize: '1.25rem', // Boyutu isteğe göre ayarlayabilirsiniz
+        },
+        // Ürün başlıkları için bu şekilde de kullanabilirsiniz
+        productTitle: {
+            fontFamily: '"Playfair Display", serif',
+            fontWeight: 700,
+            fontSize: '1.25rem',
+        }
+    },
+    // Sitenizin ana renklerini de buradan yönetebilirsiniz.
+    palette: {
+        primary: {
+            main: '#C84B31', // Örnek bir kına kırmızısı tonu
+        },
+        secondary: {
+            main: '#ECDCCB', // Örnek bir bej/krem tonu
+        },
+    },
+});
 const PAGE_SIZE = 20;
 
 // Helper function to get a prefixed image URL (e.g., "small_", "medium_", "large_")
@@ -226,7 +255,7 @@ export default function Main() {
     };
 
     return (
-        <ThemeProvider theme={defaultTheme}>
+        <ThemeProvider theme={theme}>
             <Helmet>
                 <title>{t('Kına Sepeti - Home')}</title>
                 <meta name="robots" content="index, follow" />
@@ -271,38 +300,40 @@ export default function Main() {
                                                 component="img"
                                                 image={smallImageUrl}
                                                 srcSet={`
-                                                    ${smallImageUrl} 400w,
-                                                    ${mediumImageUrl} 800w,
-                                                    ${largeImageUrl} 1200w
-                                                `}
+                                                            ${smallImageUrl} 400w,
+                                                            ${mediumImageUrl} 800w,
+                                                            ${largeImageUrl} 1200w
+                                                        `}
                                                 sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                                 alt={item.short_description || item.title || 'Product'}
                                                 title={item.title || 'Product'}
                                                 sx={{
                                                     width: '100%',
-                                                    height: { xs: 140, md: 200 },
+                                                    // height: { xs: 140, md: 200 }, // <-- BU SATIRI KALDIRIN
+                                                    aspectRatio: '1 / 1', // <-- BU SATIRI EKLEYİN (1:1 kare oran)
                                                     objectFit: 'cover',
                                                 }}
                                             />
                                         </a>
                                         <Box sx={{ padding: 2, flex: 1 }}>
                                             <Typography
+                                                // Temadan gelen 'h6' stilini kullanıyoruz.
+                                                variant="h6"
                                                 sx={{
-                                                    textAlign: 'left',
-                                                    fontSize: '1rem',
-                                                    fontWeight: 500,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
+                                                    textAlign: 'left',
                                                 }}
                                             >
                                                 {item.title || 'Unknown'}
                                             </Typography>
                                             <Typography
+                                                // Temadan gelen 'body2' stilini kullanıyoruz.
+                                                variant="body2"
+                                                color="text.secondary"
                                                 sx={{
                                                     textAlign: 'left',
-                                                    fontSize: '0.85rem',
-                                                    color: 'text.secondary',
                                                     mt: 1,
                                                     overflow: 'hidden',
                                                     display: '-webkit-box',
