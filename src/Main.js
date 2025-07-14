@@ -286,7 +286,9 @@ export default function Main() {
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                     <Card
                                         sx={{
-                                            height: { xs: 'auto', md: '350px' },
+                                            // 'height' özelliğini '100%' olarak değiştirerek
+                                            // kartın grid hücresine tam olarak sığmasını sağlıyoruz.
+                                            height: '100%',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             position: 'relative',
@@ -300,24 +302,22 @@ export default function Main() {
                                                 component="img"
                                                 image={smallImageUrl}
                                                 srcSet={`
-                                                            ${smallImageUrl} 400w,
-                                                            ${mediumImageUrl} 800w,
-                                                            ${largeImageUrl} 1200w
-                                                        `}
+                    ${smallImageUrl} 400w,
+                    ${mediumImageUrl} 800w,
+                    ${largeImageUrl} 1200w
+                `}
                                                 sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                                 alt={item.short_description || item.title || 'Product'}
                                                 title={item.title || 'Product'}
                                                 sx={{
                                                     width: '100%',
-                                                    // height: { xs: 140, md: 200 }, // <-- BU SATIRI KALDIRIN
-                                                    aspectRatio: '1 / 1', // <-- BU SATIRI EKLEYİN (1:1 kare oran)
+                                                    aspectRatio: '1 / 1',
                                                     objectFit: 'cover',
                                                 }}
                                             />
                                         </a>
-                                        <Box sx={{ padding: 2, flex: 1 }}>
+                                        <Box sx={{ padding: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                                             <Typography
-                                                // Temadan gelen 'h6' stilini kullanıyoruz.
                                                 variant="h6"
                                                 sx={{
                                                     overflow: 'hidden',
@@ -329,7 +329,6 @@ export default function Main() {
                                                 {item.title || 'Unknown'}
                                             </Typography>
                                             <Typography
-                                                // Temadan gelen 'body2' stilini kullanıyoruz.
                                                 variant="body2"
                                                 color="text.secondary"
                                                 sx={{
@@ -339,11 +338,13 @@ export default function Main() {
                                                     display: '-webkit-box',
                                                     WebkitLineClamp: 2,
                                                     WebkitBoxOrient: 'vertical',
+                                                    // Bu özellik, metin kutusunun kalan boşluğu doldurmasını sağlar.
+                                                    flexGrow: 1,
                                                 }}
                                             >
                                                 {item.short_description || t('No description available.')}
                                             </Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
                                                 <Typography
                                                     sx={{
                                                         textDecoration: 'line-through',
@@ -378,15 +379,6 @@ export default function Main() {
                                                     </Box>
                                                 )}
                                             </Box>
-                                            {/* <Button
-                                                variant="outlined"
-                                                color="success"
-                                                startIcon={<ShoppingCartIcon />}
-                                                onClick={() => addToCart(item.id, item.price, item.title, 1)}
-                                                sx={{ mt: 1 }}
-                                            >
-                                                {t('Add to Cart')}
-                                            </Button> */}
                                         </Box>
                                         <IconButton
                                             aria-label="add to favorites"
