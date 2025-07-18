@@ -282,16 +282,19 @@ export default function Main() {
                                 ? favorites.favoriteProducts?.some(product => product.id === item.id)
                                 : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
+                            // products.map(...) içindeki return bloğunu bununla değiştirin
                             return (
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                     <Card
                                         sx={{
-                                            // 'height' özelliğini '100%' olarak değiştirerek
-                                            // kartın grid hücresine tam olarak sığmasını sağlıyoruz.
                                             height: '100%',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             position: 'relative',
+                                            boxShadow: 'none', // Etsy gibi daha sade bir görünüm için gölgeyi kaldırabilirsiniz
+                                            '&:hover': {
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // Üzerine gelince gölge efekti
+                                            }
                                         }}
                                     >
                                         <a
@@ -301,13 +304,8 @@ export default function Main() {
                                             <CardMedia
                                                 component="img"
                                                 image={smallImageUrl}
-                                                srcSet={`
-                    ${smallImageUrl} 400w,
-                    ${mediumImageUrl} 800w,
-                    ${largeImageUrl} 1200w
-                `}
-                                                sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                                alt={item.short_description || item.title || 'Product'}
+                                                // srcSet ve diğer props'lar aynı kalabilir
+                                                alt={item.title || 'Product'}
                                                 title={item.title || 'Product'}
                                                 sx={{
                                                     width: '100%',
@@ -316,70 +314,60 @@ export default function Main() {
                                                 }}
                                             />
                                         </a>
-                                        <Box sx={{ padding: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        {/* --- METİN ALANI İÇİN YENİ DÜZENLEME --- */}
+                                        <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                            {/* 1. Ürün Başlığı */}
                                             <Typography
-                                                variant="h6"
                                                 sx={{
+                                                    // Ana fontu kullanalım (daha okunaklı)
+                                                    fontFamily: '"Montserrat", sans-serif',
+                                                    // Mobil için küçük, masaüstü için biraz daha büyük font
+                                                    fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                                                    fontWeight: 400,
+                                                    lineHeight: 1.4,
+                                                    textAlign: 'left',
+                                                    // Sığmazsa sonuna ... eklemesi için
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    textAlign: 'left',
+                                                    // Başlığın 2 satıra kadar uzamasına izin ver
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
                                                 {item.title || 'Unknown'}
                                             </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                color="text.secondary"
-                                                sx={{
-                                                    textAlign: 'left',
-                                                    mt: 1,
-                                                    overflow: 'hidden',
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: 'vertical',
-                                                    // Bu özellik, metin kutusunun kalan boşluğu doldurmasını sağlar.
-                                                    flexGrow: 1,
-                                                }}
-                                            >
-                                                {item.short_description || t('No description available.')}
-                                            </Typography>
+
+                                            {/* --- KISA AÇIKLAMA (SHORT DESCRIPTION) TAMAMEN KALDIRILDI --- */}
+
+                                            {/* 2. Fiyat Bilgisi */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
+                                                {/* İndirimli fiyatı öne çıkaralım */}
                                                 <Typography
                                                     sx={{
-                                                        textDecoration: 'line-through',
-                                                        color: 'gray',
-                                                        mr: 1,
-                                                    }}
-                                                >
-                                                    {originalPrice} €
-                                                </Typography>
-                                                <Typography
-                                                    sx={{
-                                                        color: '#1976d2',
                                                         fontWeight: 'bold',
+                                                        fontSize: { xs: '0.9rem', sm: '1rem' }, // Mobil için daha okunaklı
                                                     }}
                                                 >
                                                     {discountedPrice} €
                                                 </Typography>
-                                                {discountPercent >= 20 && (
-                                                    <Box
-                                                        sx={{
-                                                            backgroundColor: 'red',
-                                                            color: 'white',
-                                                            px: 1,
-                                                            py: 0.5,
-                                                            borderRadius: 1,
-                                                            ml: 1,
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: 'bold',
-                                                        }}
-                                                    >
-                                                        {discountPercent}%
-                                                    </Box>
-                                                )}
+
+                                                {/* Orijinal fiyatı daha küçük ve yanda gösterelim */}
+                                                <Typography
+                                                    sx={{
+                                                        textDecoration: 'line-through',
+                                                        color: 'gray',
+                                                        ml: 1, // 'mr' yerine 'ml' (sol boşluk)
+                                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                    }}
+                                                >
+                                                    {originalPrice} €
+                                                </Typography>
+
+                                                {/* İndirim etiketi aynı kalabilir */}
                                             </Box>
                                         </Box>
+                                        {/* Favori butonu aynı kalabilir */}
                                         <IconButton
                                             aria-label="add to favorites"
                                             onClick={() => handleFavoriteClick(item.id)}
@@ -388,16 +376,13 @@ export default function Main() {
                                                 top: '8px',
                                                 right: '8px',
                                                 backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
                                                 borderRadius: '50%',
                                                 padding: '6px',
                                                 zIndex: 3,
                                             }}
                                         >
-                                            {isAlreadyFavorited ? (
-                                                <FavoriteIcon color="error" />
-                                            ) : (
-                                                <FavoriteBorderIcon />
-                                            )}
+                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                         </IconButton>
                                     </Card>
                                 </Grid>
