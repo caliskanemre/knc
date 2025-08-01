@@ -282,7 +282,6 @@ export default function Main() {
                                 ? favorites.favoriteProducts?.some(product => product.id === item.id)
                                 : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
-                            // products.map(...) içindeki return bloğunu bununla değiştirin
                             return (
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                     <Card
@@ -291,9 +290,9 @@ export default function Main() {
                                             display: 'flex',
                                             flexDirection: 'column',
                                             position: 'relative',
-                                            boxShadow: 'none', // Etsy gibi daha sade bir görünüm için gölgeyi kaldırabilirsiniz
+                                            boxShadow: 'none',
                                             '&:hover': {
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // Üzerine gelince gölge efekti
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                             }
                                         }}
                                     >
@@ -304,7 +303,6 @@ export default function Main() {
                                             <CardMedia
                                                 component="img"
                                                 image={smallImageUrl}
-                                                // srcSet ve diğer props'lar aynı kalabilir
                                                 alt={item.title || 'Product'}
                                                 title={item.title || 'Product'}
                                                 sx={{
@@ -314,22 +312,17 @@ export default function Main() {
                                                 }}
                                             />
                                         </a>
-                                        {/* --- METİN ALANI İÇİN YENİ DÜZENLEME --- */}
                                         <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            {/* 1. Ürün Başlığı */}
+                                            {/* Başlık kalın */}
                                             <Typography
                                                 sx={{
-                                                    // Ana fontu kullanalım (daha okunaklı)
-                                                    fontFamily: '"Montserrat", sans-serif',
-                                                    // Mobil için küçük, masaüstü için biraz daha büyük font
-                                                    fontSize: { xs: '0.8rem', sm: '0.9rem' },
-                                                    fontWeight: 400,
+                                                    fontFamily: 'Montserrat, sans-serif',
+                                                    fontWeight: 'bold',
+                                                    fontSize: { xs: '1rem', sm: '1.1rem' },
                                                     lineHeight: 1.4,
                                                     textAlign: 'left',
-                                                    // Sığmazsa sonuna ... eklemesi için
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    // Başlığın 2 satıra kadar uzamasına izin ver
                                                     display: '-webkit-box',
                                                     WebkitLineClamp: 2,
                                                     WebkitBoxOrient: 'vertical',
@@ -337,37 +330,48 @@ export default function Main() {
                                             >
                                                 {item.title || 'Unknown'}
                                             </Typography>
-
-                                            {/* --- KISA AÇIKLAMA (SHORT DESCRIPTION) TAMAMEN KALDIRILDI --- */}
-
-                                            {/* 2. Fiyat Bilgisi */}
+                                            {/* Short description altına, normal fontta */}
+                                            {item.shortDescription && (
+                                                <Typography
+                                                    sx={{
+                                                        fontFamily: 'Montserrat, sans-serif',
+                                                        fontWeight: 400,
+                                                        fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                                                        color: 'text.secondary',
+                                                        mt: 0.5,
+                                                        textAlign: 'left',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                    }}
+                                                >
+                                                    {item.shortDescription}
+                                                </Typography>
+                                            )}
+                                            {/* Fiyat Bilgisi */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
-                                                {/* İndirimli fiyatı öne çıkaralım */}
                                                 <Typography
                                                     sx={{
                                                         fontWeight: 'bold',
-                                                        fontSize: { xs: '0.9rem', sm: '1rem' }, // Mobil için daha okunaklı
+                                                        fontSize: { xs: '0.9rem', sm: '1rem' },
                                                     }}
                                                 >
                                                     {discountedPrice} €
                                                 </Typography>
-
-                                                {/* Orijinal fiyatı daha küçük ve yanda gösterelim */}
                                                 <Typography
                                                     sx={{
                                                         textDecoration: 'line-through',
                                                         color: 'gray',
-                                                        ml: 1, // 'mr' yerine 'ml' (sol boşluk)
+                                                        ml: 1,
                                                         fontSize: { xs: '0.75rem', sm: '0.85rem' },
                                                     }}
                                                 >
                                                     {originalPrice} €
                                                 </Typography>
-
-                                                {/* İndirim etiketi aynı kalabilir */}
                                             </Box>
                                         </Box>
-                                        {/* Favori butonu aynı kalabilir */}
                                         <IconButton
                                             aria-label="add to favorites"
                                             onClick={() => handleFavoriteClick(item.id)}
@@ -412,3 +416,4 @@ export default function Main() {
     </ThemeProvider>
   );
 }
+
