@@ -37,6 +37,7 @@ const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 export default function Header() {
   const { isLoggedIn, setIsLoggedIn, username, setUsername } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
@@ -87,12 +88,14 @@ export default function Header() {
     const newPath = location.pathname.replace(/^\/(en|tr)/, `/${language}`) || `/${language}`;
     navigate(newPath);
     setLanguageAnchorEl(null);
-    if (isMobile) setMobileMenuOpen(false);
+    if (isMobile || isTablet) setMobileMenuOpen(false);
   };
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width <= 1024);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -195,19 +198,20 @@ export default function Header() {
         </Helmet>
 
         <AppBar position="relative" style={{ backgroundColor: 'white' }}>
-          <Toolbar>
-            {isMobile && (
+          <Toolbar sx={{ px: { xs: 1, sm: 2, md: 3 }, minHeight: { xs: '56px', sm: '64px' } }}>
+            {(isMobile || isTablet) && (
                 <IconButton
                     edge="start"
                     aria-label="menu"
-                    style={{ color: '#5D4037' }}
+                    style={{ color: '#5D4037', marginRight: '8px' }}
                     onClick={() => setMobileMenuOpen(true)}
                 >
                   <MenuIcon />
                 </IconButton>
             )}
 
-            {!isMobile && (
+            {/* Brand Name - Desktop */}
+            {!isMobile && !isTablet && (
                 <Typography
                     variant="h1"
                     component="h1"
@@ -227,8 +231,8 @@ export default function Header() {
                 </Typography>
             )}
 
-            {/* Brand Name - Mobile */}
-            {isMobile && (
+            {/* Brand Name - Mobile & Tablet */}
+            {(isMobile || isTablet) && (
                 <Typography
                     variant="h1"
                     component="h1"
@@ -237,18 +241,19 @@ export default function Header() {
                       cursor: 'pointer',
                       color: '#8B0000',
                       fontFamily: "'Dancing Script', cursive",
-                      fontSize: '1.8rem',
-                      fontWeight: 500,
+                      fontSize: isTablet ? '2.2rem' : '1.8rem',
+                      fontWeight: isTablet ? 600 : 500,
                       letterSpacing: '0.03em',
                       lineHeight: 1.2,
                       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                      flexGrow: 1,
                     }}
                 >
                   Kınasepeti
                 </Typography>
             )}
 
-            {!isMobile && (
+            {!isMobile && !isTablet && (
                 <>
                   <IconButton
                       aria-label="Instagram"
@@ -366,8 +371,8 @@ export default function Header() {
 
             <Box flexGrow={1} />
 
-            {/* Language Selector */}
-            {!isMobile && (
+            {/* Language Selector - Compact for tablet */}
+            {(!isMobile && !isTablet) && (
                 <Tooltip title="Select Language">
                   <IconButton
                       onClick={handleLanguageMenuClick}
@@ -386,81 +391,42 @@ export default function Header() {
                   </IconButton>
                 </Tooltip>
             )}
-            <Menu
-                anchorEl={languageAnchorEl}
-                open={Boolean(languageAnchorEl)}
-                onClose={handleLanguageMenuClose}
-                PaperProps={{
-                  sx: {
-                    border: '1px solid #8B0000',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                    borderRadius: '8px',
-                    bgcolor: 'white',
-                    '& .MuiMenuItem-root': {
-                      color: 'black',
-                      fontFamily: "'Lora', serif !important",
-                      padding: '8px 16px',
-                      '&:hover': {
-                        bgcolor: '#f5f5f5',
-                        color: '#8B0000',
-                      },
-                    },
-                  },
-                }}
-            >
-              <MenuItem onClick={() => changeLanguage('en')}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
-                  <Typography>
-                    English
-                  </Typography>
-                </Box>
-              </MenuItem>
-              <MenuItem onClick={() => changeLanguage('tr')}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
-                  <Typography>
-                    Türkçe
-                  </Typography>
-                </Box>
-              </MenuItem>
-            </Menu>
 
             {/* Cart Icon with Count */}
             <IconButton
                 aria-label="cart"
                 sx={{
                   color: 'black',
-                  marginLeft: '10px',
+                  marginLeft: { xs: '5px', sm: '10px' },
                   '&:hover': { color: '#8B0000' },
                 }}
                 onClick={() => handleNavigation('/cart')}
             >
               <Badge badgeContent={cartItemCount} color="error">
-                <ShoppingBagOutlinedIcon sx={{ fontSize: 30 }} />
+                <ShoppingBagOutlinedIcon sx={{ fontSize: { xs: 24, sm: 30 } }} />
               </Badge>
             </IconButton>
 
-          {/* Avatar with Menu */}
-            {/* Avatar with Menu */}
+            {/* Avatar with Menu - Compact for tablet */}
             <Tooltip title={isLoggedIn ? username : t('user_menu')}>
               <IconButton
                   onClick={handleMenuClick}
                   aria-label="user menu"
+                  sx={{ marginLeft: { xs: '5px', sm: '10px' } }}
               >
                 <Avatar
                     sx={{
-                      bgcolor: 'white', // White background for both logged-in and logged-out states
-                      color: 'black', // Black text/icon color
-                      width: 40,
-                      height: 40,
-                      border: '1px solid #8B0000', // Optional: subtle border to match menu
+                      bgcolor: 'white',
+                      color: 'black',
+                      width: { xs: 32, sm: 40 },
+                      height: { xs: 32, sm: 40 },
+                      border: '1px solid #8B0000',
                     }}
                 >
                   {username ? (
-                      username.charAt(0).toUpperCase() // Black letter for logged-in user
+                      username.charAt(0).toUpperCase()
                   ) : (
-                      <LoginIcon sx={{ color: 'black' }} /> // Black LoginIcon for logged-out user
+                      <LoginIcon sx={{ color: 'black', fontSize: { xs: 18, sm: 24 } }} />
                   )}
                 </Avatar>
               </IconButton>
@@ -515,14 +481,19 @@ export default function Header() {
           </Toolbar>
         </AppBar>
 
-        {/* Mobile Drawer */}
-        {isMobile && (
+        {/* Mobile & Tablet Drawer */}
+        {(isMobile || isTablet) && (
             <Drawer
                 anchor="left"
                 open={mobileMenuOpen}
                 onClose={() => setMobileMenuOpen(false)}
                 sx={{
-                  '& .MuiDrawer-paper': { width: { xs: '70%', sm: '400px' } },
+                  '& .MuiDrawer-paper': {
+                    width: {
+                      xs: '70%',
+                      sm: isTablet ? '50%' : '400px'
+                    }
+                  },
                 }}
             >
               <List sx={{ padding: '16px' }}>
@@ -763,3 +734,4 @@ export default function Header() {
       </>
   );
 }
+

@@ -14,7 +14,11 @@ import {
     Alert,
     CircularProgress,
     AccordionDetails,
-    debounce
+    debounce,
+    Box,
+    Grid,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 import { Helmet } from "react-helmet";
 import axios from "axios";
@@ -54,6 +58,10 @@ const ProductDetails = () => {
 
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
     // Generate UUID for guest token
     const generateUUID = () => {
@@ -385,235 +393,337 @@ const ProductDetails = () => {
             </Helmet>
 
             <Header />
-            <h2>
-                {type ? `${type} - ${t(product.category)}` : t("All Products")}
-            </h2>
+            <Box sx={{
+                px: { xs: 1, sm: 2, md: 3 },
+                py: { xs: 1, sm: 2 },
+                maxWidth: '1200px',
+                margin: '0 auto'
+            }}>
+                <Typography
+                    variant="h4"
+                    component="h2"
+                    sx={{
+                        mb: { xs: 2, sm: 3 },
+                        fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                        textAlign: { xs: 'center', md: 'left' }
+                    }}
+                >
+                    {type ? `${type} - ${t(product.category)}` : t("All Products")}
+                </Typography>
 
-            <div className="activity-details-wrapper">
-                <div className="left-section">
-                    {selectedImage && (
-                        <img
-                            src={getPrefixedImage(selectedImage, 'small')}
-                            srcSet={`
-                                ${getPrefixedImage(selectedImage, 'small')} 400w,
-                                ${getPrefixedImage(selectedImage, 'medium')} 800w,
-                                ${getPrefixedImage(selectedImage, 'large')} 1200w
-                            `}
-                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                            alt="Selected"
-                            className="main-image"
-                            onClick={openModal}
-                        />
-                    )}
-                </div>
-
-                <div className="right-section">
-                    <h1 className="product-title">{product.title}</h1>
-
-                    {product.photos && product.photos.length > 0 && (
-                        <div className="thumbnail-container">
-                            {product.photos.map((photo, index) => (
-                                <img
-                                    key={index}
-                                    src={getPrefixedImage(photo.photo, 'small')}
+                <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+                    {/* Left Section - Image */}
+                    <Grid item xs={12} md={6}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center'
+                        }}>
+                            {selectedImage && (
+                                <Box
+                                    component="img"
+                                    src={getPrefixedImage(selectedImage, 'small')}
                                     srcSet={`
-                                        ${getPrefixedImage(photo.photo, 'small')} 100w,
-                                        ${getPrefixedImage(photo.photo, 'medium')} 200w,
-                                        ${getPrefixedImage(photo.photo, 'large')} 300w
+                                        ${getPrefixedImage(selectedImage, 'small')} 400w,
+                                        ${getPrefixedImage(selectedImage, 'medium')} 800w,
+                                        ${getPrefixedImage(selectedImage, 'large')} 1200w
                                     `}
-                                    sizes="100px"
-                                    alt={`Thumbnail ${index}`}
-                                    className="thumbnail"
-                                    onClick={() => setSelectedImage(photo.photo)}
+                                    sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                    alt="Selected"
+                                    onClick={openModal}
+                                    sx={{
+                                        width: '100%',
+                                        maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+                                        height: 'auto',
+                                        borderRadius: 2,
+                                        cursor: 'pointer',
+                                        mb: 2,
+                                        boxShadow: 2,
+                                        '&:hover': {
+                                            boxShadow: 4,
+                                            transform: 'scale(1.02)',
+                                            transition: 'all 0.3s ease'
+                                        }
+                                    }}
                                 />
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    {product.price && (
-                        <div
-                            className="product-price"
-                            style={{
+                            {/* Thumbnail Container */}
+                            {product.photos && product.photos.length > 0 && (
+                                <Box sx={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: 1,
+                                    justifyContent: 'center',
+                                    maxWidth: '100%'
+                                }}>
+                                    {product.photos.map((photo, index) => (
+                                        <Box
+                                            key={index}
+                                            component="img"
+                                            src={getPrefixedImage(photo.photo, 'small')}
+                                            alt={`Thumbnail ${index}`}
+                                            onClick={() => setSelectedImage(photo.photo)}
+                                            sx={{
+                                                width: { xs: 60, sm: 80, md: 100 },
+                                                height: { xs: 60, sm: 80, md: 100 },
+                                                objectFit: 'cover',
+                                                borderRadius: 1,
+                                                cursor: 'pointer',
+                                                border: selectedImage === photo.photo ? '3px solid #1976d2' : '1px solid #ccc',
+                                                '&:hover': {
+                                                    border: '2px solid #1976d2',
+                                                    transform: 'scale(1.05)',
+                                                    transition: 'all 0.2s ease'
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+                    </Grid>
+
+                    {/* Right Section - Product Info */}
+                    <Grid item xs={12} md={6}>
+                        <Box sx={{ p: { xs: 1, sm: 2 } }}>
+                            <Typography
+                                variant="h4"
+                                component="h1"
+                                sx={{
+                                    mb: 2,
+                                    fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.8rem' },
+                                    fontWeight: 600,
+                                    lineHeight: 1.3
+                                }}
+                            >
+                                {product.title}
+                            </Typography>
+
+                            {/* Price Section */}
+                            {product.price && (
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: 1,
+                                    mb: 3
+                                }}>
+                                    <Typography
+                                        sx={{
+                                            textDecoration: 'line-through',
+                                            color: 'text.secondary',
+                                            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                                        }}
+                                    >
+                                        {originalPrice} €
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            color: 'primary.main',
+                                            fontWeight: 'bold',
+                                            fontSize: { xs: '1.3rem', sm: '1.5rem' }
+                                        }}
+                                    >
+                                        {discountedPrice} €
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            backgroundColor: 'error.main',
+                                            color: 'white',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            fontSize: '0.8rem',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {discountPercent}% OFF
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {/* Quantity Control */}
+                            <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                fontSize: '1.25rem',
-                                margin: '10px 0'
-                            }}
-                        >
-                            <span
-                                style={{
-                                    textDecoration: 'line-through',
-                                    color: 'gray',
-                                    marginRight: '8px'
-                                }}
-                            >
-                                {originalPrice} €
-                            </span>
-                            <span
-                                style={{
-                                    color: '#1976d2',
-                                    fontWeight: 'bold',
-                                    marginRight: '8px'
-                                }}
-                            >
-                                {discountedPrice} €
-                            </span>
-                            <span
-                                style={{
-                                    backgroundColor: 'red',
-                                    color: 'white',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.8rem'
-                                }}
-                            >
-                                {discountPercent}% OFF
-                            </span>
-                        </div>
-                    )}
-
-                    <div className="quantity-control">
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() =>
-                                setQuantity((prev) => (prev > 1 ? prev - 1 : 1))
-                            }
-                            className="quantity-btn"
-                        >
-                            -
-                        </Button>
-                        <span className="quantity-display">{quantity}</span>
-                        <Button
-                            variant="outlined"
-                            color="success"
-                            onClick={() => setQuantity((prev) => prev + 1)}
-                            className="quantity-btn"
-                        >
-                            +
-                        </Button>
-                    </div>
-
-                    <div className="order-note-section" style={{ marginTop: "15px" }}>
-                        <label htmlFor="order-note" style={{ fontWeight: "bold", display: "block", marginBottom: "5px" }}>
-                            {t("Order Note (Optional)")}
-                        </label>
-                        <textarea
-                            id="order-note"
-                            value={orderNote}
-                            onChange={(e) => setOrderNote(e.target.value)}
-                            placeholder={t("Add any special instructions for your order...")}
-                            style={{
-                                width: "100%",
-                                minHeight: "10px",
-                                border: "1px solid #ccc",
-                                borderRadius: "5px",
-                                padding: "8px",
-                                fontSize: "14px",
-                                marginBottom: "10px"
-                            }}
-                        />
-                    </div>
-
-                    <Button
-                        onClick={() => addToCart(quantity)}
-                        variant="contained"
-                        color="success"
-                        startIcon={<ShoppingCartIcon />}
-                        className="add-cart-btn"
-                    >
-                        {t('Add to Cart')}
-                    </Button>
-
-                    {product.type && (
-                        <p className="product-type">
-                            <strong>Type:</strong> {product.type}
-                        </p>
-                    )}
-
-                    <div
-                        className="share-buttons"
-                        style={{ marginTop: '10px', marginLeft: '25px' }}
-                    >
-                        <WhatsappShareButton
-                            url={shareUrl}
-                            title={shareMessage}
-                            separator=":: "
-                            className="share-btn"
-                        >
-                            <WhatsappIcon size={32} round />
-                        </WhatsappShareButton>
-                        <TelegramShareButton
-                            url={shareUrl}
-                            title={shareMessage}
-                            className="share-btn"
-                        >
-                            <TelegramIcon size={32} round />
-                        </TelegramShareButton>
-                        <FacebookShareButton
-                            url={shareUrl}
-                            quote={shareMessage}
-                            className="share-btn"
-                        >
-                            <FacebookIcon size={32} round />
-                        </FacebookShareButton>
-                    </div>
-
-                    <IconButton
-                        aria-label="add to favorites"
-                        onClick={handleFavoriteClick}
-                        style={{ marginTop: '20px' }}
-                    >
-                        {isAlreadyFavorited ? (
-                            <FavoriteIcon color="error" />
-                        ) : (
-                            <FavoriteBorderIcon />
-                        )}
-                    </IconButton>
-
-                    {descriptionLines.length > 0 && (
-                        <div
-                            className="description-accordion"
-                            style={{
-                                marginTop: '20px',
-                                width: '100%',
-                                maxWidth: '400px'
-                            }}
-                        >
-                            <div>
-                                <div
-                                    aria-controls="description-content"
-                                    id="description-header"
+                                gap: 2,
+                                mb: 3
+                            }}>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => setQuantity((prev) => (prev > 1 ? prev - 1 : 1))}
+                                    sx={{
+                                        minWidth: { xs: 40, sm: 44 },
+                                        height: { xs: 40, sm: 44 },
+                                        fontSize: { xs: '1.1rem', sm: '1.2rem' }
+                                    }}
                                 >
-                                    <Typography variant="h6">
+                                    -
+                                </Button>
+                                <Typography sx={{
+                                    fontSize: { xs: '1.1rem', sm: '1.2rem' },
+                                    fontWeight: 600,
+                                    minWidth: 30,
+                                    textAlign: 'center'
+                                }}>
+                                    {quantity}
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    color="success"
+                                    onClick={() => setQuantity((prev) => prev + 1)}
+                                    sx={{
+                                        minWidth: { xs: 40, sm: 44 },
+                                        height: { xs: 40, sm: 44 },
+                                        fontSize: { xs: '1.1rem', sm: '1.2rem' }
+                                    }}
+                                >
+                                    +
+                                </Button>
+                            </Box>
+
+                            {/* Order Note Section */}
+                            <Box sx={{ mb: 3 }}>
+                                <Typography
+                                    component="label"
+                                    htmlFor="order-note"
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        display: 'block',
+                                        mb: 1
+                                    }}
+                                >
+                                    {t("Order Note (Optional)")}
+                                </Typography>
+                                <Box
+                                    component="textarea"
+                                    id="order-note"
+                                    value={orderNote}
+                                    onChange={(e) => setOrderNote(e.target.value)}
+                                    placeholder={t("Add any special instructions for your order...")}
+                                    sx={{
+                                        width: '100%',
+                                        minHeight: { xs: 60, sm: 80 },
+                                        border: '1px solid #ccc',
+                                        borderRadius: 1,
+                                        p: 1,
+                                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical',
+                                        '&:focus': {
+                                            outline: 'none',
+                                            borderColor: 'primary.main'
+                                        }
+                                    }}
+                                />
+                            </Box>
+
+                            {/* Add to Cart Button */}
+                            <Button
+                                onClick={() => addToCart(quantity)}
+                                variant="contained"
+                                color="success"
+                                startIcon={<ShoppingCartIcon />}
+                                fullWidth
+                                sx={{
+                                    mb: 2,
+                                    py: { xs: 1.5, sm: 2 },
+                                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {t('Add to Cart')}
+                            </Button>
+
+                            {/* Product Type */}
+                            {product.type && (
+                                <Typography sx={{ mb: 2, color: 'text.secondary' }}>
+                                    <strong>Type:</strong> {product.type}
+                                </Typography>
+                            )}
+
+                            {/* Share Buttons */}
+                            <Box sx={{
+                                display: 'flex',
+                                gap: { xs: 1, sm: 2 },
+                                justifyContent: { xs: 'center', md: 'flex-start' },
+                                mb: 2
+                            }}>
+                                <WhatsappShareButton
+                                    url={shareUrl}
+                                    title={shareMessage}
+                                    separator=":: "
+                                    className="share-btn"
+                                >
+                                    <WhatsappIcon size={isMobile ? 28 : 32} round />
+                                </WhatsappShareButton>
+                                <TelegramShareButton
+                                    url={shareUrl}
+                                    title={shareMessage}
+                                    className="share-btn"
+                                >
+                                    <TelegramIcon size={isMobile ? 28 : 32} round />
+                                </TelegramShareButton>
+                                <FacebookShareButton
+                                    url={shareUrl}
+                                    quote={shareMessage}
+                                    className="share-btn"
+                                >
+                                    <FacebookIcon size={isMobile ? 28 : 32} round />
+                                </FacebookShareButton>
+                            </Box>
+
+                            {/* Favorite Button */}
+                            <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+                                <IconButton
+                                    aria-label="add to favorites"
+                                    onClick={handleFavoriteClick}
+                                    sx={{
+                                        color: isAlreadyFavorited ? 'error.main' : 'action.disabled',
+                                        fontSize: { xs: '2rem', sm: '2.5rem' }
+                                    }}
+                                >
+                                    {isAlreadyFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                                </IconButton>
+                            </Box>
+
+                            {/* Description Accordion */}
+                            {descriptionLines.length > 0 && (
+                                <Box sx={{ mt: 3, width: '100%' }}>
+                                    <Typography variant="h6" gutterBottom>
                                         Ürün Açıklaması
                                     </Typography>
-                                </div>
-                                <AccordionDetails>
-                                    {descriptionLines.map((line, index) => (
-                                        <div
-                                            key={index}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                marginBottom: '8px'
-                                            }}
-                                        >
-                                            <CheckCircleOutlineIcon
-                                                color="primary"
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            <Typography variant="body1">
-                                                {line}
-                                            </Typography>
-                                        </div>
-                                    ))}
-                                </AccordionDetails>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
+                                    <AccordionDetails sx={{ px: 0 }}>
+                                        {descriptionLines.map((line, index) => (
+                                            <Box
+                                                key={index}
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    mb: 1
+                                                }}
+                                            >
+                                                <CheckCircleOutlineIcon
+                                                    sx={{
+                                                        color: 'success.main',
+                                                        mr: 1,
+                                                        fontSize: '1.2rem'
+                                                    }}
+                                                />
+                                                <Typography variant="body2">
+                                                    {line}
+                                                </Typography>
+                                            </Box>
+                                        ))}
+                                    </AccordionDetails>
+                                </Box>
+                            )}
+                        </Box>
+                    </Grid>
+                </Grid>
+            </Box>
 
             {isModalOpen && (
                 <div className="modal-overlay" onClick={closeModal}>
@@ -711,3 +821,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+
