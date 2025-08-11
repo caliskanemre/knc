@@ -66,9 +66,12 @@ export default function HeroSection() {
                     component="h1"
                     gutterBottom
                     sx={{
-                        fontFamily: "'Dancing Script', cursive",
-                        fontWeight: 700,
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
+                        fontFamily: 'var(--font-brand)',
+                        fontWeight: 'var(--fw-bold)',
+                        fontSize: isMobile ? '2rem' : '3.5rem',
+                        letterSpacing: 'var(--ls-wide)',
+                        textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+                        mb: 2
                     }}
                 >
                     Hayalinizdeki Kına Gecesi
@@ -78,7 +81,12 @@ export default function HeroSection() {
                     sx={{
                         marginBottom: 4,
                         maxWidth: '600px',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                        fontFamily: 'var(--font-primary)',
+                        fontWeight: 'var(--fw-normal)',
+                        fontSize: isMobile ? '1rem' : '1.25rem',
+                        lineHeight: 1.6,
+                        letterSpacing: 'var(--ls-normal)',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                     }}
                 >
                     En özel gününüz için ihtiyacınız olan her şey bir tık uzağınızda.

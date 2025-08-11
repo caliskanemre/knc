@@ -216,15 +216,21 @@ export default function Header() {
                     variant="h1"
                     component="h1"
                     onClick={() => handleNavigation('/')}
-                    style={{
+                    className="brand-name"
+                    sx={{
                       cursor: 'pointer',
                       color: '#8B0000',
-                      fontFamily: "'Dancing Script', cursive",
-                      fontSize: '2.5rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.03em',
+                      fontFamily: 'var(--font-brand)',
+                      fontSize: { xs: '2rem', sm: '2.2rem', md: '2.5rem' },
+                      fontWeight: 'var(--fw-semibold)',
+                      letterSpacing: 'var(--ls-wide)',
                       lineHeight: 1.2,
                       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                        textShadow: '3px 3px 6px rgba(0, 0, 0, 0.3)',
+                      }
                     }}
                 >
                   Kınasepeti
@@ -237,13 +243,14 @@ export default function Header() {
                     variant="h1"
                     component="h1"
                     onClick={() => handleNavigation('/')}
-                    style={{
+                    className="brand-name"
+                    sx={{
                       cursor: 'pointer',
                       color: '#8B0000',
-                      fontFamily: "'Dancing Script', cursive",
-                      fontSize: isTablet ? '2.2rem' : '1.8rem',
-                      fontWeight: isTablet ? 600 : 500,
-                      letterSpacing: '0.03em',
+                      fontFamily: 'var(--font-brand)',
+                      fontSize: isTablet ? '2rem' : '1.6rem',
+                      fontWeight: 'var(--fw-medium)',
+                      letterSpacing: isTablet ? 'var(--ls-wide)' : 'var(--ls-normal)',
                       lineHeight: 1.2,
                       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
                       flexGrow: 1,
@@ -293,20 +300,61 @@ export default function Header() {
                       <circle fill="url(#instaGradient)" cx="18.406" cy="5.594" r="1.44" />
                     </svg>
                   </IconButton>
-                  <NavLink to={`/${currentLang}/search`} className="nav-link">
+                  <NavLink
+                    to={`/${currentLang}/search`}
+                    className="nav-link"
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 'var(--fw-medium)',
+                      letterSpacing: 'var(--ls-wide)',
+                      textDecoration: 'none'
+                    }}
+                  >
                     <img src={SearchImage} alt="Search events" style={{ cursor: 'pointer' }} />
                   </NavLink>
                   <ProductsSubHeader />
-                  <NavLink to={`/${currentLang}/articles`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
+                  <NavLink
+                    to={`/${currentLang}/articles`}
+                    className="nav-link"
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 'var(--fw-medium)',
+                      letterSpacing: 'var(--ls-wide)',
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      color: '#333',
+                      transition: 'color 0.3s ease'
+                    }}
+                  >
                     {t('Articles')}
                   </NavLink>
-                  <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
+                  <NavLink
+                    to={`/${currentLang}/about-us`}
+                    className="nav-link"
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 'var(--fw-medium)',
+                      letterSpacing: 'var(--ls-wide)',
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      color: '#333',
+                      transition: 'color 0.3s ease'
+                    }}
+                  >
                     {t('How it works')}
                   </NavLink>
                   <NavLink
                       to="#"
                       className="nav-link"
                       onMouseEnter={handlePoliciesMenuOpen}
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontWeight: 'var(--fw-medium)',
+                        letterSpacing: 'var(--ls-wide)',
+                        fontSize: '0.95rem',
+                        textDecoration: 'none',
+                        color: '#333'
+                      }}
                   >
                     {t('Policies')}
                   </NavLink>
@@ -324,8 +372,11 @@ export default function Header() {
                           bgcolor: 'white',
                           '& .MuiMenuItem-root': {
                             color: 'black',
-                            fontFamily: "'Lora', serif !important",
-                            padding: '8px 16px',
+                            fontFamily: 'var(--font-ui)',
+                            fontWeight: 'var(--fw-normal)',
+                            letterSpacing: 'var(--ls-normal)',
+                            fontSize: '0.9rem',
+                            padding: '12px 16px',
                             '&:hover': {
                               bgcolor: '#f5f5f5',
                               color: '#8B0000',
@@ -363,7 +414,18 @@ export default function Header() {
                       </NavLink>
                     </MenuItem>
                   </Menu>
-                  <NavLink to={`/${currentLang}/contact-us`} className="nav-link">
+                  <NavLink
+                    to={`/${currentLang}/contact-us`}
+                    className="nav-link"
+                    style={{
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 'var(--fw-medium)',
+                      letterSpacing: 'var(--ls-wide)',
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      color: '#333'
+                    }}
+                  >
                     {t('Contact Us')}
                   </NavLink>
                 </>
@@ -437,42 +499,50 @@ export default function Header() {
                 onClose={handleMenuClose}
                 PaperProps={{
                   sx: {
-                    border: '1px solid #8B0000', // Matches Avatar border
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Subtle shadow
-                    bgcolor: 'white', // White background for menu
+                    border: '1px solid #8B0000',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    bgcolor: 'white',
                     '& .MuiMenuItem-root': {
                       color: 'black',
-                      fontFamily: "'Lora', serif !important",
-                      padding: '8px 16px',
+                      fontFamily: 'var(--font-ui)',
+                      fontWeight: 'var(--fw-normal)',
+                      letterSpacing: 'var(--ls-normal)',
+                      fontSize: '0.9rem',
+                      padding: '12px 16px',
                       '&:hover': {
-                        bgcolor: '#f5f5f5', // Light gray hover effect
-                        color: '#8B0000', // Optional: red tint on hover to match theme
+                        bgcolor: '#f5f5f5',
+                        color: '#8B0000',
                       },
                     },
                   },
                 }}
             >
               <MenuItem onClick={handleFetchFavorites}>
-                <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
+                <Typography sx={{
+                  fontFamily: 'var(--font-ui)',
+                  fontWeight: 'var(--fw-normal)',
+                  color: 'black',
+                  fontSize: '0.9rem'
+                }}>
                   {t('Favorites')}
                 </Typography>
               </MenuItem>
               {isLoggedIn ? (
                   <>
                     <MenuItem onClick={handleMyOrders}>
-                      <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
+                      <Typography sx={{ fontFamily: 'var(--font-ui)', color: 'black', fontSize: '0.9rem' }}>
                         {t('My Orders')}
                       </Typography>
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
-                      <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
+                      <Typography sx={{ fontFamily: 'var(--font-ui)', color: 'black', fontSize: '0.9rem' }}>
                         {t('Logout')}
                       </Typography>
                     </MenuItem>
                   </>
               ) : (
                   <MenuItem onClick={handleOpenLoginDialog}>
-                    <Typography sx={{ fontFamily: "'Lora', serif", color: 'black' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-ui)', color: 'black', fontSize: '0.9rem' }}>
                       {t('Login')}
                     </Typography>
                   </MenuItem>
@@ -502,13 +572,14 @@ export default function Header() {
                     variant="h1"
                     component="h1"
                     onClick={() => handleNavigation('/')}
-                    style={{
+                    className="brand-name"
+                    sx={{
                       cursor: 'pointer',
                       color: '#8B0000',
-                      fontFamily: "'Dancing Script', cursive",
-                      fontSize: '1.8rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.03em',
+                      fontFamily: 'var(--font-brand)',
+                      fontSize: '1.6rem',
+                      fontWeight: 'var(--fw-semibold)',
+                      letterSpacing: 'var(--ls-wide)',
                       lineHeight: 1.2,
                       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
                       paddingBottom: '16px',
@@ -560,7 +631,15 @@ export default function Header() {
                 <ListItem button onClick={() => handleNavigation('/search')}>
                   <Box display="flex" alignItems="center">
                     <i className="fas fa-search" style={{ marginRight: '10px' }}></i>
-                    <ListItemText primary={t('Search')} />
+                    <ListItemText
+                      primary={t('Search')}
+                      primaryTypographyProps={{
+                        fontFamily: 'var(--font-ui)',
+                        fontWeight: 'var(--fw-medium)',
+                        fontSize: '0.95rem',
+                        letterSpacing: 'var(--ls-normal)'
+                      }}
+                    />
                   </Box>
                 </ListItem>
 
@@ -594,8 +673,11 @@ export default function Header() {
                         bgcolor: 'white',
                         '& .MuiMenuItem-root': {
                           color: 'black',
-                          fontFamily: "'Lora', serif !important",
-                          padding: '8px 16px',
+                          fontFamily: 'var(--font-ui)',
+                          fontWeight: 'var(--fw-normal)',
+                          letterSpacing: 'var(--ls-normal)',
+                          fontSize: '0.9rem',
+                          padding: '12px 16px',
                           '&:hover': {
                             bgcolor: '#f5f5f5',
                             color: '#8B0000',
@@ -681,8 +763,11 @@ export default function Header() {
                           bgcolor: 'white',
                           '& .MuiMenuItem-root': {
                             color: 'black',
-                            fontFamily: "'Lora', serif !important",
-                            padding: '8px 16px',
+                            fontFamily: 'var(--font-ui)',
+                            fontWeight: 'var(--fw-normal)',
+                            letterSpacing: 'var(--ls-normal)',
+                            fontSize: '0.9rem',
+                            padding: '12px 16px',
                             '&:hover': {
                               bgcolor: '#f5f5f5',
                               color: '#8B0000',

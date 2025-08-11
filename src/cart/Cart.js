@@ -337,7 +337,19 @@ const Cart = () => {
                     </Box>
                 ) : (
                     <>
-                        <Typography variant="h4" component="h1" gutterBottom>
+                        <Typography
+                            variant="h4"
+                            component="h1"
+                            gutterBottom
+                            sx={{
+                                fontFamily: 'var(--font-heading)',
+                                fontWeight: 'var(--fw-bold)',
+                                color: '#2c2c2c',
+                                letterSpacing: 'var(--ls-tight)',
+                                textAlign: 'center',
+                                mb: 3
+                            }}
+                        >
                             {t("My Cart")}
                         </Typography>
                         <Divider sx={{ marginBottom: 2 }} />
@@ -353,8 +365,20 @@ const Cart = () => {
                                     const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
 
                                     return (
-                                        <Card key={id} sx={{ marginBottom: 2 }}>
-                                            <CardContent>
+                                        <Card
+                                            key={id}
+                                            sx={{
+                                                marginBottom: 2,
+                                                borderRadius: 2,
+                                                boxShadow: 2,
+                                                transition: 'all 0.3s ease',
+                                                '&:hover': {
+                                                    boxShadow: 4,
+                                                    transform: 'translateY(-2px)'
+                                                }
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 3 }}>
                                                 <a href={`/products/detail/${id}/${encodeURIComponent(item.title || '')}`}>
                                                     <CardMedia
                                                         component="img"
@@ -366,42 +390,145 @@ const Cart = () => {
                                                         `}
                                                         sizes="(max-width: 600px) 100px, 300px"
                                                         alt={item.title || t("Product Image")}
-                                                        sx={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                                                        sx={{
+                                                            width: '100px',
+                                                            height: '100px',
+                                                            objectFit: 'cover',
+                                                            borderRadius: 1,
+                                                            mb: 2
+                                                        }}
                                                     />
-                                                    <Typography variant="h6">{item.title}</Typography>
+                                                    <Typography
+                                                        variant="h6"
+                                                        sx={{
+                                                            fontFamily: 'var(--font-heading)',
+                                                            fontWeight: 'var(--fw-semibold)',
+                                                            color: '#2c2c2c',
+                                                            letterSpacing: 'var(--ls-tight)',
+                                                            mb: 1
+                                                        }}
+                                                    >
+                                                        {item.title}
+                                                    </Typography>
                                                 </a>
-                                                <Typography color="textSecondary">
+                                                <Typography
+                                                    color="textSecondary"
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontSize: '0.9rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
                                                     {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
                                                 </Typography>
-                                                <Typography color="textSecondary">
+                                                <Typography
+                                                    color="textSecondary"
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontSize: '0.9rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
                                                     {t("Quantity")}: {item.quantity}
                                                 </Typography>
-                                                <Typography color="textSecondary">
+                                                <Typography
+                                                    color="textSecondary"
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontSize: '0.9rem',
+                                                        mb: 1
+                                                    }}
+                                                >
                                                     {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
-                                                    <strong>{(price * (1 - discountRate / 100)).toFixed(2)} €</strong>
+                                                    <strong style={{
+                                                        color: '#1976d2',
+                                                        fontWeight: 'var(--fw-semibold)'
+                                                    }}>
+                                                        {(price * (1 - discountRate / 100)).toFixed(2)} €
+                                                    </strong>
                                                 </Typography>
                                                 {item.orderNote && (
-                                                    <Typography color="textSecondary" sx={{ fontStyle: 'italic', marginTop: 1 }}>
+                                                    <Typography
+                                                        color="textSecondary"
+                                                        sx={{
+                                                            fontStyle: 'italic',
+                                                            marginTop: 1,
+                                                            fontFamily: 'var(--font-primary)',
+                                                            fontSize: '0.85rem',
+                                                            lineHeight: 1.5
+                                                        }}
+                                                    >
                                                         {t("Note")}: {item.orderNote}
                                                     </Typography>
                                                 )}
                                             </CardContent>
-                                            <CardActions>
-                                                <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')}>-</Button>
-                                                <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
-                                                <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t("Remove Item")}</Button>
+                                            <CardActions sx={{ p: 2, pt: 0 }}>
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => handleUpdateQuantity(id, 'decrement')}
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontWeight: 'var(--fw-bold)',
+                                                        minWidth: 40
+                                                    }}
+                                                >
+                                                    -
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => handleUpdateQuantity(id, 'increment')}
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontWeight: 'var(--fw-bold)',
+                                                        minWidth: 40
+                                                    }}
+                                                >
+                                                    +
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleRemoveItem(id)}
+                                                    sx={{
+                                                        fontFamily: 'var(--font-ui)',
+                                                        fontWeight: 'var(--fw-medium)',
+                                                        letterSpacing: 'var(--ls-normal)'
+                                                    }}
+                                                >
+                                                    {t("Remove Item")}
+                                                </Button>
                                             </CardActions>
                                         </Card>
                                     );
                                 })}
                             </List>
                         ) : (
-                            <Typography>{t("Your cart is empty")}</Typography>
+                            <Typography
+                                sx={{
+                                    textAlign: 'center',
+                                    fontFamily: 'var(--font-primary)',
+                                    fontSize: '1.1rem',
+                                    color: 'text.secondary',
+                                    py: 4
+                                }}
+                            >
+                                {t("Your cart is empty")}
+                            </Typography>
                         )}
 
                         <Divider sx={{ marginY: 2 }} />
 
-                        <Typography variant="h5" component="h2">
+                        <Typography
+                            variant="h5"
+                            component="h2"
+                            sx={{
+                                fontFamily: 'var(--font-heading)',
+                                fontWeight: 'var(--fw-bold)',
+                                color: '#2c2c2c',
+                                textAlign: 'center',
+                                mb: 3
+                            }}
+                        >
                             {t("Total")}: {totalPrice.toFixed(2)} €
                         </Typography>
 
@@ -409,7 +536,22 @@ const Cart = () => {
                             variant="contained"
                             color="primary"
                             fullWidth
-                            sx={{ marginTop: 2 }}
+                            sx={{
+                                marginTop: 2,
+                                py: 2,
+                                fontFamily: 'var(--font-ui)',
+                                fontWeight: 'var(--fw-semibold)',
+                                letterSpacing: 'var(--ls-wide)',
+                                textTransform: 'uppercase',
+                                borderRadius: 2,
+                                fontSize: '1.1rem',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
+                                }
+                            }}
                             disabled={cartItems.length === 0}
                             onClick={handleCheckout}
                         >
@@ -434,3 +576,4 @@ const Cart = () => {
 };
 
 export default Cart;
+

@@ -405,7 +405,11 @@ const ProductDetails = () => {
                     sx={{
                         mb: { xs: 2, sm: 3 },
                         fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                        textAlign: { xs: 'center', md: 'left' }
+                        textAlign: { xs: 'center', md: 'left' },
+                        fontFamily: 'var(--font-heading)',
+                        fontWeight: 'var(--fw-semibold)',
+                        letterSpacing: 'var(--ls-tight)',
+                        color: '#2c2c2c'
                     }}
                 >
                     {type ? `${type} - ${t(product.category)}` : t("All Products")}
@@ -490,11 +494,15 @@ const ProductDetails = () => {
                             <Typography
                                 variant="h4"
                                 component="h1"
+                                className="product-title"
                                 sx={{
                                     mb: 2,
                                     fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.8rem' },
-                                    fontWeight: 600,
-                                    lineHeight: 1.3
+                                    fontFamily: 'var(--font-heading)',
+                                    fontWeight: 'var(--fw-semibold)',
+                                    letterSpacing: 'var(--ls-tight)',
+                                    lineHeight: 1.3,
+                                    color: '#2c2c2c'
                                 }}
                             >
                                 {product.title}
@@ -510,19 +518,24 @@ const ProductDetails = () => {
                                     mb: 3
                                 }}>
                                     <Typography
+                                        className="price"
                                         sx={{
                                             textDecoration: 'line-through',
                                             color: 'text.secondary',
-                                            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                                            fontFamily: 'var(--font-ui)',
+                                            fontWeight: 'var(--fw-medium)'
                                         }}
                                     >
                                         {originalPrice} €
                                     </Typography>
                                     <Typography
+                                        className="price"
                                         sx={{
                                             color: 'primary.main',
-                                            fontWeight: 'bold',
-                                            fontSize: { xs: '1.3rem', sm: '1.5rem' }
+                                            fontWeight: 'var(--fw-semibold)',
+                                            fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                                            fontFamily: 'var(--font-ui)'
                                         }}
                                     >
                                         {discountedPrice} €
@@ -535,7 +548,9 @@ const ProductDetails = () => {
                                             py: 0.5,
                                             borderRadius: 1,
                                             fontSize: '0.8rem',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'var(--fw-bold)',
+                                            fontFamily: 'var(--font-ui)',
+                                            letterSpacing: 'var(--ls-wide)'
                                         }}
                                     >
                                         {discountPercent}% OFF
@@ -557,16 +572,19 @@ const ProductDetails = () => {
                                     sx={{
                                         minWidth: { xs: 40, sm: 44 },
                                         height: { xs: 40, sm: 44 },
-                                        fontSize: { xs: '1.1rem', sm: '1.2rem' }
+                                        fontSize: { xs: '1.1rem', sm: '1.2rem' },
+                                        fontFamily: 'var(--font-ui)',
+                                        fontWeight: 'var(--fw-bold)'
                                     }}
                                 >
                                     -
                                 </Button>
                                 <Typography sx={{
                                     fontSize: { xs: '1.1rem', sm: '1.2rem' },
-                                    fontWeight: 600,
+                                    fontWeight: 'var(--fw-semibold)',
                                     minWidth: 30,
-                                    textAlign: 'center'
+                                    textAlign: 'center',
+                                    fontFamily: 'var(--font-ui)'
                                 }}>
                                     {quantity}
                                 </Typography>
@@ -577,7 +595,9 @@ const ProductDetails = () => {
                                     sx={{
                                         minWidth: { xs: 40, sm: 44 },
                                         height: { xs: 40, sm: 44 },
-                                        fontSize: { xs: '1.1rem', sm: '1.2rem' }
+                                        fontSize: { xs: '1.1rem', sm: '1.2rem' },
+                                        fontFamily: 'var(--font-ui)',
+                                        fontWeight: 'var(--fw-bold)'
                                     }}
                                 >
                                     +
@@ -590,9 +610,12 @@ const ProductDetails = () => {
                                     component="label"
                                     htmlFor="order-note"
                                     sx={{
-                                        fontWeight: 'bold',
+                                        fontWeight: 'var(--fw-semibold)',
                                         display: 'block',
-                                        mb: 1
+                                        mb: 1,
+                                        fontFamily: 'var(--font-ui)',
+                                        fontSize: '0.95rem',
+                                        letterSpacing: 'var(--ls-normal)'
                                     }}
                                 >
                                     {t("Order Note (Optional)")}
@@ -610,7 +633,9 @@ const ProductDetails = () => {
                                         borderRadius: 1,
                                         p: 1,
                                         fontSize: { xs: '0.9rem', sm: '1rem' },
-                                        fontFamily: 'inherit',
+                                        fontFamily: 'var(--font-primary)',
+                                        letterSpacing: 'var(--ls-normal)',
+                                        lineHeight: 1.5,
                                         resize: 'vertical',
                                         '&:focus': {
                                             outline: 'none',
@@ -631,7 +656,17 @@ const ProductDetails = () => {
                                     mb: 2,
                                     py: { xs: 1.5, sm: 2 },
                                     fontSize: { xs: '1rem', sm: '1.1rem' },
-                                    fontWeight: 'bold'
+                                    fontWeight: 'var(--fw-semibold)',
+                                    fontFamily: 'var(--font-ui)',
+                                    letterSpacing: 'var(--ls-wide)',
+                                    textTransform: 'uppercase',
+                                    borderRadius: 2,
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
+                                    }
                                 }}
                             >
                                 {t('Add to Cart')}
@@ -639,8 +674,14 @@ const ProductDetails = () => {
 
                             {/* Product Type */}
                             {product.type && (
-                                <Typography sx={{ mb: 2, color: 'text.secondary' }}>
-                                    <strong>Type:</strong> {product.type}
+                                <Typography sx={{
+                                    mb: 2,
+                                    color: 'text.secondary',
+                                    fontFamily: 'var(--font-primary)',
+                                    fontSize: '0.9rem',
+                                    letterSpacing: 'var(--ls-normal)'
+                                }}>
+                                    <strong style={{ fontWeight: 'var(--fw-semibold)' }}>Type:</strong> {product.type}
                                 </Typography>
                             )}
 
@@ -692,7 +733,16 @@ const ProductDetails = () => {
                             {/* Description Accordion */}
                             {descriptionLines.length > 0 && (
                                 <Box sx={{ mt: 3, width: '100%' }}>
-                                    <Typography variant="h6" gutterBottom>
+                                    <Typography
+                                        variant="h6"
+                                        gutterBottom
+                                        sx={{
+                                            fontFamily: 'var(--font-heading)',
+                                            fontWeight: 'var(--fw-semibold)',
+                                            letterSpacing: 'var(--ls-tight)',
+                                            color: '#2c2c2c'
+                                        }}
+                                    >
                                         Ürün Açıklaması
                                     </Typography>
                                     <AccordionDetails sx={{ px: 0 }}>
@@ -712,7 +762,14 @@ const ProductDetails = () => {
                                                         fontSize: '1.2rem'
                                                     }}
                                                 />
-                                                <Typography variant="body2">
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        fontFamily: 'var(--font-primary)',
+                                                        lineHeight: 1.6,
+                                                        letterSpacing: 'var(--ls-normal)'
+                                                    }}
+                                                >
                                                     {line}
                                                 </Typography>
                                             </Box>
