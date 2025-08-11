@@ -250,12 +250,13 @@ const Cart = () => {
 
         if (updatedQuantity <= 0) return;
 
-        const unitPrice = product.price / product.quantity;
+        // Backend orijinal fiyat bekliyor, indirim backend'de uygulanıyor
+        const unitPrice = product.price / product.quantity; // Mevcut toplam fiyattan birim fiyatı hesapla
         const updatedItems = [...cartItems];
         updatedItems[productIndex] = {
             ...product,
             quantity: updatedQuantity,
-            price: unitPrice * updatedQuantity,
+            price: unitPrice * updatedQuantity, // Toplam fiyat = birim fiyat * yeni miktar
         };
         setCartItems(updatedItems);
         calculateTotalPrice(updatedItems);
@@ -265,7 +266,7 @@ const Cart = () => {
                 const cartItemDTO = {
                     productId: id,
                     quantity: updatedQuantity,
-                    price: unitPrice,
+                    price: unitPrice * updatedQuantity, // Backend'e toplam fiyat gönder
                     title: product.title,
                     image: product.image,
                     orderNote: product.orderNote,
@@ -276,8 +277,13 @@ const Cart = () => {
                 showToast(t("Quantity updated"), "success");
             } catch (error) {
                 console.error("Error updating quantity:", error);
-                fetchCartItems();
-                showToast(error.response?.data || t("Error updating quantity"), "error");
+                if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
+                    showToast(t('Price validation failed. Please refresh the page and try again.'), 'error');
+                    fetchCartItems();
+                } else {
+                    fetchCartItems();
+                    showToast(error.response?.data || t("Error updating quantity"), "error");
+                }
             }
         } else {
             try {
@@ -285,6 +291,9 @@ const Cart = () => {
                 showToast(t("Quantity updated"), "success");
             } catch (error) {
                 console.error("Error updating guest quantity:", error);
+                if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
+                    showToast(t('Price validation failed. Please refresh the page and try again.'), 'error');
+                }
                 fetchGuestCart();
                 showToast(t("Error updating quantity"), "error");
             }

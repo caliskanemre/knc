@@ -223,10 +223,11 @@ const ProductDetails = () => {
             return;
         }
 
+        // Backend'in beklediği orijinal fiyatı kullan (indirim backend'de uygulanıyor)
         const cartItem = {
             productId: product.id,
             quantity,
-            price: discountedPrice * quantity, // İndirimli fiyatı kullanmak daha doğru olacaktır
+            price: originalPrice * quantity, // Orijinal fiyatı kullan (backend indirimi uygulayacak)
             title: product.name || product.title,
             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
             orderNote,
@@ -250,7 +251,7 @@ const ProductDetails = () => {
                 const existingItem = localCart.find(item => item.productId === cartItem.productId);
                 if (existingItem) {
                     existingItem.quantity += cartItem.quantity;
-                    existingItem.price = discountedPrice * existingItem.quantity; // Fiyatı da güncelle
+                    existingItem.price = originalPrice * existingItem.quantity; // Orijinal fiyatı kullan
                     existingItem.orderNote = orderNote || existingItem.orderNote;
                 } else {
                     localCart.push(cartItem);
@@ -265,30 +266,33 @@ const ProductDetails = () => {
                 });
             }
 
-            // --- DÜZELTİLMİŞ GOOGLE ADS KODU ---
+            // Google Ads conversion tracking - indirimli fiyatı kullan
             if (window.gtag) {
                 window.gtag('event', 'add_to_cart', {
                     'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                    'value': parseFloat(cartItem.price), // Sepete eklenen toplam tutar (indirimli)
-                    'currency': 'EUR', // Para birimi (sabit olarak EUR ayarlı)
+                    'value': parseFloat(discountedPrice * quantity), // Tracking için indirimli fiyat
+                    'currency': 'EUR',
                     'items': [{
-                        'id': product.id,                  // DOĞRU: product.id kullanıldı
-                        'name': cartItem.title,            // DOĞRU: cartItem.title kullanıldı
-                        'quantity': quantity               // DOĞRU: quantity değişkeni kullanıldı
+                        'id': product.id,
+                        'name': cartItem.title,
+                        'quantity': quantity
                     }]
                 });
                 console.log("Google Ads 'add_to_cart' dönüşümü gönderildi:", {
                     id: product.id,
-                    price: cartItem.price,
+                    price: discountedPrice * quantity,
                     currency: 'EUR'
                 });
             }
-            // --- KOD BİTİŞİ ---
 
             showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
             console.error('Error adding to cart:', error);
-            showSnackbar(t('Error adding to cart'), 'error');
+            if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
+                showSnackbar(t('Price validation failed. Please refresh the page and try again.'), 'error');
+            } else {
+                showSnackbar(t('Error adding to cart'), 'error');
+            }
         }
     }, 500);
 
