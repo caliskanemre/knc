@@ -64,6 +64,7 @@ export default function HeroSection() {
                 <Typography
                     variant={isMobile ? 'h4' : 'h2'}
                     component="h1"
+                    color = "white"
                     gutterBottom
                     sx={{
                         fontFamily: "'Dancing Script', cursive",
@@ -74,6 +75,7 @@ export default function HeroSection() {
                     Hayalinizdeki Kına Gecesi
                 </Typography>
                 <Typography
+                    color = "white"
                     variant={isMobile ? 'body1' : 'h6'}
                     sx={{
                         marginBottom: 4,
