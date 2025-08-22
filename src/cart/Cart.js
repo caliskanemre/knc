@@ -26,7 +26,7 @@ const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
-    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -39,125 +39,145 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
-       // Generate UUID for guest token
-       function generateUUID() {
-           return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-               (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-           );
-       }
+    // Para birimi ve kur - Backend'den gelen fiyatı olduğu gibi göster
+    const [currency] = useState(() => {
+        try {
+            const saved = localStorage.getItem('currency');
+            if (saved === 'TRY' || saved === 'EUR') return saved;
+        } catch (_) {}
+        const lang = (i18n?.language || '').toLowerCase();
+        return lang.startsWith('tr') ? 'TRY' : 'EUR';
+    });
+    const eurToTry = parseFloat(process.env.REACT_APP_EUR_TO_TRY) || 36; // Varsayılan kur
 
-       useEffect(() => {
-           // Ensure guest token is stored
-           if (!localStorage.getItem('guestToken')) {
-               localStorage.setItem('guestToken', guestToken);
-           }
+    const formatPrice = (amount) => {
+        // Backend'den gelen fiyatı olduğu gibi göster, çevrim yapma
+        const symbol = currency === 'TRY' ? '₺' : '€';
+        return `${amount.toFixed(2)} ${symbol}`;
+    };
 
-           const initializeCart = async () => {
-               setIsLoading(true);
-               const token = localStorage.getItem('token');
-               if (token) {
-                   try {
-                       const decodedToken = jwtDecode(token);
-                       if (decodedToken?.sub && decodedToken.sub.includes('@')) {
-                           setEmail(decodedToken.sub);
-                           await syncLocalCartToServer(decodedToken.sub);
-                           await fetchCartItems();
-                       }
-                   } catch (error) {
-                       console.error("Error decoding JWT token:", error);
-                       showToast(t("Error initializing cart"), "error");
-                       await fetchGuestCart(); // Fallback to guest cart
-                   }
-               } else {
-                   await fetchGuestCart();
-               }
-               setIsLoading(false);
-           };
 
-           initializeCart();
-       }, []);
+    // Generate UUID for guest token
+    function generateUUID() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
 
-       const fetchGuestCart = async () => {
-           try {
-               const response = await axios.get(`${baseURL}/cart/guest`, {
-                   headers: { 'X-Guest-Token': guestToken },
-               });
-               const serverCart = response.data || [];
-               const normalizedServerCart = serverCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedServerCart);
-               calculateTotalPrice(normalizedServerCart);
-               localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
-           } catch (error) {
-               console.error("Error fetching guest cart:", error.response?.data || error.message);
-               const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-               const normalizedCart = localCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedCart);
-               calculateTotalPrice(normalizedCart);
-               if (localCart.length > 0) {
-                   await syncGuestCart(normalizedCart);
-               }
-           }
-       };
+    useEffect(() => {
+        // Ensure guest token is stored
+        if (!localStorage.getItem('guestToken')) {
+            localStorage.setItem('guestToken', guestToken);
+        }
+        // Para birimini sakla
+        try { localStorage.setItem('currency', currency); } catch (_) {}
 
-       const syncGuestCart = async (items) => {
-           if (isSyncing) return;
-           setIsSyncing(true);
-           try {
-               const normalizedItems = items.map(item => ({
-                   productId: item.productId,
-                   quantity: item.quantity,
-                   price: parseFloat(item.price) || 0,
-                   title: item.title,
-                   image: item.image,
-                   orderNote: item.orderNote,
-               }));
-               const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
-                   headers: { 'X-Guest-Token': guestToken },
-               });
-               const serverCart = response.data || [];
-               const normalizedServerCart = serverCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedServerCart);
-               calculateTotalPrice(normalizedServerCart);
-               localStorage.setItem('cart', JSON.stringify(normalizedServerCart));
-           } catch (error) {
-               console.error("Error syncing guest cart:", error.response?.data || error.message);
-               showToast(t("Error syncing guest cart"), "error");
-           } finally {
-               setIsSyncing(false);
-           }
-       };
+        const initializeCart = async () => {
+            setIsLoading(true);
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decodedToken = jwtDecode(token);
+                    if (decodedToken?.sub && decodedToken.sub.includes('@')) {
+                        setEmail(decodedToken.sub);
+                        await syncLocalCartToServer(decodedToken.sub);
+                        await fetchCartItems();
+                    }
+                } catch (error) {
+                    console.error("Error decoding JWT token:", error);
+                    showToast(t("Error initializing cart"), "error");
+                    await fetchGuestCart(); // Fallback to guest cart
+                }
+            } else {
+                await fetchGuestCart();
+            }
+            setIsLoading(false);
+        };
 
-       const syncLocalCartToServer = async (userEmail) => {
-           const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-           if (localCart.length === 0) return;
+        initializeCart();
+    }, []);
 
-           try {
-               for (const item of localCart) {
-                   const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
-                   const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
-                   await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
-                       ...item,
-                       quantity,
-                       price: parseFloat(item.price) || 0,
-                   }, {
-                       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                   });
-               }
-               localStorage.removeItem('cart');
-           } catch (error) {
-               console.error("Error syncing local cart to server:", error.response?.data || error.message);
-               showToast(t("Error syncing cart"), "error");
-           }
-       };
+    const fetchGuestCart = async () => {
+        try {
+            const response = await axios.get(`${baseURL}/cart/guest`, {
+                headers: { 'X-Guest-Token': guestToken },
+            });
+            const serverCart = response.data || [];
+            const normalizedServerCart = serverCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedServerCart);
+            calculateTotalPrice(normalizedServerCart);
+            localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
+        } catch (error) {
+            console.error("Error fetching guest cart:", error.response?.data || error.message);
+            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+            const normalizedCart = localCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedCart);
+            calculateTotalPrice(normalizedCart);
+            if (localCart.length > 0) {
+                await syncGuestCart(normalizedCart);
+            }
+        }
+    };
+
+    const syncGuestCart = async (items) => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        try {
+            const normalizedItems = items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: parseFloat(item.price) || 0,
+                title: item.title,
+                image: item.image,
+                orderNote: item.orderNote,
+            }));
+            const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
+                headers: { 'X-Guest-Token': guestToken },
+            });
+            const serverCart = response.data || [];
+            const normalizedServerCart = serverCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedServerCart);
+            calculateTotalPrice(normalizedServerCart);
+            localStorage.setItem('cart', JSON.stringify(normalizedServerCart));
+        } catch (error) {
+            console.error("Error syncing guest cart:", error.response?.data || error.message);
+            showToast(t("Error syncing guest cart"), "error");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const syncLocalCartToServer = async (userEmail) => {
+        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (localCart.length === 0) return;
+
+        try {
+            for (const item of localCart) {
+                const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
+                const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
+                await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
+                    ...item,
+                    quantity,
+                    price: parseFloat(item.price) || 0,
+                }, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+            }
+            localStorage.removeItem('cart');
+        } catch (error) {
+            console.error("Error syncing local cart to server:", error.response?.data || error.message);
+            showToast(t("Error syncing cart"), "error");
+        }
+    };
 
     const fetchCartItems = async () => {
         if (!email) return;
@@ -318,8 +338,8 @@ const Cart = () => {
             console.log("Validation response:", response.data); // Debug log
             if (response.data.valid) {
                 const lang = i18n.language || 'tr';
-                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken }); // Debug log
-                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken } });
+                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency, eurToTry }); // Debug log
+                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken, currency, eurToTry } });
                 console.log("Guest checkout - Navigation called successfully"); // Debug log
             } else {
                 showToast(response.data.message || t("Cart validation failed"), "error");
@@ -367,7 +387,7 @@ const Cart = () => {
                             <List>
                                 {cartItems.map((item) => {
                                     const id = item.productId || item.id;
-                                    const price = parseFloat(item.price) || 0;
+                                    const price = parseFloat(item.price) || 0; // EUR cinsinden toplam
                                     const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
@@ -428,7 +448,7 @@ const Cart = () => {
                                                         mb: 0.5
                                                     }}
                                                 >
-                                                    {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
+                                                    {t("Unit Price")}: {formatPrice(price / item.quantity)}
                                                 </Typography>
                                                 <Typography
                                                     color="textSecondary"
@@ -448,12 +468,12 @@ const Cart = () => {
                                                         mb: 1
                                                     }}
                                                 >
-                                                    {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
+                                                    {t("Total Price")}: <s>{formatPrice(price)}</s> →
                                                     <strong style={{
                                                         color: '#1976d2',
                                                         fontWeight: 'var(--fw-semibold)'
                                                     }}>
-                                                        {(price * (1 - discountRate / 100)).toFixed(2)} €
+                                                        {formatPrice(price * (1 - discountRate / 100))}
                                                     </strong>
                                                 </Typography>
                                                 {item.orderNote && (
@@ -538,7 +558,7 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {totalPrice.toFixed(2)} €
+                            {t("Total")}: {formatPrice(totalPrice)}
                         </Typography>
 
                         <Button

@@ -71,11 +71,11 @@ export default function ArticlesPage() {
             <Container sx={{ mt: 4 }}>
                 {/* Page Title */}
                 <Box sx={{ textAlign: 'center', mb: 5 }}>
-                    <Typography
-                        variant="h3"
-                        sx={{
-                            fontFamily: 'var(--font-heading)',
-                            fontWeight: 'var(--fw-bold)',
+                    <Typography 
+                        variant="h3" 
+                        sx={{ 
+                            fontFamily: 'var(--font-heading)', 
+                            fontWeight: 'var(--fw-bold)', 
                             color: '#8B0000',
                             letterSpacing: 'var(--ls-tight)',
                             mb: 2
@@ -83,10 +83,10 @@ export default function ArticlesPage() {
                     >
                         {t("Henna Night Ideas")}
                     </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            color: 'text.secondary',
+                    <Typography 
+                        variant="body1" 
+                        sx={{ 
+                            color: 'text.secondary', 
                             mt: 2,
                             fontFamily: 'var(--font-primary)',
                             fontSize: '1.1rem',
@@ -106,8 +106,8 @@ export default function ArticlesPage() {
                         label="All"
                         onClick={() => setTopicFilter('All')}
                         variant={topicFilter === 'All' ? 'filled' : 'outlined'}
-                        sx={{
-                            mr: 1,
+                        sx={{ 
+                            mr: 1, 
                             cursor: 'pointer',
                             fontFamily: 'var(--font-ui)',
                             fontWeight: 'var(--fw-medium)',
@@ -127,8 +127,8 @@ export default function ArticlesPage() {
                             label={topic}
                             onClick={() => setTopicFilter(topic)}
                             variant={topicFilter === topic ? 'filled' : 'outlined'}
-                            sx={{
-                                mr: 1,
+                            sx={{ 
+                                mr: 1, 
                                 cursor: 'pointer',
                                 fontFamily: 'var(--font-ui)',
                                 fontWeight: 'var(--fw-medium)',
@@ -149,10 +149,10 @@ export default function ArticlesPage() {
                 <Grid container spacing={4}>
                     {filteredArticles.map((article) => (
                         <Grid key={article.id} item xs={12} sm={6} md={4}>
-                            <Card sx={{
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column',
+                            <Card sx={{ 
+                                height: '100%', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
                                 boxShadow: 3,
                                 borderRadius: 2,
                                 transition: 'all 0.3s ease',
@@ -168,9 +168,9 @@ export default function ArticlesPage() {
                                     sx={{ height: 180, objectFit: 'cover' }}
                                 />
                                 <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
+                                    <Typography 
+                                        variant="caption" 
+                                        sx={{ 
                                             color: 'text.secondary',
                                             fontFamily: 'var(--font-ui)',
                                             fontSize: '0.8rem',
@@ -181,10 +181,10 @@ export default function ArticlesPage() {
                                     >
                                         {article.topic} &middot; {article.date}
                                     </Typography>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{
-                                            fontWeight: 'var(--fw-semibold)',
+                                    <Typography 
+                                        variant="h6" 
+                                        sx={{ 
+                                            fontWeight: 'var(--fw-semibold)', 
                                             mt: 1,
                                             fontFamily: 'var(--font-heading)',
                                             letterSpacing: 'var(--ls-tight)',
@@ -194,10 +194,10 @@ export default function ArticlesPage() {
                                     >
                                         {article.title}
                                     </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            mt: 1,
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            mt: 1, 
                                             color: 'text.secondary',
                                             fontFamily: 'var(--font-primary)',
                                             lineHeight: 1.6,

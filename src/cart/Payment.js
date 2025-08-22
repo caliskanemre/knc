@@ -24,7 +24,7 @@ import React, { useEffect, useState } from 'react';
        const location = useLocation();
        const navigate = useNavigate();
 
-       const { totalPrice: basePrice = 0, cartItems: initialCartItems = [], email: userEmail = '', guestToken = '' } = location.state || {};
+       const { totalPrice: basePrice = 0, cartItems: initialCartItems = [], email: userEmail = '', guestToken = '', currency: currencyFromState = 'EUR', eurToTry: eurToTryFromState = 36 } = location.state || {};
        const initialGuestToken = guestToken || localStorage.getItem('guestToken') || '';
 
     const discountRate = 20;
@@ -45,7 +45,10 @@ import React, { useEffect, useState } from 'react';
            guestEmail: userEmail || '',
        });
 
-       const [currency] = useState('EUR');
+       // Çoklu para birimi
+       const [currency, setCurrency] = useState(currencyFromState === 'TRY' ? 'TRY' : 'EUR');
+       const eurToTry = parseFloat(eurToTryFromState) || 36;
+
        const [revolutOrderId, setRevolutOrderId] = useState(null);
 
        const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -54,10 +57,16 @@ import React, { useEffect, useState } from 'react';
 
        const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
+    const formatPrice = (amountEur) => {
+        const amount = currency === 'TRY' ? amountEur * eurToTry : amountEur;
+        const symbol = currency === 'TRY' ? '₺' : '€';
+        return `${parseFloat(amount).toFixed(2)} ${symbol}`;
+    };
+
     // Debug log for component mount and state
     useEffect(() => {
         console.log("Payment component mounted with location.state:", location.state);
-        console.log("Initial cartItems:", initialCartItems, "userEmail:", userEmail, "guestToken:", initialGuestToken);
+        console.log("Initial cartItems:", initialCartItems, "userEmail:", userEmail, "guestToken:", initialGuestToken, "currency:", currency, "eurToTry:", eurToTry);
     }, []);
 
     // Generate UUID for guest token
@@ -67,7 +76,7 @@ import React, { useEffect, useState } from 'react';
         );
     };
 
-    // List of shipping countries & costs
+    // List of shipping countries & costs (EUR baz)
     const shippingCountries = [
         { code: 'TR', name: 'Türkiye', cost: 0 },
         { code: 'AL', name: 'Albania', cost: 12.99 },
@@ -179,9 +188,10 @@ import React, { useEffect, useState } from 'react';
        const handleCountrySelect = (event) => {
            const selectedCountryCode = event.target.value;
            const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
-           const cost = foundCountry ? foundCountry.cost : 0;
+           const cost = foundCountry ? foundCountry.cost : 0; // EUR baz
            setShippingAddress((prev) => ({ ...prev, country: selectedCountryCode }));
            setShippingCost(cost);
+           if (selectedCountryCode === 'TR') setCurrency('TRY');
        };
 
        const validateEmail = (email) => {
@@ -232,10 +242,43 @@ import React, { useEffect, useState } from 'react';
                 return;
             }
 
-               const amountInCents = Math.round(finalPrice * 100);
+               const amountInCentsEur = Math.round(finalPrice * 100); // EUR baz
+               const isTR = (shippingAddress.country === 'TR') || currency === 'TRY';
+
+               if (isTR) {
+                   const amountInKurus = Math.round(finalPrice * eurToTry * 100); // TRY minor
+                   const paymentDetails = {
+                       amount: amountInKurus,
+                       currency: 'TRY',
+                       shippingAddress: {
+                           name: shippingAddress.name,
+                           addressLine1: shippingAddress.addressLine1,
+                           addressLine2: shippingAddress.addressLine2,
+                           city: shippingAddress.city,
+                           postalCode: shippingAddress.postalCode,
+                           country: shippingAddress.country,
+                       },
+                       email: userEmail || shippingAddress.guestEmail,
+                       items: cartItems,
+                   };
+                   console.log('Initiating PayTR payment with data:', paymentDetails);
+                   const paytrResp = await axios.post(`${baseURL}/paytr`, paymentDetails, { headers });
+                   const data = paytrResp.data || {};
+                   if (paytrResp.status === 200) {
+                       const redirectUrl = data.checkout_url || data.url || data.gateway_url || data.iframe_url;
+                       if (redirectUrl) {
+                           showSnackbar(t('Payment process started!'), 'success');
+                           window.location.href = redirectUrl;
+                           return;
+                       }
+                   }
+                   showSnackbar(t('Payment could not be initiated!'), 'error');
+                   return;
+               }
+
                const paymentData = {
-                   amount: amountInCents,
-                   currency,
+                   amount: amountInCentsEur,
+                   currency: 'EUR',
                    shippingAddress: {
                        name: shippingAddress.name,
                        addressLine1: shippingAddress.addressLine1,
@@ -451,14 +494,14 @@ import React, { useEffect, useState } from 'react';
                                            {t('Order Summary')}
                                        </Typography>
                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                           {t('Items Total')}: {parseFloat(totalPrice).toFixed(2)} €
+                                           {t('Items Total')}: {formatPrice(parseFloat(totalPrice))}
                                        </Typography>
                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                           {t('Shipping Cost')}: <strong>{parseFloat(shippingCost).toFixed(2)} €</strong>
+                                           {t('Shipping Cost')}: <strong>{formatPrice(parseFloat(shippingCost))}</strong>
                                        </Typography>
                                        <Divider sx={{ my: 1 }} />
                                        <Typography variant="h6">
-                                           {t('Total')}: <strong>{parseFloat(finalPrice).toFixed(2)} €</strong>
+                                           {t('Total')}: <strong>{formatPrice(parseFloat(finalPrice))}</strong>
                                        </Typography>
                                        <Button
                                            variant="contained"
@@ -468,7 +511,7 @@ import React, { useEffect, useState } from 'react';
                                            onClick={handlePaymentSubmit}
                                            disabled={cartItems.length === 0 || isLoading}
                                        >
-                                           {t('Proceed to Payment')}
+                                           {shippingAddress.country === 'TR' || currency === 'TRY' ? t('Proceed to Payment') + ' (PayTR)' : t('Proceed to Payment')}
                                        </Button>
                                    </Box>
                                </section>
@@ -491,3 +534,4 @@ import React, { useEffect, useState } from 'react';
    };
 
    export default Payment;
+

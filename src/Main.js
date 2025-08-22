@@ -16,7 +16,6 @@ import Axios from 'axios';
 import axios from 'axios';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
@@ -56,10 +55,7 @@ const theme = createTheme({
 const PAGE_SIZE = 20;
 
 // Helper function to get a prefixed image URL (e.g., "small_", "medium_", "large_")
-const getPrefixedImage = (url, prefix) => {
-    if (!url) return url;
-    return url.replace(/([^/]+)$/, `${prefix}_$1`);
-};
+
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -67,7 +63,10 @@ const generateUUID = () => {
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 };
-
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 export default function Main() {
     const [products, setProducts] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -76,10 +75,17 @@ export default function Main() {
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
-    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const { t } = useTranslation();
     const { favorites, isLoggedIn, toggleFavorite, token } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+    // Fiyat formatlama (dönüşüm yok)
+    const formatPrice = (amount, isTR) => {
+        const symbol = isTR ? '₺' : '€';
+        const num = Number(amount) || 0;
+        return `${num.toFixed(2)} ${symbol}`;
+    };
 
     // Fetch products
     const fetchProducts = async (pageNum) => {
@@ -222,34 +228,6 @@ export default function Main() {
         }
     };
 
-    const addToCart = (productId, price, title, quantity) => {
-        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-        const cartItem = { productId, quantity, price, title, note: '' };
-        const existingItemIndex = localCart.findIndex(item => item.productId === productId);
-        if (existingItemIndex >= 0) {
-            localCart[existingItemIndex].quantity += quantity;
-        } else {
-            localCart.push(cartItem);
-        }
-        localStorage.setItem('cart', JSON.stringify(localCart));
-        setSnackbarMessage(t(`${quantity} adet "${title}" sepete eklendi!`));
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
-
-        if (isLoggedIn && token) {
-            // Sync to server (requires email from useAuth)
-            // Note: You'll need to add email to useAuth or fetch it from localStorage
-            // Axios.post(`${baseURL}/cart/${email}`, cartItem, {
-            //     headers: { Authorization: `Bearer ${token}` },
-            // }).catch(error => {
-            //     console.error('Error syncing cart:', error);
-            //     setSnackbarMessage(t('Error syncing cart'));
-            //     setSnackbarSeverity('error');
-            //     setSnackbarOpen(true);
-            // });
-        }
-    };
-
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
@@ -269,14 +247,14 @@ export default function Main() {
                 <Container sx={{ py: 9 }} maxWidth="xl">
                     <Grid container spacing={4}>
                         {products.map((item) => {
+                            const isTR = !!item.is_turkey_user;
+                            const baseOriginal = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
+                            const originalPriceNum = Number(baseOriginal) || 0;
                             const discountPercent = 20;
-                            const originalPrice = Number(item.price).toFixed(2);
-                            const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
+                            const discountedPriceNum = originalPriceNum * (1 - discountPercent / 100);
 
                             const originalPhoto = item.photos[0]?.photo || 'https://via.placeholder.com/300x200?text=No+Image';
                             const smallImageUrl = getPrefixedImage(originalPhoto, 'small');
-                            const mediumImageUrl = getPrefixedImage(originalPhoto, 'medium');
-                            const largeImageUrl = getPrefixedImage(originalPhoto, 'large');
 
                             const isAlreadyFavorited = isLoggedIn
                                 ? favorites.favoriteProducts?.some(product => product.id === item.id)
@@ -313,7 +291,7 @@ export default function Main() {
                                             />
                                         </a>
                                         <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            {/* Başlık kalın */}
+                                            {/* Başlık */}
                                             <Typography
                                                 sx={{
                                                     fontFamily: 'Montserrat, sans-serif',
@@ -330,7 +308,7 @@ export default function Main() {
                                             >
                                                 {item.title || 'Unknown'}
                                             </Typography>
-                                            {/* Short description altına, normal fontta */}
+                                            {/* Short description */}
                                             {item.shortDescription && (
                                                 <Typography
                                                     sx={{
@@ -352,26 +330,15 @@ export default function Main() {
                                             )}
                                             {/* Fiyat Bilgisi */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
-                                                <Typography
-                                                    sx={{
-                                                        fontWeight: 'bold',
-                                                        fontSize: { xs: '0.9rem', sm: '1rem' },
-                                                    }}
-                                                >
-                                                    {discountedPrice} €
+                                                <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                                                    {formatPrice(discountedPriceNum, isTR)}
                                                 </Typography>
-                                                <Typography
-                                                    sx={{
-                                                        textDecoration: 'line-through',
-                                                        color: 'gray',
-                                                        ml: 1,
-                                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                                                    }}
-                                                >
-                                                    {originalPrice} €
+                                                <Typography sx={{ textDecoration: 'line-through', color: 'gray', ml: 1, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                                                    {formatPrice(originalPriceNum, isTR)}
                                                 </Typography>
                                             </Box>
                                         </Box>
+                                        {/* Favori butonu */}
                                         <IconButton
                                             aria-label="add to favorites"
                                             onClick={() => handleFavoriteClick(item.id)}
@@ -416,4 +383,3 @@ export default function Main() {
     </ThemeProvider>
   );
 }
-

@@ -36,9 +36,19 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "react-i18next";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Footer from "../Footer";
+
+function generateUUID() {
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+}
+
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 const ProductDetails = () => {
     const { id, title, type } = useParams();
@@ -51,70 +61,20 @@ const ProductDetails = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [orderNote, setOrderNote] = useState("");
-    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
-    const [email, setEmail] = useState('');
-
     const { t } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
-    // Generate UUID for guest token
-    const generateUUID = () => {
-        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-        );
+    // Fiyat formatlama (dönüşüm yok, yalnızca sembol)
+    const formatPrice = (amount, isTR) => {
+        const symbol = isTR ? '₺' : '€';
+        const num = Number(amount) || 0;
+        return `${num.toFixed(2)} ${symbol}`;
     };
-
-    // Helper to get image URL with prefix
-    const getPrefixedImage = (url, prefix) => {
-        if (!url) return url;
-        return url.replace(/([^/]+)$/, `${prefix}_$1`);
-    };
-
-    useEffect(() => {
-        // Store guest token
-        localStorage.setItem('guestToken', guestToken);
-
-        if (isLoggedIn && email && token) {
-            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-            localCart.forEach(async (item) => {
-                try {
-                    await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, item, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                } catch (error) {
-                    console.error("Error syncing cart item:", error);
-                }
-            });
-            localStorage.removeItem('cart');
-
-            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-            localFavorites.forEach(async (favorite) => {
-                if (favorite && favorite.id) {
-                    try {
-                        await toggleFavorite(favorite.id, false, "product");
-                    } catch (error) {
-                        console.error("Error syncing favorite:", error);
-                    }
-                }
-            });
-            localStorage.removeItem('favorites');
-        }
-    }, [isLoggedIn, email, token, guestToken]);
-
-    // Extract email from JWT token
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-            const decoded = jwtDecode(storedToken);
-            setEmail(decoded.sub);
-        }
-    }, []);
 
     useEffect(() => {
         Axios.get(`${baseURL}/products/detail/${id}/${title}`)
@@ -217,17 +177,26 @@ const ProductDetails = () => {
         );
     }
 
+    // Discount Logic
+    const discountPercent = 20;
+    const originalPrice = Math.floor(product.price); // Backend için EUR baz (fallback)
+
+    // UI fiyatları
+    const isTR = !!product.is_turkey_user;
+    const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
+    const displayOriginalPrice = Number(uiBaseOriginal) || 0;
+    const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
+
     const addToCart = debounce(async () => {
         if (!product || quantity <= 0) {
             showSnackbar(t('Invalid quantity'), 'warning');
             return;
         }
 
-        // Backend'in beklediği orijinal fiyatı kullan (indirim backend'de uygulanıyor)
         const cartItem = {
             productId: product.id,
             quantity,
-            price: originalPrice * quantity, // Orijinal fiyatı kullan (backend indirimi uygulayacak)
+            price: originalPrice * quantity, // Backend EUR bekliyor varsayımı ile
             title: product.name || product.title,
             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
             orderNote,
@@ -251,7 +220,7 @@ const ProductDetails = () => {
                 const existingItem = localCart.find(item => item.productId === cartItem.productId);
                 if (existingItem) {
                     existingItem.quantity += cartItem.quantity;
-                    existingItem.price = originalPrice * existingItem.quantity; // Orijinal fiyatı kullan
+                    existingItem.price = originalPrice * existingItem.quantity;
                     existingItem.orderNote = orderNote || existingItem.orderNote;
                 } else {
                     localCart.push(cartItem);
@@ -266,22 +235,22 @@ const ProductDetails = () => {
                 });
             }
 
-            // Google Ads conversion tracking - indirimli fiyatı kullan
+            // Google Ads conversion tracking - UI para birimine göre
             if (window.gtag) {
                 window.gtag('event', 'add_to_cart', {
                     'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                    'value': parseFloat(discountedPrice * quantity), // Tracking için indirimli fiyat
-                    'currency': 'EUR',
+                    'value': parseFloat(displayDiscountedPrice * quantity),
+                    'currency': isTR ? 'TRY' : 'EUR',
                     'items': [{
                         'id': product.id,
                         'name': cartItem.title,
                         'quantity': quantity
                     }]
                 });
-                console.log("Google Ads 'add_to_cart' dönüşümü gönderildi:", {
+                console.log("Google Ads 'add_to_cart' gönderildi:", {
                     id: product.id,
-                    price: discountedPrice * quantity,
-                    currency: 'EUR'
+                    price: displayDiscountedPrice * quantity,
+                    currency: isTR ? 'TRY' : 'EUR'
                 });
             }
 
@@ -316,11 +285,6 @@ const ProductDetails = () => {
     const descriptionLines = product.description
         ? product.description.split("\n").filter((line) => line.trim() !== "")
         : [];
-
-    // Discount Logic
-    const discountPercent = 20;
-    const originalPrice = Math.floor(product.price);
-    const discountedPrice = Math.floor(product.price * (1 - discountPercent / 100));
 
     return (
         <div className="activity-details-container">
@@ -514,49 +478,14 @@ const ProductDetails = () => {
 
                             {/* Price Section */}
                             {product.price && (
-                                <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    flexWrap: 'wrap',
-                                    gap: 1,
-                                    mb: 3
-                                }}>
-                                    <Typography
-                                        className="price"
-                                        sx={{
-                                            textDecoration: 'line-through',
-                                            color: 'text.secondary',
-                                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                                            fontFamily: 'var(--font-ui)',
-                                            fontWeight: 'var(--fw-medium)'
-                                        }}
-                                    >
-                                        {originalPrice} €
+                                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                                    <Typography className="price" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.25rem' }, fontFamily: 'var(--font-ui)', fontWeight: 'var(--fw-medium)' }}>
+                                        {formatPrice(displayOriginalPrice, isTR)}
                                     </Typography>
-                                    <Typography
-                                        className="price"
-                                        sx={{
-                                            color: 'primary.main',
-                                            fontWeight: 'var(--fw-semibold)',
-                                            fontSize: { xs: '1.3rem', sm: '1.5rem' },
-                                            fontFamily: 'var(--font-ui)'
-                                        }}
-                                    >
-                                        {discountedPrice} €
+                                    <Typography className="price" sx={{ color: 'primary.main', fontWeight: 'var(--fw-semibold)', fontSize: { xs: '1.3rem', sm: '1.5rem' }, fontFamily: 'var(--font-ui)' }}>
+                                        {formatPrice(displayDiscountedPrice, isTR)}
                                     </Typography>
-                                    <Box
-                                        sx={{
-                                            backgroundColor: 'error.main',
-                                            color: 'white',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            fontSize: '0.8rem',
-                                            fontWeight: 'var(--fw-bold)',
-                                            fontFamily: 'var(--font-ui)',
-                                            letterSpacing: 'var(--ls-wide)'
-                                        }}
-                                    >
+                                    <Box sx={{ backgroundColor: 'error.main', color: 'white', px: 1, py: 0.5, borderRadius: 1, fontSize: '0.8rem', fontWeight: 'var(--fw-bold)', fontFamily: 'var(--font-ui)', letterSpacing: 'var(--ls-wide)' }}>
                                         {discountPercent}% OFF
                                     </Box>
                                 </Box>
@@ -818,18 +747,12 @@ const ProductDetails = () => {
                         }}
                     >
                         {similarProducts.map((sp) => {
+                            const spIsTR = !!(sp.is_turkey_user ?? product?.is_turkey_user);
+                            const spBaseOriginal = spIsTR ? (sp.tl_price ?? sp.price) : (sp.eur_price ?? sp.price);
+                            const spOriginalNum = Number(spBaseOriginal) || 0;
                             const spOriginal = sp.photos?.[0]?.photo || "https://via.placeholder.com/300x200?text=No+Image";
                             return (
-                                <Card
-                                    key={sp.id}
-                                    style={{
-                                        marginRight: '30px',
-                                        minWidth: '200px',
-                                        maxWidth: '300px',
-                                        textAlign: 'center',
-                                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)'
-                                    }}
-                                >
+                                <Card key={sp.id} style={{ marginRight: '30px', minWidth: '200px', maxWidth: '300px', textAlign: 'center', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)' }}>
                                     <CardMedia
                                         component="img"
                                         alt={sp.title}
@@ -847,7 +770,7 @@ const ProductDetails = () => {
                                             {sp.title}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {sp.price} €
+                                            {formatPrice(spOriginalNum, spIsTR)}
                                         </Typography>
                                         <Button
                                             variant="contained"
