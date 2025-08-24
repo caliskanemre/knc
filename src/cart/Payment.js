@@ -57,10 +57,10 @@ import React, { useEffect, useState } from 'react';
 
        const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    const formatPrice = (amountEur) => {
-        const amount = currency === 'TRY' ? amountEur * eurToTry : amountEur;
-        const symbol = currency === 'TRY' ? '₺' : '€';
-        return `${parseFloat(amount).toFixed(2)} ${symbol}`;
+    const formatPrice = (amount, currencyType) => {
+        const symbol = currencyType === 'TRY' || currencyType === 'TL' ? '₺' : '€';
+        const num = Number(amount) || 0;
+        return `${num.toFixed(2)} ${symbol}`;
     };
 
     // Debug log for component mount and state
@@ -142,6 +142,15 @@ import React, { useEffect, useState } from 'react';
                     }));
                     setCartItems(normalizedCartItems);
                     calculateTotalPrice(normalizedCartItems);
+
+                    // Cart'tan currency bilgisini al
+                    if (normalizedCartItems.length > 0) {
+                        const firstItem = normalizedCartItems[0];
+                        const itemCurrency = firstItem.currency || 'EUR';
+                        const shouldUseTRY = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
+                        setCurrency(shouldUseTRY ? 'TRY' : 'EUR');
+                    }
+
                     if (normalizedCartItems.length === 0) {
                         console.log("Guest checkout - Redirecting to /cart: Guest cart is empty");
                         showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
@@ -159,6 +168,15 @@ import React, { useEffect, useState } from 'react';
                 console.log("Guest checkout - Using initialCartItems:", initialCartItems);
                 setCartItems(initialCartItems);
                 calculateTotalPrice(initialCartItems);
+
+                // Initial cart items'dan currency bilgisini al
+                if (initialCartItems.length > 0) {
+                    const firstItem = initialCartItems[0];
+                    const itemCurrency = firstItem.currency || 'EUR';
+                    const shouldUseTRY = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
+                    setCurrency(shouldUseTRY ? 'TRY' : 'EUR');
+                }
+
                 if (initialCartItems.length === 0 && !initialGuestToken) {
                     console.log("Guest checkout - Redirecting to /cart: No cart items and no guest token");
                     showSnackbar(t('Cart is empty. Please add items to your cart.'), 'warning');
@@ -167,8 +185,8 @@ import React, { useEffect, useState } from 'react';
             }
         };
 
-           fetchGuestCart();
-       }, [initialGuestToken, userEmail, initialCartItems, navigate]);
+        fetchGuestCart();
+    }, [initialGuestToken, userEmail, initialCartItems, navigate]);
 
        useEffect(() => {
            setFinalPrice(totalPrice + parseFloat(shippingCost));
@@ -246,7 +264,8 @@ import React, { useEffect, useState } from 'react';
                const isTR = (shippingAddress.country === 'TR') || currency === 'TRY';
 
                if (isTR) {
-                   const amountInKurus = Math.round(finalPrice * eurToTry * 100); // TRY minor
+                   // TRY için direkt finalPrice'ı kuruş cinsinden gönder (çeviri yapma)
+                   const amountInKurus = Math.round(finalPrice * 100); // TRY kuruş
                    const paymentDetails = {
                        amount: amountInKurus,
                        currency: 'TRY',
@@ -262,7 +281,7 @@ import React, { useEffect, useState } from 'react';
                        items: cartItems,
                    };
                    console.log('Initiating PayTR payment with data:', paymentDetails);
-                   const paytrResp = await axios.post(`${baseURL}/paytr`, paymentDetails, { headers });
+                   const paytrResp = await axios.post(`${baseURL}/api/payment`, paymentDetails, { headers });
                    const data = paytrResp.data || {};
                    if (paytrResp.status === 200) {
                        const redirectUrl = data.checkout_url || data.url || data.gateway_url || data.iframe_url;
@@ -494,14 +513,14 @@ import React, { useEffect, useState } from 'react';
                                            {t('Order Summary')}
                                        </Typography>
                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                           {t('Items Total')}: {formatPrice(parseFloat(totalPrice))}
+                                           {t('Items Total')}: {formatPrice(parseFloat(totalPrice), currency)}
                                        </Typography>
                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                           {t('Shipping Cost')}: <strong>{formatPrice(parseFloat(shippingCost))}</strong>
+                                           {t('Shipping Cost')}: <strong>{formatPrice(parseFloat(shippingCost), currency)}</strong>
                                        </Typography>
                                        <Divider sx={{ my: 1 }} />
                                        <Typography variant="h6">
-                                           {t('Total')}: <strong>{formatPrice(parseFloat(finalPrice))}</strong>
+                                           {t('Total')}: <strong>{formatPrice(parseFloat(finalPrice), currency)}</strong>
                                        </Typography>
                                        <Button
                                            variant="contained"
@@ -534,4 +553,3 @@ import React, { useEffect, useState } from 'react';
    };
 
    export default Payment;
-

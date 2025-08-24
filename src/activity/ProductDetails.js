@@ -200,6 +200,8 @@ const ProductDetails = () => {
             title: product.name || product.title,
             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
             orderNote,
+            currency: isTR ? 'TRY' : 'EUR', // Currency bilgisini ekle
+            is_turkey_user: isTR // IP bazlı bilgiyi de ekle
         };
 
         try {
@@ -478,6 +480,7 @@ const ProductDetails = () => {
 
                             {/* Price Section */}
                             {product.price && (
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 3 }}>
                                     <Typography className="price" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: { xs: '1.1rem', sm: '1.25rem' }, fontFamily: 'var(--font-ui)', fontWeight: 'var(--fw-medium)' }}>
                                         {formatPrice(displayOriginalPrice, isTR)}

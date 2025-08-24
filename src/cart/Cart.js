@@ -50,10 +50,10 @@ const Cart = () => {
     });
     const eurToTry = parseFloat(process.env.REACT_APP_EUR_TO_TRY) || 36; // Varsayılan kur
 
-    const formatPrice = (amount) => {
-        // Backend'den gelen fiyatı olduğu gibi göster, çevrim yapma
-        const symbol = currency === 'TRY' ? '₺' : '€';
-        return `${amount.toFixed(2)} ${symbol}`;
+    const formatPrice = (amount, isTR) => {
+        const symbol = isTR ? '₺' : '€';
+        const num = Number(amount) || 0;
+        return `${num.toFixed(2)} ${symbol}`;
     };
 
 
@@ -86,7 +86,7 @@ const Cart = () => {
                 } catch (error) {
                     console.error("Error decoding JWT token:", error);
                     showToast(t("Error initializing cart"), "error");
-                    await fetchGuestCart(); // Fallback to guest cart
+                    await fetchGuestCart; // Fallback to guest cart
                 }
             } else {
                 await fetchGuestCart();
@@ -129,6 +129,7 @@ const Cart = () => {
         if (isSyncing) return;
         setIsSyncing(true);
         try {
+
             const normalizedItems = items.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
@@ -136,6 +137,8 @@ const Cart = () => {
                 title: item.title,
                 image: item.image,
                 orderNote: item.orderNote,
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'), // Currency bilgisini ekle
+                is_turkey_user: item.is_turkey_user // IP bazlı bilgiyi ekle
             }));
             const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
                 headers: { 'X-Guest-Token': guestToken },
@@ -216,10 +219,26 @@ const Cart = () => {
     };
 
     const calculateTotalPrice = (items) => {
-        const total = items.reduce((acc, item) => {
-            const unitPrice = parseFloat(item.price) / item.quantity || 0;
+        let total = 0;
+
+        total = items.reduce((acc, item) => {
+            // Currency kontrolü - backend'den gelen currency değerini kullan
+            const itemCurrency = item.currency || 'EUR';
+            const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
+
+            // Fiyat hesaplama
+            let unitPrice;
+            if (isTR) {
+                // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
+                unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
+            } else {
+                // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
+                unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
+            }
+
             return acc + unitPrice * item.quantity;
         }, 0);
+
         const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
     };
@@ -290,6 +309,8 @@ const Cart = () => {
                     title: product.title,
                     image: product.image,
                     orderNote: product.orderNote,
+                    currency: product.currency || (product.is_turkey_user ? 'TRY' : 'EUR'), // Currency bilgisini koru
+                    is_turkey_user: product.is_turkey_user // IP bazlı bilgiyi koru
                 };
                 await axios.put(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, cartItemDTO, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -386,8 +407,22 @@ const Cart = () => {
                         {cartItems.length > 0 ? (
                             <List>
                                 {cartItems.map((item) => {
+                                    // Currency kontrolü - backend'den gelen currency değerini kullan
+                                    const itemCurrency = item.currency || 'EUR';
+                                    const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
                                     const id = item.productId || item.id;
-                                    const price = parseFloat(item.price) || 0; // EUR cinsinden toplam
+
+                                    // Fiyat hesaplama - currency'ye göre doğru fiyatı kullan
+                                    let unitPrice;
+                                    if (isTR) {
+                                        // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
+                                        unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
+                                    } else {
+                                        // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
+                                        unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
+                                    }
+                                    const totalPrice = unitPrice * item.quantity;
+
                                     const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
@@ -448,7 +483,7 @@ const Cart = () => {
                                                         mb: 0.5
                                                     }}
                                                 >
-                                                    {t("Unit Price")}: {formatPrice(price / item.quantity)}
+                                                    {t("Unit Price")}: {formatPrice(unitPrice, isTR)}
                                                 </Typography>
                                                 <Typography
                                                     color="textSecondary"
@@ -468,12 +503,12 @@ const Cart = () => {
                                                         mb: 1
                                                     }}
                                                 >
-                                                    {t("Total Price")}: <s>{formatPrice(price)}</s> →
+                                                    {t("Total Price")}: <s>{formatPrice(totalPrice, isTR)}</s> →
                                                     <strong style={{
                                                         color: '#1976d2',
                                                         fontWeight: 'var(--fw-semibold)'
                                                     }}>
-                                                        {formatPrice(price * (1 - discountRate / 100))}
+                                                        {formatPrice(totalPrice * (1 - discountRate / 100), isTR)}
                                                     </strong>
                                                 </Typography>
                                                 {item.orderNote && (
@@ -558,7 +593,7 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {formatPrice(totalPrice)}
+                            {t("Total")}: {formatPrice(totalPrice, cartItems.length > 0 ? (cartItems[0].currency === 'TL' || cartItems[0].currency === 'TRY' || !!cartItems[0].is_turkey_user) : false)}
                         </Typography>
 
                         <Button
