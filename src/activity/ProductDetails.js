@@ -382,7 +382,7 @@ const ProductDetails = () => {
                         color: '#2c2c2c'
                     }}
                 >
-                    {type ? `${type} - ${t(product.category)}` : t("All Products")}
+
                 </Typography>
 
                 <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>

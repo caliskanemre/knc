@@ -50,8 +50,8 @@ const Cart = () => {
     });
     const eurToTry = parseFloat(process.env.REACT_APP_EUR_TO_TRY) || 36; // Varsayılan kur
 
-    const formatPrice = (amount, isTR) => {
-        const symbol = isTR ? '₺' : '€';
+    const formatPrice = (amount, currencyType) => {
+        const symbol = currencyType === 'TRY' || currencyType === 'TL' ? '₺' : '€';
         const num = Number(amount) || 0;
         return `${num.toFixed(2)} ${symbol}`;
     };

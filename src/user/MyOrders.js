@@ -14,23 +14,37 @@ import {
     CircularProgress
 } from "@mui/material";
 import Header from "../header/Header";
+import { useTranslation } from "react-i18next";
 
 const MyOrders = () => {
-  const { email, token } = useAuth(); // ✅ Use `email` instead of `username`
+  const { email, token } = useAuth();
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Add error state
+  const [error, setError] = useState(null);
+  const [guestToken] = useState(localStorage.getItem('guestToken') || '');
 
   const baseURL = process.env.REACT_APP_BASE_URL || "http://localhost:8080";
 
+  // Currency formatting function
+  const formatPrice = (amount, currency) => {
+    const symbol = currency === 'TRY' || currency === 'TL' ? '₺' : '€';
+    const num = Number(amount) || 0;
+    return `${num.toFixed(2)} ${symbol}`;
+  };
+
   useEffect(() => {
-    if (email && token) { // Check for both email and token
+    if (email && token) {
+      // Authenticated user
       fetchUserOrders(email);
+    } else if (guestToken) {
+      // Guest user
+      fetchGuestOrders();
     } else {
-      setLoading(false); // Stop loading if no email/token
-      setError("Kullanıcı bilgileri eksik."); // Set an error message
+      setLoading(false);
+      setError(t("No user information available"));
     }
-  }, [email, token]);
+  }, [email, token, guestToken]);
 
   const fetchUserOrders = async (email) => {
     try {
@@ -39,13 +53,40 @@ const MyOrders = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      // Ensure response.data is an array; fallback to empty array if not
       setOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch user orders:", error);
-      setError("Siparişler yüklenirken bir hata oluştu."); // User-friendly error
+      setError(t("Error loading orders"));
     } finally {
-      setLoading(false); // Always resolve loading
+      setLoading(false);
+    }
+  };
+
+  const fetchGuestOrders = async () => {
+    try {
+      // Guest için latest-order endpoint'i guest token ile çağır
+      const response = await axios.get(`${baseURL}/api/payment/latest-order`, {
+        headers: {
+          'X-Guest-Token': guestToken
+        }
+      });
+
+      // Response tek bir order objesi ise array'e dönüştür
+      const orderData = response.data;
+      if (orderData) {
+        setOrders(Array.isArray(orderData) ? orderData : [orderData]);
+      } else {
+        setOrders([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch guest orders:", error);
+      if (error.response?.status === 401) {
+        setError(t("Guest session expired. Please start a new order."));
+      } else {
+        setError(t("Error loading orders"));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

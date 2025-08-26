@@ -295,8 +295,10 @@ import React, { useEffect, useState } from 'react';
                    return;
                }
 
+               // EUR için direkt finalPrice'ı cent cinsinden gönder
+               const amountInCents = Math.round(finalPrice * 100); // EUR cent
                const paymentData = {
-                   amount: amountInCentsEur,
+                   amount: amountInCents,
                    currency: 'EUR',
                    shippingAddress: {
                        name: shippingAddress.name,
@@ -307,6 +309,7 @@ import React, { useEffect, useState } from 'react';
                        country: shippingAddress.country,
                    },
                    email: userEmail || shippingAddress.guestEmail,
+                   items: cartItems,
                };
 
             console.log("Guest checkout - Initiating payment with data:", paymentData);
