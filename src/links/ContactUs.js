@@ -102,6 +102,9 @@ const ContactUs = () => {
                         <Typography variant="h6" component="h2" gutterBottom>
                             KNC Kına Organizasyon
                         </Typography>
+                        <Typography variant="body1"  gutterBottom>
+                            Tel :  +90 534 829 08 66
+                        </Typography>
                         <Typography variant="body1" gutterBottom>
                             Yukarı Pazarcı Mah. 4005 sok. Fettah Kaya İş Merkezi No. 5/Z01
                             Manavgat / Antalya
