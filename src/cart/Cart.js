@@ -50,8 +50,8 @@ const Cart = () => {
     });
     const eurToTry = parseFloat(process.env.REACT_APP_EUR_TO_TRY) || 36; // Varsayılan kur
 
-    const formatPrice = (amount, currencyType) => {
-        const symbol = currencyType === 'TRY' || currencyType === 'TL' ? '₺' : '€';
+    const formatPrice = (amount, isTR) => {
+        const symbol = isTR ? '₺' : '€';
         const num = Number(amount) || 0;
         return `${num.toFixed(2)} ${symbol}`;
     };
@@ -86,7 +86,7 @@ const Cart = () => {
                 } catch (error) {
                     console.error("Error decoding JWT token:", error);
                     showToast(t("Error initializing cart"), "error");
-                    await fetchGuestCart; // Fallback to guest cart
+                    await fetchGuestCart(); // Fallback to guest cart
                 }
             } else {
                 await fetchGuestCart();
@@ -199,10 +199,12 @@ const Cart = () => {
             if (previousCartItems.length < items.length) {
                 const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
                 if (newItem && window.gtag) {
+                    const isTR = !!newItem.is_turkey_user;
+                    const currencyCode = isTR ? 'TRY' : 'EUR';
                     window.gtag('event', 'conversion', {
                         'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
                         'value': newItem.price,
-                        'currency': 'EUR',
+                        'currency': currencyCode,
                         'event_callback': () => {
                             console.log('Add to Cart conversion tracked');
                         }
@@ -219,26 +221,22 @@ const Cart = () => {
     };
 
     const calculateTotalPrice = (items) => {
-        let total = 0;
+        // Sepetteki ürünleri tek bir 'reduce' döngüsüyle topla
+        const total = items.reduce((acc, item) => {
+            // Her bir ürün için para birimini kontrol et
+            const isTR = item.currency === 'TL' || item.currency === 'TRY' || !!item.is_turkey_user;
 
-        total = items.reduce((acc, item) => {
-            // Currency kontrolü - backend'den gelen currency değerini kullan
-            const itemCurrency = item.currency || 'EUR';
-            const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
+            // Ürünün birim fiyatını doğru para birimine göre belirle
+            // Not: Backend'den gelen 'price' zaten toplam fiyatsa, quantity'e bölerek birim fiyatı buluruz.
+            const unitPrice = isTR
+                ? (item.tl_price ?? item.price) / item.quantity
+                : (item.eur_price ?? item.price) / item.quantity;
 
-            // Fiyat hesaplama
-            let unitPrice;
-            if (isTR) {
-                // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
-                unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
-            } else {
-                // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
-                unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
-            }
+            // Toplama mevcut ürünün toplam fiyatını ekle
+            return acc + (unitPrice || 0) * item.quantity;
+        }, 0); // Başlangıç değeri 0
 
-            return acc + unitPrice * item.quantity;
-        }, 0);
-
+        // İndirim uygula ve sonucu döndür
         const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
     };
@@ -407,18 +405,14 @@ const Cart = () => {
                         {cartItems.length > 0 ? (
                             <List>
                                 {cartItems.map((item) => {
-                                    // Currency kontrolü - backend'den gelen currency değerini kullan
-                                    const itemCurrency = item.currency || 'EUR';
-                                    const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
+                                    const isTR = !!item.is_turkey_user; // Main.js ile aynı mantık
                                     const id = item.productId || item.id;
 
                                     // Fiyat hesaplama - currency'ye göre doğru fiyatı kullan
                                     let unitPrice;
                                     if (isTR) {
-                                        // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
                                         unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
                                     } else {
-                                        // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
                                         unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
                                     }
                                     const totalPrice = unitPrice * item.quantity;
@@ -593,15 +587,10 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {formatPrice(totalPrice, (() => {
-                                // Cart items'dan currency bilgisini al - aynı calculateTotalPrice'daki mantık
-                                if (cartItems.length > 0) {
-                                    const firstItem = cartItems[0];
-                                    const itemCurrency = firstItem.currency || 'EUR';
-                                    return itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
-                                }
-                                return false;
-                            })())}
+                            {t("Total")}: {formatPrice(totalPrice,
+                            // Sepette ürün varsa ilk ürünün para birimini kontrol et, yoksa 'false' (EUR) varsay
+                            cartItems.length > 0 ? (cartItems[0].currency === 'TL' || cartItems[0].currency === 'TRY' || !!cartItems[0].is_turkey_user) : false
+                        )}
                         </Typography>
 
                         <Button

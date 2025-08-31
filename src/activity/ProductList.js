@@ -35,6 +35,13 @@ const generateUUID = () => {
     );
 };
 
+// Fiyat formatlama (dönüşüm yok) - Main.js ile uyumlu gösterim
+const formatPrice = (amount, isTR) => {
+    const symbol = isTR ? '₺' : '€';
+    const num = Number(amount) || 0;
+    return `${num.toFixed(2)} ${symbol}`;
+};
+
 const ProductList = () => {
     const { type } = useParams();
     const [activities, setActivities] = useState([]);
@@ -298,10 +305,13 @@ const ProductList = () => {
                             ? favorites.favoriteProducts?.some(product => product.id === item.id)
                             : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
-                        // Pricing and discount logic
+                        // Pricing and discount logic - Main.js ile uyumlu
+                        const itemCurrency = item.currency || 'EUR';
+                        const isTR = (itemCurrency === 'TL' || itemCurrency === 'TRY') || !!item.is_turkey_user;
+                        const baseOriginal = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
+                        const originalPriceNum = Number(baseOriginal) || 0;
                         const discountPercent = 20;
-                        const originalPrice = Number(item.price).toFixed(2);
-                        const discountedPrice = (item.price * (1 - discountPercent / 100)).toFixed(2);
+                        const discountedPriceNum = originalPriceNum * (1 - discountPercent / 100);
 
                         // Build image URLs with prefixes
                         const originalImageUrl = item.photos[0]?.photo || '';
@@ -372,7 +382,7 @@ const ProductList = () => {
                                                         fontSize: '0.9rem'
                                                     }}
                                                 >
-                                                    {originalPrice} €
+                                                    {formatPrice(originalPriceNum, isTR)}
                                                 </Typography>
                                                 <Typography
                                                     sx={{
@@ -381,7 +391,7 @@ const ProductList = () => {
                                                         fontSize: '0.9rem'
                                                     }}
                                                 >
-                                                    {discountedPrice} €
+                                                    {formatPrice(discountedPriceNum, isTR)}
                                                 </Typography>
                                                 {discountPercent >= 20 && (
                                                     <Box
@@ -473,3 +483,4 @@ const ProductList = () => {
 };
 
 export default ProductList;
+
