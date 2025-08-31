@@ -12,8 +12,6 @@ import {
     Snackbar,
     Stack,
     SwipeableDrawer,
-    useMediaQuery,
-    useTheme,
     Box,
     Alert
 } from "@mui/material";
@@ -47,12 +45,10 @@ const ProductList = () => {
     const [activities, setActivities] = useState([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
     const { t } = useTranslation();
-    const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
     const [filters, setFilters] = useState({});
     const listRef = useRef(null);
     const { toggleFavorite, favorites, isLoggedIn, token } = useAuth();
@@ -184,8 +180,6 @@ const ProductList = () => {
     };
 
     useEffect(() => {
-        localStorage.setItem('guestToken', guestToken);
-
         const fetchActivities = async () => {
             setActivities([]);
             setPage(0);
@@ -280,7 +274,7 @@ const ProductList = () => {
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
                     {type || t('All Products')} {Object.keys(filters).length > 0 ?
-                    Object.entries(filters).map(([filterType, filterValue]) => {
+                    Object.entries(filters).map(([_, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
                             return filterValue.name;
                         } else {

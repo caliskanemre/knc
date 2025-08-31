@@ -405,7 +405,7 @@ const Cart = () => {
                         {cartItems.length > 0 ? (
                             <List>
                                 {cartItems.map((item) => {
-                                    const isTR = !!item.is_turkey_user; // Main.js ile aynı mantık
+                                    const isTR = (item.currency === 'TL' || item.currency === 'TRY') || !!item.is_turkey_user; // Main.js ve toplam ile aynı mantık
                                     const id = item.productId || item.id;
 
                                     // Fiyat hesaplama - currency'ye göre doğru fiyatı kullan
