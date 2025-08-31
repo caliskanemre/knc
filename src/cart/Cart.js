@@ -14,7 +14,7 @@ import {
     CircularProgress,
 } from '@mui/material';
 import Header from "../header/Header";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
@@ -23,6 +23,7 @@ import i18n from "i18next";
 const Cart = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const location = useLocation();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
@@ -30,6 +31,9 @@ const Cart = () => {
     const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Para birimi (TRY/EUR)
+    const [currency, setCurrency] = useState('EUR');
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -45,6 +49,21 @@ const Cart = () => {
                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
            );
        }
+
+       // Para birimini URL (?currency), localStorage veya dil ayarına göre belirle
+       useEffect(() => {
+           const params = new URLSearchParams(location.search);
+           const qCurrency = params.get('currency')?.toUpperCase();
+           const lsCurrency = localStorage.getItem('currency')?.toUpperCase();
+           const langBased = (i18n.language || 'tr').toLowerCase().startsWith('tr') ? 'TRY' : 'EUR';
+           const next = (qCurrency === 'TRY' || qCurrency === 'EUR')
+               ? qCurrency
+               : (lsCurrency === 'TRY' || lsCurrency === 'EUR')
+                   ? lsCurrency
+                   : langBased;
+           setCurrency(next);
+           localStorage.setItem('currency', next);
+       }, [location.search]);
 
        useEffect(() => {
            // Ensure guest token is stored
@@ -76,6 +95,23 @@ const Cart = () => {
 
            initializeCart();
        }, []);
+
+       // Fiyatları mevcut para birimiyle biçimlendir
+       const formatCurrency = (value) => {
+           const amount = Number(value) || 0;
+           const code = currency === 'TRY' ? 'TRY' : 'EUR';
+           const locale = code === 'TRY' ? 'tr-TR' : 'en-US';
+           try {
+               return new Intl.NumberFormat(locale, {
+                   style: 'currency',
+                   currency: code,
+                   maximumFractionDigits: 2,
+               }).format(amount);
+           } catch (e) {
+               // Intl desteklenmezse basit fallback
+               return `${amount.toFixed(2)} ${code === 'TRY' ? '₺' : '€'}`;
+           }
+       };
 
        const fetchGuestCart = async () => {
            try {
@@ -251,7 +287,7 @@ const Cart = () => {
         if (updatedQuantity <= 0) return;
 
         // Backend orijinal fiyat bekliyor, indirim backend'de uygulanıyor
-        const unitPrice = product.price / product.quantity; // Mevcut toplam fiyattan birim fiyatı hesapla
+        const unitPrice = product.quantity > 0 ? (product.price / product.quantity) : 0; // Mevcut toplam fiyattan birim fiyatı hesapla
         const updatedItems = [...cartItems];
         updatedItems[productIndex] = {
             ...product,
@@ -318,8 +354,8 @@ const Cart = () => {
             console.log("Validation response:", response.data); // Debug log
             if (response.data.valid) {
                 const lang = i18n.language || 'tr';
-                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken }); // Debug log
-                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken } });
+                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency }); // Debug log
+                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken, currency } });
                 console.log("Guest checkout - Navigation called successfully"); // Debug log
             } else {
                 showToast(response.data.message || t("Cart validation failed"), "error");
@@ -372,6 +408,8 @@ const Cart = () => {
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
                                     const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
+
+                                    const unitPrice = item.quantity > 0 ? (price / item.quantity) : 0;
 
                                     return (
                                         <Card
@@ -428,7 +466,7 @@ const Cart = () => {
                                                         mb: 0.5
                                                     }}
                                                 >
-                                                    {t("Unit Price")}: {(price / item.quantity).toFixed(2)} €
+                                                    {t("Unit Price")}: {formatCurrency(unitPrice)}
                                                 </Typography>
                                                 <Typography
                                                     color="textSecondary"
@@ -448,12 +486,12 @@ const Cart = () => {
                                                         mb: 1
                                                     }}
                                                 >
-                                                    {t("Total Price")}: <s>{(price).toFixed(2)} €</s> →
+                                                    {t("Total Price")}: <s>{formatCurrency(price)}</s> →
                                                     <strong style={{
                                                         color: '#1976d2',
                                                         fontWeight: 'var(--fw-semibold)'
                                                     }}>
-                                                        {(price * (1 - discountRate / 100)).toFixed(2)} €
+                                                        {formatCurrency(price * (1 - discountRate / 100))}
                                                     </strong>
                                                 </Typography>
                                                 {item.orderNote && (
@@ -538,7 +576,7 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {totalPrice.toFixed(2)} €
+                            {t("Total")}: {formatCurrency(totalPrice)}
                         </Typography>
 
                         <Button
