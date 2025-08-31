@@ -106,6 +106,8 @@ const Cart = () => {
             const normalizedServerCart = serverCart.map(item => ({
                 ...item,
                 price: parseFloat(item.price) || 0,
+                // Currency bilgisini güvence altına al
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
             }));
             setCartItems(normalizedServerCart);
             calculateTotalPrice(normalizedServerCart);
@@ -116,6 +118,8 @@ const Cart = () => {
             const normalizedCart = localCart.map(item => ({
                 ...item,
                 price: parseFloat(item.price) || 0,
+                // Local cart'ta da currency bilgisini güvence altına al
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
             }));
             setCartItems(normalizedCart);
             calculateTotalPrice(normalizedCart);
@@ -164,17 +168,33 @@ const Cart = () => {
         if (localCart.length === 0) return;
 
         try {
-            for (const item of localCart) {
-                const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
-                const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
-                await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
-                    ...item,
-                    quantity,
-                    price: parseFloat(item.price) || 0,
-                }, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
+            // Currency bilgisini belirle
+            let syncCurrency = currency; // State'den al
+            if (localCart.length > 0 && localCart[0].currency) {
+                syncCurrency = localCart[0].currency;
             }
+
+            // Yeni sync endpoint'ini kullan
+            const response = await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}/sync`, localCart, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                params: {
+                    currency: syncCurrency
+                }
+            });
+
+            // Sync edilen cart'ı state'e set et
+            const syncedCart = response.data || [];
+            const normalizedCart = syncedCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedCart);
+            calculateTotalPrice(normalizedCart);
+
+            // Local cart'ı temizle
             localStorage.removeItem('cart');
         } catch (error) {
             console.error("Error syncing local cart to server:", error.response?.data || error.message);
