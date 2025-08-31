@@ -376,6 +376,33 @@ import React, { useEffect, useState } from 'react';
                 }
 
                 showSnackbar(t('Your order has been successfully created!'), 'success');
+
+                // Admin bildirim emaili gönder
+                try {
+                    const adminNotificationData = {
+                        customerEmail: userEmail || shippingAddress.guestEmail,
+                        customerName: shippingAddress.name,
+                        orderId: revolutOrderId,
+                        totalAmount: finalPrice,
+                        currency: currency,
+                        shippingCountry: shippingAddress.country,
+                        itemCount: cartItems.length
+                    };
+
+                    const adminHeaders = userEmail
+                        ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        : { 'X-Guest-Token': initialGuestToken };
+
+                    console.log("Sending admin notification email with data:", adminNotificationData);
+                    await axios.post(`${baseURL}/api/notification/admin/new-order`, adminNotificationData, {
+                        headers: adminHeaders
+                    });
+                    console.log("Admin notification email sent successfully");
+                } catch (adminEmailError) {
+                    console.error('Error sending admin notification email:', adminEmailError.response?.data || adminEmailError.message);
+                    // Admin email hatası sipariş oluşturma sürecini durdurmasın
+                }
+
                 if (userEmail) {
                     await axios.delete(`${baseURL}/cart/${userEmail}`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
