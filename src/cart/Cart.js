@@ -593,7 +593,15 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {formatPrice(totalPrice, cartItems.length > 0 ? (cartItems[0].currency === 'TL' || cartItems[0].currency === 'TRY' || !!cartItems[0].is_turkey_user) : false)}
+                            {t("Total")}: {formatPrice(totalPrice, (() => {
+                                // Cart items'dan currency bilgisini al - aynı calculateTotalPrice'daki mantık
+                                if (cartItems.length > 0) {
+                                    const firstItem = cartItems[0];
+                                    const itemCurrency = firstItem.currency || 'EUR';
+                                    return itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
+                                }
+                                return false;
+                            })())}
                         </Typography>
 
                         <Button
