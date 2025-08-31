@@ -14,7 +14,7 @@ import {
     CircularProgress,
 } from '@mui/material';
 import Header from "../header/Header";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
@@ -23,17 +23,13 @@ import i18n from "i18next";
 const Cart = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const location = useLocation();
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
-    const [guestToken, setGuestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
     const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    // Para birimi (TRY/EUR)
-    const [currency, setCurrency] = useState('EUR');
 
     // Toast Message State
     const [toastMessage, setToastMessage] = useState('');
@@ -43,157 +39,148 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
-       // Generate UUID for guest token
-       function generateUUID() {
-           return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-               (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-           );
-       }
+    // Para birimi ve kur - Backend'den gelen fiyatı olduğu gibi göster
+    const [currency] = useState(() => {
+        try {
+            const saved = localStorage.getItem('currency');
+            if (saved === 'TRY' || saved === 'EUR') return saved;
+        } catch (_) {}
+        const lang = (i18n?.language || '').toLowerCase();
+        return lang.startsWith('tr') ? 'TRY' : 'EUR';
+    });
+    const eurToTry = parseFloat(process.env.REACT_APP_EUR_TO_TRY) || 36; // Varsayılan kur
 
-       // Para birimini URL (?currency), localStorage veya dil ayarına göre belirle
-       useEffect(() => {
-           const params = new URLSearchParams(location.search);
-           const qCurrency = params.get('currency')?.toUpperCase();
-           const lsCurrency = localStorage.getItem('currency')?.toUpperCase();
-           const langBased = (i18n.language || 'tr').toLowerCase().startsWith('tr') ? 'TRY' : 'EUR';
-           const next = (qCurrency === 'TRY' || qCurrency === 'EUR')
-               ? qCurrency
-               : (lsCurrency === 'TRY' || lsCurrency === 'EUR')
-                   ? lsCurrency
-                   : langBased;
-           setCurrency(next);
-           localStorage.setItem('currency', next);
-       }, [location.search]);
+    const formatPrice = (amount, currencyType) => {
+        const symbol = currencyType === 'TRY' || currencyType === 'TL' ? '₺' : '€';
+        const num = Number(amount) || 0;
+        return `${num.toFixed(2)} ${symbol}`;
+    };
 
-       useEffect(() => {
-           // Ensure guest token is stored
-           if (!localStorage.getItem('guestToken')) {
-               localStorage.setItem('guestToken', guestToken);
-           }
 
-           const initializeCart = async () => {
-               setIsLoading(true);
-               const token = localStorage.getItem('token');
-               if (token) {
-                   try {
-                       const decodedToken = jwtDecode(token);
-                       if (decodedToken?.sub && decodedToken.sub.includes('@')) {
-                           setEmail(decodedToken.sub);
-                           await syncLocalCartToServer(decodedToken.sub);
-                           await fetchCartItems();
-                       }
-                   } catch (error) {
-                       console.error("Error decoding JWT token:", error);
-                       showToast(t("Error initializing cart"), "error");
-                       await fetchGuestCart(); // Fallback to guest cart
-                   }
-               } else {
-                   await fetchGuestCart();
-               }
-               setIsLoading(false);
-           };
+    // Generate UUID for guest token
+    function generateUUID() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
 
-           initializeCart();
-       }, []);
+    useEffect(() => {
+        // Ensure guest token is stored
+        if (!localStorage.getItem('guestToken')) {
+            localStorage.setItem('guestToken', guestToken);
+        }
+        // Para birimini sakla
+        try { localStorage.setItem('currency', currency); } catch (_) {}
 
-       // Fiyatları mevcut para birimiyle biçimlendir
-       const formatCurrency = (value) => {
-           const amount = Number(value) || 0;
-           const code = currency === 'TRY' ? 'TRY' : 'EUR';
-           const locale = code === 'TRY' ? 'tr-TR' : 'en-US';
-           try {
-               return new Intl.NumberFormat(locale, {
-                   style: 'currency',
-                   currency: code,
-                   maximumFractionDigits: 2,
-               }).format(amount);
-           } catch (e) {
-               // Intl desteklenmezse basit fallback
-               return `${amount.toFixed(2)} ${code === 'TRY' ? '₺' : '€'}`;
-           }
-       };
+        const initializeCart = async () => {
+            setIsLoading(true);
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decodedToken = jwtDecode(token);
+                    if (decodedToken?.sub && decodedToken.sub.includes('@')) {
+                        setEmail(decodedToken.sub);
+                        await syncLocalCartToServer(decodedToken.sub);
+                        await fetchCartItems();
+                    }
+                } catch (error) {
+                    console.error("Error decoding JWT token:", error);
+                    showToast(t("Error initializing cart"), "error");
+                    await fetchGuestCart; // Fallback to guest cart
+                }
+            } else {
+                await fetchGuestCart();
+            }
+            setIsLoading(false);
+        };
 
-       const fetchGuestCart = async () => {
-           try {
-               const response = await axios.get(`${baseURL}/cart/guest`, {
-                   headers: { 'X-Guest-Token': guestToken },
-               });
-               const serverCart = response.data || [];
-               const normalizedServerCart = serverCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedServerCart);
-               calculateTotalPrice(normalizedServerCart);
-               localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
-           } catch (error) {
-               console.error("Error fetching guest cart:", error.response?.data || error.message);
-               const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-               const normalizedCart = localCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedCart);
-               calculateTotalPrice(normalizedCart);
-               if (localCart.length > 0) {
-                   await syncGuestCart(normalizedCart);
-               }
-           }
-       };
+        initializeCart();
+    }, []);
 
-       const syncGuestCart = async (items) => {
-           if (isSyncing) return;
-           setIsSyncing(true);
-           try {
-               const normalizedItems = items.map(item => ({
-                   productId: item.productId,
-                   quantity: item.quantity,
-                   price: parseFloat(item.price) || 0,
-                   title: item.title,
-                   image: item.image,
-                   orderNote: item.orderNote,
-               }));
-               const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
-                   headers: { 'X-Guest-Token': guestToken },
-               });
-               const serverCart = response.data || [];
-               const normalizedServerCart = serverCart.map(item => ({
-                   ...item,
-                   price: parseFloat(item.price) || 0,
-               }));
-               setCartItems(normalizedServerCart);
-               calculateTotalPrice(normalizedServerCart);
-               localStorage.setItem('cart', JSON.stringify(normalizedServerCart));
-           } catch (error) {
-               console.error("Error syncing guest cart:", error.response?.data || error.message);
-               showToast(t("Error syncing guest cart"), "error");
-           } finally {
-               setIsSyncing(false);
-           }
-       };
+    const fetchGuestCart = async () => {
+        try {
+            const response = await axios.get(`${baseURL}/cart/guest`, {
+                headers: { 'X-Guest-Token': guestToken },
+            });
+            const serverCart = response.data || [];
+            const normalizedServerCart = serverCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedServerCart);
+            calculateTotalPrice(normalizedServerCart);
+            localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
+        } catch (error) {
+            console.error("Error fetching guest cart:", error.response?.data || error.message);
+            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+            const normalizedCart = localCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedCart);
+            calculateTotalPrice(normalizedCart);
+            if (localCart.length > 0) {
+                await syncGuestCart(normalizedCart);
+            }
+        }
+    };
 
-       const syncLocalCartToServer = async (userEmail) => {
-           const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-           if (localCart.length === 0) return;
+    const syncGuestCart = async (items) => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        try {
 
-           try {
-               for (const item of localCart) {
-                   const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
-                   const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
-                   await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
-                       ...item,
-                       quantity,
-                       price: parseFloat(item.price) || 0,
-                   }, {
-                       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                   });
-               }
-               localStorage.removeItem('cart');
-           } catch (error) {
-               console.error("Error syncing local cart to server:", error.response?.data || error.message);
-               showToast(t("Error syncing cart"), "error");
-           }
-       };
+            const normalizedItems = items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: parseFloat(item.price) || 0,
+                title: item.title,
+                image: item.image,
+                orderNote: item.orderNote,
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'), // Currency bilgisini ekle
+                is_turkey_user: item.is_turkey_user // IP bazlı bilgiyi ekle
+            }));
+            const response = await axios.post(`${baseURL}/cart/guest`, normalizedItems, {
+                headers: { 'X-Guest-Token': guestToken },
+            });
+            const serverCart = response.data || [];
+            const normalizedServerCart = serverCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+            }));
+            setCartItems(normalizedServerCart);
+            calculateTotalPrice(normalizedServerCart);
+            localStorage.setItem('cart', JSON.stringify(normalizedServerCart));
+        } catch (error) {
+            console.error("Error syncing guest cart:", error.response?.data || error.message);
+            showToast(t("Error syncing guest cart"), "error");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const syncLocalCartToServer = async (userEmail) => {
+        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (localCart.length === 0) return;
+
+        try {
+            for (const item of localCart) {
+                const existingItem = cartItems.find(cartItem => cartItem.productId === item.productId);
+                const quantity = existingItem ? existingItem.quantity + item.quantity : item.quantity;
+                await axios.post(`${baseURL}/cart/${encodeURIComponent(userEmail)}`, {
+                    ...item,
+                    quantity,
+                    price: parseFloat(item.price) || 0,
+                }, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+            }
+            localStorage.removeItem('cart');
+        } catch (error) {
+            console.error("Error syncing local cart to server:", error.response?.data || error.message);
+            showToast(t("Error syncing cart"), "error");
+        }
+    };
 
     const fetchCartItems = async () => {
         if (!email) return;
@@ -232,10 +219,26 @@ const Cart = () => {
     };
 
     const calculateTotalPrice = (items) => {
-        const total = items.reduce((acc, item) => {
-            const unitPrice = parseFloat(item.price) / item.quantity || 0;
+        let total = 0;
+
+        total = items.reduce((acc, item) => {
+            // Currency kontrolü - backend'den gelen currency değerini kullan
+            const itemCurrency = item.currency || 'EUR';
+            const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
+
+            // Fiyat hesaplama
+            let unitPrice;
+            if (isTR) {
+                // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
+                unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
+            } else {
+                // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
+                unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
+            }
+
             return acc + unitPrice * item.quantity;
         }, 0);
+
         const discountedTotal = total * (1 - discountRate / 100);
         setTotalPrice(discountedTotal);
     };
@@ -287,7 +290,7 @@ const Cart = () => {
         if (updatedQuantity <= 0) return;
 
         // Backend orijinal fiyat bekliyor, indirim backend'de uygulanıyor
-        const unitPrice = product.quantity > 0 ? (product.price / product.quantity) : 0; // Mevcut toplam fiyattan birim fiyatı hesapla
+        const unitPrice = product.price / product.quantity; // Mevcut toplam fiyattan birim fiyatı hesapla
         const updatedItems = [...cartItems];
         updatedItems[productIndex] = {
             ...product,
@@ -306,6 +309,8 @@ const Cart = () => {
                     title: product.title,
                     image: product.image,
                     orderNote: product.orderNote,
+                    currency: product.currency || (product.is_turkey_user ? 'TRY' : 'EUR'), // Currency bilgisini koru
+                    is_turkey_user: product.is_turkey_user // IP bazlı bilgiyi koru
                 };
                 await axios.put(`${baseURL}/cart/${encodeURIComponent(email)}/item/${id}`, cartItemDTO, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -354,8 +359,8 @@ const Cart = () => {
             console.log("Validation response:", response.data); // Debug log
             if (response.data.valid) {
                 const lang = i18n.language || 'tr';
-                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency }); // Debug log
-                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken, currency } });
+                console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency, eurToTry }); // Debug log
+                navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken, currency, eurToTry } });
                 console.log("Guest checkout - Navigation called successfully"); // Debug log
             } else {
                 showToast(response.data.message || t("Cart validation failed"), "error");
@@ -402,14 +407,26 @@ const Cart = () => {
                         {cartItems.length > 0 ? (
                             <List>
                                 {cartItems.map((item) => {
+                                    // Currency kontrolü - backend'den gelen currency değerini kullan
+                                    const itemCurrency = item.currency || 'EUR';
+                                    const isTR = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!item.is_turkey_user;
                                     const id = item.productId || item.id;
-                                    const price = parseFloat(item.price) || 0;
+
+                                    // Fiyat hesaplama - currency'ye göre doğru fiyatı kullan
+                                    let unitPrice;
+                                    if (isTR) {
+                                        // TL fiyat varsa onu kullan, yoksa price'ı TL olarak kabul et
+                                        unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
+                                    } else {
+                                        // EUR fiyat varsa onu kullan, yoksa price'ı EUR olarak kabul et
+                                        unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
+                                    }
+                                    const totalPrice = unitPrice * item.quantity;
+
                                     const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
                                     const largeImageUrl = originalImageUrl.replace(/([^/]+)$/, 'large_$1');
-
-                                    const unitPrice = item.quantity > 0 ? (price / item.quantity) : 0;
 
                                     return (
                                         <Card
@@ -466,7 +483,7 @@ const Cart = () => {
                                                         mb: 0.5
                                                     }}
                                                 >
-                                                    {t("Unit Price")}: {formatCurrency(unitPrice)}
+                                                    {t("Unit Price")}: {formatPrice(unitPrice, isTR)}
                                                 </Typography>
                                                 <Typography
                                                     color="textSecondary"
@@ -486,12 +503,12 @@ const Cart = () => {
                                                         mb: 1
                                                     }}
                                                 >
-                                                    {t("Total Price")}: <s>{formatCurrency(price)}</s> →
+                                                    {t("Total Price")}: <s>{formatPrice(totalPrice, isTR)}</s> →
                                                     <strong style={{
                                                         color: '#1976d2',
                                                         fontWeight: 'var(--fw-semibold)'
                                                     }}>
-                                                        {formatCurrency(price * (1 - discountRate / 100))}
+                                                        {formatPrice(totalPrice * (1 - discountRate / 100), isTR)}
                                                     </strong>
                                                 </Typography>
                                                 {item.orderNote && (
@@ -576,7 +593,7 @@ const Cart = () => {
                                 mb: 3
                             }}
                         >
-                            {t("Total")}: {formatCurrency(totalPrice)}
+                            {t("Total")}: {formatPrice(totalPrice, cartItems.length > 0 ? (cartItems[0].currency === 'TL' || cartItems[0].currency === 'TRY' || !!cartItems[0].is_turkey_user) : false)}
                         </Typography>
 
                         <Button
