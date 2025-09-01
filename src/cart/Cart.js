@@ -19,10 +19,12 @@ import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
+import { useAuth } from "../auth/AuthProvider"; // AuthProvider import eklendi
 
 const Cart = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { cart: authCart, isLoggedIn } = useAuth(); // AuthProvider'dan destructuring
     const [cartItems, setCartItems] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
@@ -56,7 +58,6 @@ const Cart = () => {
         return `${num.toFixed(2)} ${symbol}`;
     };
 
-
     // Generate UUID for guest token
     function generateUUID() {
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
@@ -65,6 +66,19 @@ const Cart = () => {
     }
 
     useEffect(() => {
+        // AuthProvider'dan gelen cart verilerini kullan
+        if (isLoggedIn && authCart && authCart.length > 0) {
+            const normalizedAuthCart = authCart.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
+                is_turkey_user: item.is_turkey_user ?? (i18n.language?.toLowerCase().startsWith('tr') || false)
+            }));
+            setCartItems(normalizedAuthCart);
+            calculateTotalPrice(normalizedAuthCart);
+            return; // AuthProvider'da veri varsa kendi fetch'i yapma
+        }
+
         // Ensure guest token is stored
         if (!localStorage.getItem('guestToken')) {
             localStorage.setItem('guestToken', guestToken);
@@ -95,7 +109,7 @@ const Cart = () => {
         };
 
         initializeCart();
-    }, []);
+    }, [authCart, isLoggedIn]); // AuthProvider cart'ını dinle
 
     const fetchGuestCart = async () => {
         try {
