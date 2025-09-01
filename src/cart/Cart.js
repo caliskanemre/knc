@@ -212,6 +212,10 @@ const Cart = () => {
             const items = (response.data ?? []).map(item => ({
                 ...item,
                 price: parseFloat(item.price) || 0,
+                // Backend'den currency null gelirse, kullanıcının bulunduğu konuma göre belirle
+                currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
+                // Eğer is_turkey_user da yoksa, browser dilinden tahmin et
+                is_turkey_user: item.is_turkey_user ?? (i18n.language?.toLowerCase().startsWith('tr') || false)
             }));
             setCartItems(items);
             calculateTotalPrice(items);
