@@ -19,11 +19,12 @@ export const AuthProvider = ({ children }) => {
     if (storedToken) {
       try {
         const decoded = jwtDecode(storedToken);
+        const userEmail = decoded.sub;
         setToken(storedToken);
-        setUsername(decoded.sub); // Store email in username
+        setUsername(userEmail); // Store email in username
         setIsLoggedIn(true);
-        fetchFavorites(storedToken);
-        fetchCart(storedToken);
+        fetchFavorites(storedToken, userEmail);
+        fetchCart(storedToken, userEmail);
       } catch (error) {
         console.error('Invalid token:', error);
         localStorage.removeItem('token'); // Clear invalid token
@@ -34,10 +35,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const fetchCart = async (authToken) => {
+  const fetchCart = async (authToken, userEmail) => {
     try {
-      const response = await axios.get(`${baseURL}/cart/${username}`, {
-        // Use username (contains email) for API call
+      const email = userEmail || username;
+      if (!email) return;
+
+      const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, {
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
       setCart(response.data || []);
@@ -46,9 +49,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const fetchFavorites = async (authToken) => {
+  const fetchFavorites = async (authToken, userEmail) => {
     try {
-      const response = await axios.get(`${baseURL}/users/favorites`, {
+      const email = userEmail || username;
+      if (!email) return;
+
+      const response = await axios.get(`${baseURL}/users/${encodeURIComponent(email)}/favorites`, {
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
       setFavorites(response.data || []);
@@ -59,19 +65,22 @@ export const AuthProvider = ({ children }) => {
 
   const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
     try {
+      const email = username;
+      if (!email) return;
+
       if (isInCart) {
-        // Remove from cart using username (contains email)
-        await axios.delete(`${baseURL}/cart/${username}/item/${itemId}`, {
+        // Remove from cart using encoded email
+        await axios.delete(`${baseURL}/cart/${encodeURIComponent(email)}/item/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        // Add to cart using username (contains email)
+        // Add to cart using encoded email
         const cartItem = { productId: itemId, quantity, price };
-        await axios.post(`${baseURL}/cart/${username}`, cartItem, {
+        await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-      fetchCart(token);
+      fetchCart(token, email);
     } catch (error) {
       console.error(`Error toggling cart item ${itemId}:`, error.response?.data || error.message);
     }
