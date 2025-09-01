@@ -243,11 +243,12 @@ const Cart = () => {
     const calculateTotalPrice = (items) => {
         // Sepetteki ürünleri tek bir 'reduce' döngüsüyle topla
         const total = items.reduce((acc, item) => {
-            // Her bir ürün için para birimini kontrol et
-            const isTR = item.currency === 'TL' || item.currency === 'TRY' || !!item.is_turkey_user;
+            // Her bir ürün için para birimini kontrol et - null değerleri handle et
+            const isTR = item.currency === 'TL' || item.currency === 'TRY' ||
+                        (item.currency === null && !!item.is_turkey_user) ||
+                        (item.currency === null && !item.is_turkey_user && i18n.language?.toLowerCase().startsWith('tr'));
 
             // Ürünün birim fiyatını doğru para birimine göre belirle
-            // Not: Backend'den gelen 'price' zaten toplam fiyatsa, quantity'e bölerek birim fiyatı buluruz.
             const unitPrice = isTR
                 ? (item.tl_price ?? item.price) / item.quantity
                 : (item.eur_price ?? item.price) / item.quantity;
