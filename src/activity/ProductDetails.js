@@ -256,6 +256,9 @@ const ProductDetails = () => {
                 });
             }
 
+            // Sepet güncellendiğini bildir
+            window.dispatchEvent(new Event('cartUpdated'));
+
             showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
             console.error('Error adding to cart:', error);

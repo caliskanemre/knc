@@ -50,6 +50,7 @@
   "Ornament": "Kına Süsü",
   "Souvenir": "Kına Hatırası",
   "Add to Cart": "Sepete Ekle",
+  "Item added to cart": "Ürün sepete eklendi! 🛒✨",
   "Articles": "Blog",
   "Please log in to add this product to your favorites": "Lütfen bu ürünü favorilerinize eklemek için giriş yapın",
   "All Products": "Tüm Ürünler",
@@ -105,7 +106,7 @@
   },
   "return_policy": {
     "title": "İade Politikası",
-    "content": "Teslimattan itibaren 30 gün içinde, kullanılmamış, orijinal durumunda ve orijinal ambalajında ve nakis yapilmamis olan ürünlerin iadesini kabul ediyoruz. İade başlatmak için lütfen info@kinasepeti.com adresinden müşteri hizmetleri ekibimizle iletişime geçerek bir iade yetki numarası alın. Bu numarayı iade paketinizle birlikte ekleyin. Ürün kusurlu, hasarlı veya yanlış değilse, iade kargo masrafları müşteriye aittir. İade edilen ürünü aldıktan ve inceledikten sonra, orijinal ödeme yönteminize 7-10 iş günü içinde iade işlemini gerçekleştiririz. İadeler, orijinal kargo masraflarını kapsamaz. Kusurlu veya yanlış ürünler için iade kargo masraflarını biz karşılarız ve tercihinize göre tam iade veya değişim sağlarız. İade süreciyle ilgili sorularınız için destek ekibimize ulaşın."
+    "content": "Teslimattan itibaren 30 gün içinde, kullanılmamış, orijinal durumunda ve orijinal ambalajında ve nakis yapilmamis olan ürünlerin iadesini kabul ediyoruz. İade başlatmak için lütfen info@kinasepeti.com adresinden müşteri hizmetleri ekibimizle iletişime geçerek bir iade yetki numarası alın. Bu numarayı iade paketinizle birlikte ekleyin. Ürün kusurlu, hasarlı veya yanlış değilse, iade kargo masrafları müşteriye aittir. İade edilen ürünü aldıktan ve inceledikten sonra, orijinal ödeme yöntemine 7-10 iş günü içinde iade işlemini gerçekleştiririz. İadeler, orijinal kargo masraflarını kapsamaz. Kusurlu veya yanlış ürünler için iade kargo masraflarını biz karşılarız ve tercihinize göre tam iade veya değişim sağlarız. İade süreciyle ilgili sorularınız için destek ekibimize ulaşın."
   },
   "sales_agreement": {
     "title": "Satış Sözleşmesi",

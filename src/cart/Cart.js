@@ -383,9 +383,9 @@ const Cart = () => {
             } else {
                 showToast(response.data.message || t("Cart validation failed"), "error");
             }
-        } catch (error) {
+                    fetchCartItemsForUser(email);
             console.error("Error validating guest cart:", error.response?.data || error.message);
-            showToast(error.response?.data?.message || t("Error validating cart"), "error");
+                    fetchCartItemsForUser(email);
         }
     };
 
