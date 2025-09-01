@@ -386,6 +386,8 @@ const Cart = () => {
                     fetchCartItemsForUser(email);
             console.error("Error validating guest cart:", error.response?.data || error.message);
                     fetchCartItemsForUser(email);
+        }catch (e) {
+            console.error(e);
         }
     };
 
