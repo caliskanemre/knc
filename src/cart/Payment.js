@@ -141,12 +141,18 @@ const Payment = () => {
                     setCartItems(normalizedCartItems);
                     calculateTotalPrice(normalizedCartItems);
 
-                    // Cart'tan currency bilgisini al
+                    // Para birimini belirle: önce item.currency, yoksa is_turkey_user'a bak
                     if (normalizedCartItems.length > 0) {
                         const firstItem = normalizedCartItems[0];
-                        const itemCurrency = firstItem.currency || 'EUR';
-                        const shouldUseTRY = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
-                        setCurrency(shouldUseTRY ? 'TRY' : 'EUR');
+                        const itemCurrency = firstItem.currency;
+                        if (itemCurrency === 'TL' || itemCurrency === 'TRY') {
+                            setCurrency('TRY');
+                        } else if (itemCurrency === 'EUR') {
+                            setCurrency('EUR');
+                        } else {
+                            // Currency bilgisi yoksa is_turkey_user'a bak
+                            setCurrency(!!firstItem.is_turkey_user ? 'TRY' : 'EUR');
+                        }
                     }
 
                     if (normalizedCartItems.length === 0) {
@@ -167,12 +173,18 @@ const Payment = () => {
                 setCartItems(initialCartItems);
                 calculateTotalPrice(initialCartItems);
 
-                // Initial cart items'dan currency bilgisini al
+                // Para birimini belirle: önce item.currency, yoksa is_turkey_user'a bak
                 if (initialCartItems.length > 0) {
                     const firstItem = initialCartItems[0];
-                    const itemCurrency = firstItem.currency || 'EUR';
-                    const shouldUseTRY = itemCurrency === 'TL' || itemCurrency === 'TRY' || !!firstItem.is_turkey_user;
-                    setCurrency(shouldUseTRY ? 'TRY' : 'EUR');
+                    const itemCurrency = firstItem.currency;
+                    if (itemCurrency === 'TL' || itemCurrency === 'TRY') {
+                        setCurrency('TRY');
+                    } else if (itemCurrency === 'EUR') {
+                        setCurrency('EUR');
+                    } else {
+                        // Currency bilgisi yoksa is_turkey_user'a bak
+                        setCurrency(!!firstItem.is_turkey_user ? 'TRY' : 'EUR');
+                    }
                 }
 
                 if (initialCartItems.length === 0 && !initialGuestToken) {
