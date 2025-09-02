@@ -95,7 +95,8 @@ const Cart = () => {
                     if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                         setEmail(decodedToken.sub);
                         await syncLocalCartToServer(decodedToken.sub);
-                        await fetchCartItems();
+                        // Email state'i güncellenmeden ��nce fetch erken dönmesin diye email'i parametre olarak geçir
+                        await fetchCartItems(decodedToken.sub);
                     }
                 } catch (error) {
                     console.error("Error decoding JWT token:", error);
@@ -216,11 +217,13 @@ const Cart = () => {
         }
     };
 
-    const fetchCartItems = async () => {
-        if (!email) return;
+    // email state set edilmeden önce çağrılırsa erken dönmemesi için opsiyonel parametre eklendi
+    const fetchCartItems = async (userEmailParam) => {
+        const effectiveEmail = userEmailParam || email;
+        if (!effectiveEmail) return;
 
         try {
-            const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(email)}`, {
+            const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(effectiveEmail)}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             const items = (response.data ?? []).map(item => ({
@@ -357,9 +360,9 @@ const Cart = () => {
                 console.error("Error updating quantity:", error);
                 if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
                     showToast(t('Price validation failed. Please refresh the page and try again.'), 'error');
-                    fetchCartItems();
+                    fetchCartItems(email);
                 } else {
-                    fetchCartItems();
+                    fetchCartItems(email);
                     showToast(error.response?.data || t("Error updating quantity"), "error");
                 }
             }
