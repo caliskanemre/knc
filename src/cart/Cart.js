@@ -264,10 +264,9 @@ const Cart = () => {
     const calculateTotalPrice = (items) => {
         // Sepetteki ürünleri tek bir 'reduce' döngüsüyle topla
         const total = items.reduce((acc, item) => {
-            // Her bir ürün için para birimini kontrol et - null değerleri handle et
-            const isTR = item.currency === 'TL' || item.currency === 'TRY' ||
-                        (item.currency === null && !!item.is_turkey_user) ||
-                        (item.currency === null && !item.is_turkey_user && i18n.language?.toLowerCase().startsWith('tr'));
+            // Para birimini belirle: varsa item.currency, yoksa is_turkey_user'a (son çare browser diline) bak
+            const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : (i18n.language?.toLowerCase().startsWith('tr') ? 'TRY' : 'EUR'));
+            const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
 
             // Ürünün birim fiyatını doğru para birimine göre belirle
             const unitPrice = isTR
@@ -447,7 +446,9 @@ const Cart = () => {
                         {cartItems.length > 0 ? (
                             <List>
                                 {cartItems.map((item) => {
-                                    const isTR = (item.currency === 'TL' || item.currency === 'TRY') || !!item.is_turkey_user; // Main.js ve toplam ile aynı mantık
+                                    // Para birimi: varsa item.currency, yoksa is_turkey_user üzerinden belirle
+                                    const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : 'EUR');
+                                    const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
                                     const id = item.productId || item.id;
 
                                     // Fiyat hesaplama - currency'ye göre doğru fiyatı kullan
@@ -630,8 +631,8 @@ const Cart = () => {
                             }}
                         >
                             {t("Total")}: {formatPrice(totalPrice,
-                            // Sepette ürün varsa ilk ürünün para birimini kontrol et, yoksa 'false' (EUR) varsay
-                            cartItems.length > 0 ? (cartItems[0].currency === 'TL' || cartItems[0].currency === 'TRY' || !!cartItems[0].is_turkey_user) : false
+                            // Sepette ürün varsa ilk ürünün para birimini öncelikle currency'den belirle
+                            cartItems.length > 0 ? ((cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TL' || (cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TRY') : false
                         )}
                         </Typography>
 
