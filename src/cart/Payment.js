@@ -55,6 +55,62 @@ const Payment = () => {
 
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
+    // Currency'ye göre mevcut ülkeleri filtrele
+    const getAvailableCountries = () => {
+        if (currency === 'TRY' || currency === 'TL') {
+            // TRY ise sadece Türkiye
+            return shippingCountries.filter(country => country.code === 'TR');
+        } else {
+            // EUR ise Türkiye hariç tüm ülkeler
+            return shippingCountries.filter(country => country.code !== 'TR');
+        }
+    };
+
+    // Kargo ücreti hesaplama (currency ve tutar bazlı)
+    const calculateShippingCost = (selectedCountryCode, currentTotalPrice) => {
+        if (!selectedCountryCode) return 0;
+
+        const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
+        if (!foundCountry) return 0;
+
+        // TRY currency için özel kargo mantığı
+        if (currency === 'TRY' || currency === 'TL') {
+            if (selectedCountryCode === 'TR') {
+                // Türkiye için: 500 TL üzeri ücretsiz, altında 99 TL
+                return currentTotalPrice >= 500 ? 0 : 99;
+            }
+            // TRY currency'de TR dışı ülke seçilemez
+            return 0;
+        } else {
+            // EUR currency için
+            if (selectedCountryCode === 'TR') {
+                // EUR currency'de TR seçilemez
+                return 0;
+            }
+            // 150 EUR üzeri ücretsiz kargo, altında normal ücretler
+            return currentTotalPrice >= 150 ? 0 : foundCountry.cost;
+        }
+    };
+
+    // Ücretsiz kargo için kalan tutarı hesapla
+    const getFreeShippingInfo = () => {
+        if (currency === 'TRY' || currency === 'TL') {
+            const remaining = 500 - totalPrice;
+            return {
+                threshold: 500,
+                remaining: remaining > 0 ? remaining : 0,
+                isFree: totalPrice >= 500
+            };
+        } else {
+            const remaining = 150 - totalPrice;
+            return {
+                threshold: 150,
+                remaining: remaining > 0 ? remaining : 0,
+                isFree: totalPrice >= 150
+            };
+        }
+    };
+
     const formatPrice = (amount, currencyType) => {
         const symbol = currencyType === 'TRY' || currencyType === 'TL' ? '₺' : '€';
         const num = Number(amount) || 0;
@@ -65,12 +121,12 @@ const Payment = () => {
     useEffect(() => {
         console.log("Payment component mounted with location.state:", location.state);
         console.log("Initial cartItems:", initialCartItems, "userEmail:", userEmail, "guestToken:", initialGuestToken, "currency:", currency, "eurToTry:", eurToTry);
-    }, []);
+    }, [initialCartItems, userEmail, initialGuestToken, currency, eurToTry, location.state]);
 
     // Generate UUID for guest token
     const generateUUID = () => {
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
         );
     };
 
@@ -213,12 +269,32 @@ const Payment = () => {
         setShippingAddress((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Currency değiştiğinde seçili ülkeyi kontrol et
+    useEffect(() => {
+        const availableCountries = getAvailableCountries();
+        const currentCountryCode = shippingAddress.country;
+
+        // Eğer mevcut seçili ülke artık mevcut değilse, seçimi temizle
+        if (currentCountryCode && !availableCountries.find(country => country.code === currentCountryCode)) {
+            setShippingAddress(prev => ({ ...prev, country: '' }));
+            setShippingCost(0);
+        }
+
+        // Eğer TRY ise ve henüz ülke seçilmemişse otomatik olarak TR seç
+        if ((currency === 'TRY' || currency === 'TL') && !currentCountryCode) {
+            setShippingAddress(prev => ({ ...prev, country: 'TR' }));
+            setShippingCost(0);
+        }
+    }, [currency]);
+
     const handleCountrySelect = (event) => {
         const selectedCountryCode = event.target.value;
-        const foundCountry = shippingCountries.find((c) => c.code === selectedCountryCode);
-        const cost = foundCountry ? foundCountry.cost : 0; // EUR baz
         setShippingAddress((prev) => ({ ...prev, country: selectedCountryCode }));
-        setShippingCost(cost);
+
+        // Yeni kargo hesaplama mantığını kullan
+        const newShippingCost = calculateShippingCost(selectedCountryCode, totalPrice);
+        setShippingCost(newShippingCost);
+
         if (selectedCountryCode === 'TR') setCurrency('TRY');
     };
 
@@ -436,6 +512,7 @@ const Payment = () => {
 
     const handleSnackbarClose = () => setSnackbarOpen(false);
 
+
     return (
         <div>
             <Header />
@@ -515,24 +592,42 @@ const Payment = () => {
                                     />
                                     <FormControl fullWidth sx={{ mb: 2 }} required>
                                         <InputLabel id="country-select-label">{t('Country')}</InputLabel>
-                                        <Select
-                                            labelId="country-select-label"
-                                            id="country-select"
-                                            name="country"
-                                            label={t('Country')}
-                                            value={shippingAddress.country}
-                                            onChange={handleCountrySelect}
-                                            variant="outlined"
-                                        >
-                                            <MenuItem value="">
-                                                <em>{t('Select')}</em>
-                                            </MenuItem>
-                                            {shippingCountries.map((country) => (
-                                                <MenuItem key={country.code} value={country.code}>
-                                                    {country.name}
+                                        {currency === 'TRY' || currency === 'TL' ? (
+                                            // TL/TRY için sadece Türkiye göster ve seçim yaptırma
+                                            <Select
+                                                labelId="country-select-label"
+                                                id="country-select"
+                                                name="country"
+                                                label={t('Country')}
+                                                value="TR"
+                                                disabled
+                                                variant="outlined"
+                                            >
+                                                <MenuItem value="TR">
+                                                    Türkiye
                                                 </MenuItem>
-                                            ))}
-                                        </Select>
+                                            </Select>
+                                        ) : (
+                                            // EUR için normal dropdown (Türkiye hariç)
+                                            <Select
+                                                labelId="country-select-label"
+                                                id="country-select"
+                                                name="country"
+                                                label={t('Country')}
+                                                value={shippingAddress.country}
+                                                onChange={handleCountrySelect}
+                                                variant="outlined"
+                                            >
+                                                <MenuItem value="">
+                                                    <em>{t('Select')}</em>
+                                                </MenuItem>
+                                                {getAvailableCountries().map((country) => (
+                                                    <MenuItem key={country.code} value={country.code}>
+                                                        {country.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        )}
                                     </FormControl>
                                 </Box>
                             </section>
@@ -558,6 +653,36 @@ const Payment = () => {
                                     <Typography variant="h6">
                                         {t('Total')}: <strong>{formatPrice(parseFloat(finalPrice), currency)}</strong>
                                     </Typography>
+
+                                    {/* Ücretsiz kargo bilgisi */}
+                                    {(() => {
+                                        const freeShippingInfo = getFreeShippingInfo();
+                                        if (freeShippingInfo.isFree) {
+                                            return (
+                                                <Box sx={{ mt: 2, p: 1.5, bgcolor: '#e8f5e8', borderRadius: 1, border: '1px solid #4caf50' }}>
+                                                    <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                                        🎉 {t('Free shipping applied!')}
+                                                    </Typography>
+                                                </Box>
+                                            );
+                                        } else if (freeShippingInfo.remaining > 0) {
+                                            return (
+                                                <Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}>
+                                                    <Typography variant="body2" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                                                        🚚 {formatPrice(freeShippingInfo.remaining, currency)} {t('more for free shipping!')}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {currency === 'TRY' || currency === 'TL'
+                                                            ? t('Free shipping on orders over 500 TL')
+                                                            : t('Free shipping on orders over 150 EUR')
+                                                        }
+                                                    </Typography>
+                                                </Box>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+
                                     <Button
                                         variant="contained"
                                         color="primary"
