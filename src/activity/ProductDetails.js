@@ -275,6 +275,35 @@ const ProductDetails = () => {
         setSnackbarSeverity(severity);
         setSnackbarOpen(true);
     };
+
+    const handleWhatsAppOrder = () => {
+        if (!product || quantity <= 0) {
+            showSnackbar(t('Invalid product or quantity'), 'warning');
+            return;
+        }
+
+        // WhatsApp mesajı oluştur
+        const isTR = !!product.is_turkey_user;
+        const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
+        const displayOriginalPrice = Number(uiBaseOriginal) || 0;
+        const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
+        const totalDiscountedPrice = displayDiscountedPrice * quantity;
+
+        const orderSummary = `• ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+
+        const message = `🛍️ ${t('New Order')}:\n\n` +
+            `📦 ${t('Product')}:\n${orderSummary}\n\n` +
+            `💰 ${t('Total')}: ${formatPrice(totalDiscountedPrice, isTR)}\n\n` +
+            `📅 ${t('Order Date')}: ${new Date().toLocaleString('tr-TR')}`;
+
+        const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        showSnackbar(t('Redirecting to WhatsApp...'), 'info');
+    };
+
     const shareUrl = window.location.href;
     const shareMessage = `${product.title} - Check out this product!`;
 
@@ -609,6 +638,37 @@ const ProductDetails = () => {
                                 }}
                             >
                                 {t('Add to Cart')}
+                            </Button>
+
+                            {/* WhatsApp Order Button */}
+                            <Button
+                                onClick={handleWhatsAppOrder}
+                                variant="outlined"
+                                color="success"
+                                fullWidth
+                                sx={{
+                                    mb: 2,
+                                    py: { xs: 1.5, sm: 2 },
+                                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                                    fontWeight: 'var(--fw-semibold)',
+                                    fontFamily: 'var(--font-ui)',
+                                    letterSpacing: 'var(--ls-wide)',
+                                    textTransform: 'uppercase',
+                                    borderRadius: 2,
+                                    borderColor: '#25D366',
+                                    color: '#25D366',
+                                    boxShadow: '0 4px 12px rgba(37, 211, 102, 0.15)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        backgroundColor: '#25D366',
+                                        color: 'white',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 6px 20px rgba(37, 211, 102, 0.3)'
+                                    }
+                                }}
+                                startIcon={<span style={{ fontSize: '1.2rem' }}>📱</span>}
+                            >
+                                {t('Order via WhatsApp')}
                             </Button>
 
                             {/* Product Type */}

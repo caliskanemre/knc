@@ -95,7 +95,7 @@ const Cart = () => {
                     if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                         setEmail(decodedToken.sub);
                         await syncLocalCartToServer(decodedToken.sub);
-                        // Email state'i güncellenmeden ��nce fetch erken dönmesin diye email'i parametre olarak geçir
+                        // Email state'i güncellenmeden ����nce fetch erken dönmesin diye email'i parametre olarak geçir
                         await fetchCartItems(decodedToken.sub);
                     }
                 } catch (error) {
@@ -416,6 +416,47 @@ const Cart = () => {
         setToastOpen(true);
     };
 
+    const handleWhatsAppOrder = () => {
+        if (cartItems.length === 0) {
+            showToast(t('Cart is empty'), 'warning');
+            return;
+        }
+
+        // WhatsApp mesajı oluştur
+        const orderSummary = cartItems.map(item => {
+            const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : 'EUR');
+            const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
+
+            let unitPrice;
+            if (isTR) {
+                unitPrice = (item.tl_price ?? item.price) / item.quantity || 0;
+            } else {
+                unitPrice = (item.eur_price ?? item.price) / item.quantity || 0;
+            }
+            const totalPrice = unitPrice * item.quantity;
+            const discountedPrice = totalPrice * (1 - discountRate / 100);
+
+            return `• ${item.title} - ${item.quantity} adet - ${formatPrice(discountedPrice, isTR)}${item.orderNote ? ` (Not: ${item.orderNote})` : ''}`;
+        }).join('\n');
+
+        // Toplam fiyat hesapla
+        const finalTotal = totalPrice;
+        const firstItemCurrency = cartItems.length > 0 ? ((cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TL' || (cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TRY') : false;
+
+        const message = `🛍️ ${t('New Order')}:\n\n` +
+            `📦 ${t('Items')}:\n${orderSummary}\n\n` +
+            `💰 ${t('Total')}: ${formatPrice(finalTotal, firstItemCurrency)}\n\n` +
+            `👤 ${t('Customer')}: ${email || 'Misafir Müşteri'}\n\n` +
+            `📅 ${t('Order Date')}: ${new Date().toLocaleString('tr-TR')}`;
+
+        const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın (örn: 905551234567)
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        showToast(t('Redirecting to WhatsApp...'), 'info');
+    };
+
     return (
         <div>
             <Header />
@@ -660,6 +701,33 @@ const Cart = () => {
                             onClick={handleCheckout}
                         >
                             {t("Proceed to Checkout")}
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            fullWidth
+                            sx={{
+                                marginTop: 1,
+                                py: 2,
+                                fontFamily: 'var(--font-ui)',
+                                fontWeight: 'var(--fw-semibold)',
+                                letterSpacing: 'var(--ls-wide)',
+                                textTransform: 'uppercase',
+                                borderRadius: 2,
+                                fontSize: '1.1rem',
+                                borderColor: '#1976d2',
+                                color: '#1976d2',
+                                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 6px 20px rgba(25, 118, 210, 0.2)'
+                                }
+                            }}
+                            onClick={handleWhatsAppOrder}
+                        >
+                            {t("Order via WhatsApp")}
                         </Button>
                     </>
                 )}
