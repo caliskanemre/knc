@@ -289,12 +289,12 @@ const ProductDetails = () => {
         const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
         const totalDiscountedPrice = displayDiscountedPrice * quantity;
 
-        const orderSummary = `• ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+        const orderSummary = `\u2022 ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
 
-        const message = `🛍️ ${t('New Order')}:\n\n` +
-            `📦 ${t('Product')}:\n${orderSummary}\n\n` +
-            `💰 ${t('Total')}: ${formatPrice(totalDiscountedPrice, isTR)}\n\n` +
-            `📅 ${t('Order Date')}: ${new Date().toLocaleString('tr-TR')}`;
+        const message = `\ud83d\udecd\ufe0f Yeni Siparis:\n\n` +
+            `\ud83d\udce6 Urun:\n${orderSummary}\n\n` +
+            `\ud83d\udcb0 Toplam: ${formatPrice(totalDiscountedPrice, isTR)}\n\n` +
+            `\ud83d\udcc5 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
 
         const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;

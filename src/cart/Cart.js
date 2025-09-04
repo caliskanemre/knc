@@ -95,7 +95,7 @@ const Cart = () => {
                     if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                         setEmail(decodedToken.sub);
                         await syncLocalCartToServer(decodedToken.sub);
-                        // Email state'i güncellenmeden ����nce fetch erken dönmesin diye email'i parametre olarak geçir
+                        // Email state'i güncellenmeden ��������nce fetch erken dönmesin diye email'i parametre olarak geçir
                         await fetchCartItems(decodedToken.sub);
                     }
                 } catch (error) {
@@ -436,18 +436,18 @@ const Cart = () => {
             const totalPrice = unitPrice * item.quantity;
             const discountedPrice = totalPrice * (1 - discountRate / 100);
 
-            return `• ${item.title} - ${item.quantity} adet - ${formatPrice(discountedPrice, isTR)}${item.orderNote ? ` (Not: ${item.orderNote})` : ''}`;
+            return `\u2022 ${item.title} - ${item.quantity} adet - ${formatPrice(discountedPrice, isTR)}${item.orderNote ? ` (Not: ${item.orderNote})` : ''}`;
         }).join('\n');
 
         // Toplam fiyat hesapla
         const finalTotal = totalPrice;
         const firstItemCurrency = cartItems.length > 0 ? ((cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TL' || (cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TRY') : false;
 
-        const message = `🛍️ ${t('New Order')}:\n\n` +
-            `📦 ${t('Items')}:\n${orderSummary}\n\n` +
-            `💰 ${t('Total')}: ${formatPrice(finalTotal, firstItemCurrency)}\n\n` +
-            `👤 ${t('Customer')}: ${email || 'Misafir Müşteri'}\n\n` +
-            `📅 ${t('Order Date')}: ${new Date().toLocaleString('tr-TR')}`;
+        const message = `\ud83d\udecd\ufe0f Yeni Siparis:\n\n` +
+            `\ud83d\udce6 Urunler:\n${orderSummary}\n\n` +
+            `\ud83d\udcb0 Toplam: ${formatPrice(finalTotal, firstItemCurrency)}\n\n` +
+            `\ud83d\udc64 Musteri: ${email || 'Misafir Musteri'}\n\n` +
+            `\ud83d\udcc5 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
 
         const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın (örn: 905551234567)
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
