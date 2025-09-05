@@ -95,7 +95,7 @@ const Cart = () => {
                     if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                         setEmail(decodedToken.sub);
                         await syncLocalCartToServer(decodedToken.sub);
-                        // Email state'i güncellenmeden ��������nce fetch erken dönmesin diye email'i parametre olarak geçir
+                        // Email state'i güncellenmeden ������������nce fetch erken dönmesin diye email'i parametre olarak geçir
                         await fetchCartItems(decodedToken.sub);
                     }
                 } catch (error) {
@@ -416,6 +416,15 @@ const Cart = () => {
         setToastOpen(true);
     };
 
+    // Emoji'leri encoding'den bağımsız oluştur
+    const EMOJI = {
+        bag: String.fromCodePoint(0x1F6CD, 0xFE0F),
+        box: String.fromCodePoint(0x1F4E6),
+        money: String.fromCodePoint(0x1F4B0),
+        user: String.fromCodePoint(0x1F464),
+        calendar: String.fromCodePoint(0x1F4C5)
+    };
+
     const handleWhatsAppOrder = () => {
         if (cartItems.length === 0) {
             showToast(t('Cart is empty'), 'warning');
@@ -443,12 +452,12 @@ const Cart = () => {
         const finalTotal = totalPrice;
         const firstItemCurrency = cartItems.length > 0 ? ((cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TL' || (cartItems[0].currency ?? (cartItems[0].is_turkey_user ? 'TRY' : 'EUR')) === 'TRY') : false;
 
-        const message = `\ud83d\udecd\ufe0f Yeni Siparis:\n\n` +
-            `\ud83d\udce6 Urunler:\n${orderSummary}\n\n` +
-            `\ud83d\udcb0 Toplam: ${formatPrice(finalTotal, firstItemCurrency)}\n\n` +
-            `\ud83d\udc64 Musteri: ${email || 'Misafir Musteri'}\n\n` +
-            `\ud83d\udcc5 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
-
+        // Emojileri String.fromCodePoint ile kullan
+        const message = `${EMOJI.bag} Yeni Siparis:\n\n` +
+            `${EMOJI.box} Urunler:\n${orderSummary}\n\n` +
+            `${EMOJI.money} Toplam: ${formatPrice(finalTotal, firstItemCurrency)}\n\n` +
+            `${EMOJI.user} Musteri: ${email || 'Misafir Musteri'}\n\n` +
+            `${EMOJI.calendar} Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
         const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın (örn: 905551234567)
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 

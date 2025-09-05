@@ -51,7 +51,7 @@ const getPrefixedImage = (url, prefix) => {
 };
 
 const ProductDetails = () => {
-    const { id, title, type } = useParams();
+    const { id, title } = useParams();
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState('');
@@ -276,6 +276,14 @@ const ProductDetails = () => {
         setSnackbarOpen(true);
     };
 
+    // Emoji'leri encoding'den bağımsız oluştur
+    const EMOJI = {
+        bag: String.fromCodePoint(0x1F6CD, 0xFE0F),
+        box: String.fromCodePoint(0x1F4E6),
+        money: String.fromCodePoint(0x1F4B0),
+        calendar: String.fromCodePoint(0x1F4C5),
+    };
+
     const handleWhatsAppOrder = () => {
         if (!product || quantity <= 0) {
             showSnackbar(t('Invalid product or quantity'), 'warning');
@@ -291,11 +299,11 @@ const ProductDetails = () => {
 
         const orderSummary = `\u2022 ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
 
-        const message = `\ud83d\udecd\ufe0f Yeni Siparis:\n\n` +
-            `\ud83d\udce6 Urun:\n${orderSummary}\n\n` +
-            `\ud83d\udcb0 Toplam: ${formatPrice(totalDiscountedPrice, isTR)}\n\n` +
-            `\ud83d\udcc5 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
-
+        // Emojileri String.fromCodePoint ile kullan
+        const message = `${EMOJI.bag} Yeni Siparis:\n\n` +
+            `${EMOJI.box} Urun:\n${orderSummary}\n\n` +
+            `${EMOJI.money} Toplam: ${formatPrice(totalDiscountedPrice, isTR)}\n\n` +
+            `${EMOJI.calendar} Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
         const phoneNumber = '905348290866'; // Buraya WhatsApp numaranızı yazın
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
