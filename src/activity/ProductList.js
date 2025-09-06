@@ -272,7 +272,7 @@ const ProductList = () => {
             <Header />
 
             <Container sx={{ py: 9 }} maxWidth="xl">
-                <Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
+                {/*<Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
                     {type || t('All Products')} {Object.keys(filters).length > 0 ?
                     Object.entries(filters).map(([_, filterValue]) => {
                         if (typeof filterValue === 'object' && filterValue !== null) {
@@ -281,7 +281,7 @@ const ProductList = () => {
                             return filterValue;
                         }
                     }).join(', ') : ''}
-                </Typography>
+                </Typography>*/}
 
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (

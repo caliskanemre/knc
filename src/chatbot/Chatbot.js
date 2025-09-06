@@ -1,8 +1,10 @@
 // src/components/Chatbot.js
 import React, { useState, useEffect } from 'react';
 import './Chatbot.css'; // Stil dosyası
+import { useTranslation } from 'react-i18next';
 
 const Chatbot = () => {
+    const { t } = useTranslation();
     const [message, setMessage] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
@@ -24,7 +26,7 @@ const Chatbot = () => {
             // Kısa bir yazıyor simülasyonu
             setTimeout(() => {
                 const phoneNumber = '905348290866';
-                const finalMessage = `Merhaba! Website'den mesaj gönderiyorum:\n\n${message}`;
+                const finalMessage = `${t('helloWebsiteMessage')}\n\n${message}`;
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(finalMessage)}`;
                 window.open(whatsappUrl, '_blank');
                 setMessage('');
@@ -48,7 +50,7 @@ const Chatbot = () => {
                         <span className="message-icon">💬</span>
                         {onlineStatus && <div className="online-indicator"></div>}
                     </div>
-                    <span className="chat-text">Canlı Destek</span>
+                    <span className="chat-text">{t('liveSupport')}</span>
                     {onlineStatus && <div className="pulse-animation"></div>}
                 </div>
             ) : (
@@ -60,9 +62,9 @@ const Chatbot = () => {
                                 <div className={`status-dot ${onlineStatus ? 'online' : 'offline'}`}></div>
                             </div>
                             <div className="agent-details">
-                                <span className="agent-name">Müşteri Temsilcisi</span>
+                                <span className="agent-name">{t('customerRepresentative')}</span>
                                 <span className="agent-status">
-                                    {onlineStatus ? 'Çevrimiçi' : 'Yakında döner'}
+                                    {onlineStatus ? t('online') : t('comingBackSoon')}
                                 </span>
                             </div>
                         </div>
@@ -74,9 +76,9 @@ const Chatbot = () => {
                     <div className="chat-body">
                         <div className="welcome-message">
                             <div className="message-bubble received">
-                                <p>Merhaba! 👋</p>
-                                <p>Size nasıl yardımcı olabilirim? Sorularınızı WhatsApp üzerinden yanıtlayalım.</p>
-                                <span className="message-time">Şimdi</span>
+                                <p>{t('hello')}</p>
+                                <p>{t('howCanIHelp')}</p>
+                                <span className="message-time">{t('now')}</span>
                             </div>
                         </div>
 
@@ -97,8 +99,8 @@ const Chatbot = () => {
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Mesajınızı yazın..."
+                            onKeyDown={handleKeyPress}
+                            placeholder={t('typeYourMessage')}
                             disabled={isTyping}
                         />
                         <button
@@ -111,7 +113,7 @@ const Chatbot = () => {
                     </div>
 
                     <div className="powered-by">
-                        <span>WhatsApp ile güvenli mesajlaşma</span>
+                        <span>{t('secureMessagingWhatsApp')}</span>
                     </div>
                 </div>
             )}

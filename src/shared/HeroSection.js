@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 // YENİ: Örnek video ve poster (kendi dosyalarınızla değiştirin)
 import videoPoster from './../images/IMG_6719.JPG'// Video yüklenemezse görünecek resim
 
 export default function HeroSection() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -72,7 +74,7 @@ export default function HeroSection() {
                         textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
                     }}
                 >
-                    Hayalinizdeki Kına Gecesi
+                    {t('heroTitle')}
                 </Typography>
                 <Typography
                     color = "white"
@@ -83,7 +85,7 @@ export default function HeroSection() {
                         textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
                     }}
                 >
-                    En özel gününüz için ihtiyacınız olan her şey bir tık uzağınızda.
+                    {t('heroSubtitle')}
                 </Typography>
 
             </Box>

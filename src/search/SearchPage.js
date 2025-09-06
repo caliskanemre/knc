@@ -3,7 +3,6 @@ import axios from 'axios';
 import "./css/SearchPage.css";
 import Header from "../header/Header";
 import {
-    Avatar,
     Button,
     Card,
     CardMedia,
@@ -25,6 +24,7 @@ import { useAuth } from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import EventSearchButtons from "./EventSearchButtons";
+import { useTranslation } from 'react-i18next';
 
 // Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
 const getPrefixedImage = (url, prefix) => {
@@ -33,6 +33,7 @@ const getPrefixedImage = (url, prefix) => {
 };
 
 const SearchPage = () => {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchLocation, setSearchLocation] = useState('');
     const [eventResult, setEventResult] = useState([]);
@@ -40,13 +41,11 @@ const SearchPage = () => {
     const [allResult, setAllResult] = useState({ event: [], activity: [] });
     const [eventPage, setEventPage] = useState(0);
     const [hasMoreEvents, setHasMoreEvents] = useState(false);
-    const [hasMoreActivity, setHasMoreActivity] = useState(false);
+    const [hasMoreActivity] = useState(false);
     const [activityPage, setActivityPage] = useState(0);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const location = useLocation();
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
 
@@ -58,7 +57,6 @@ const SearchPage = () => {
                 setSearchQuery(fromSearch.searchQuery);
                 setSearchLocation(fromSearch.searchLocation);
                 setAllResult(fromSearch.allResult);
-                // Optionally restore pagination states here
             }
         }
     }, [location]);
@@ -83,12 +81,6 @@ const SearchPage = () => {
         setOpenDialog(true);
     };
 
-    const handleCloseNotification = (eventId, notificationType) => {
-        // Set the notification preference based on user selection and call favorite toggle
-        handleFavoriteClick(eventId, notificationType);
-        setOpenMenuEventId(null);
-    };
-
     const handleCloseFavoriteDialog = () => {
         setOpenDialog(false);
     };
@@ -98,8 +90,6 @@ const SearchPage = () => {
             .map(event => event.id)
             .includes(eventId);
         toggleFavorite(eventId, isFavorite, "event", notificationType);
-        setSnackbarMessage(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-        setSnackbarOpen(true);
     };
 
     // For activity favorites, use a simpler toggle
@@ -172,7 +162,6 @@ const SearchPage = () => {
     const totalResults = eventResult.length + activityResult.length;
     const handleSearch = async (options = {}) => {
         await extractedEvent(options);
-        // (You can add an analogous extraction for activities if needed)
     };
 
     // Combine event and activity results into one array and add a type property
@@ -203,10 +192,10 @@ const SearchPage = () => {
                     <div className="location-input">
                         <input
                             type="text"
-                            placeholder="Ürün ara!"
+                            placeholder={t('searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyPress={(e) => {
+                            onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     handleNewSearch(e.target.value);
                                 }
@@ -217,7 +206,7 @@ const SearchPage = () => {
                             onClick={() => handleNewSearch(searchQuery)}
                             className="search-button"
                         >
-                            Ara
+                            {t('Search')}
                         </Button>
                     </div>
 
@@ -230,20 +219,23 @@ const SearchPage = () => {
                     </div>
 
                     <div className="recent-searches">
-                        <h2>Popüler Aramalar</h2>
+                        <h2>{t('popularSearches')}</h2>
                         <ul>
-                            <li><h6>Duvak</h6></li>
-                            <li><h6>Halay Mendili</h6></li>
-                            <li><h6>Çiçek</h6></li>
-                            <li><h6>Tef</h6></li>
-                            <li><h6>Sepet</h6></li>
-                            <li><h6>Örtü</h6></li>
+                            <li><h6>{t('Veil')}</h6></li>
+                            <li><h6>{t('HalayHandkerchief')}</h6></li>
+                            <li><h6>{t('Flowers')}</h6></li>
+                            <li><h6>{t('Tambourine')}</h6></li>
+                            <li><h6>{t('Basket')}</h6></li>
+                            <li><h6>{t('Cloth')}</h6></li>
                         </ul>
                     </div>
                 </div>
                 {searchQuery && (
                     <Typography variant="h6" style={{ textAlign: 'center', margin: '20px 0' }}>
-                        {totalResults === 0 ? `Ürün bulunamadı` : `"${searchQuery}" ile alakalı ${totalResults} sonuç bulundu`}
+                        {totalResults === 0
+                            ? t('productNotFound')
+                            : t('resultsFound', { count: totalResults, query: searchQuery })
+                        }
                     </Typography>
                 )}
             </div>
@@ -401,21 +393,22 @@ const SearchPage = () => {
                             color="primary"
                             style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
                         >
-                            Daha Fazla
+                            {t('Load More')}
                         </Button>
                     </div>
                 )}
             </Container>
+
             <Dialog open={openDialog} onClose={handleCloseFavoriteDialog}>
-                <DialogTitle>{"Just a moment!"}</DialogTitle>
+                <DialogTitle>{t('Just a moment')}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Login please...
+                        {t('loginPlease')}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseFavoriteDialog} color="primary" autoFocus>
-                        Got it, thanks!
+                        {t('gotItThanks')}
                     </Button>
                 </DialogActions>
             </Dialog>
