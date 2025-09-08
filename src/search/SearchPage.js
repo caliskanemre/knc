@@ -33,7 +33,7 @@ const getPrefixedImage = (url, prefix) => {
 };
 
 const SearchPage = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchLocation, setSearchLocation] = useState('');
     const [eventResult, setEventResult] = useState([]);
@@ -48,6 +48,12 @@ const SearchPage = () => {
     const [openMenuEventId, setOpenMenuEventId] = useState(null);
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
+
+    // Get current locale from i18next
+    const getCurrentLocale = () => {
+        const currentLang = i18n.language || 'tr';
+        return currentLang.split('-')[0]; // 'tr-TR' -> 'tr'
+    };
 
     // Restore search state from navigation if available
     useEffect(() => {
@@ -132,13 +138,16 @@ const SearchPage = () => {
             eventPageNumber = eventPage,
         } = options;
         const eventSize = 20;
+        const locale = getCurrentLocale();
+
         try {
             const eventResponse = await axios.get(`${baseURL}/products/searchByFts`, {
                 params: {
                     query,
                     location: loc,
                     page: eventPageNumber,
-                    size: eventSize
+                    size: eventSize,
+                    locale: locale // Backend otomatik olarak currency tespit edecek
                 }
             });
             const events = eventResponse.data.content;
@@ -173,6 +182,49 @@ const SearchPage = () => {
             ? allResult.activity.map(item => ({ ...item, type: 'activities' }))
             : []),
     ];
+
+    // Helper function to get localized product name
+    const getLocalizedName = (item) => {
+        const locale = getCurrentLocale();
+        if (locale === 'en' && item.nameEn) {
+            return item.nameEn;
+        }
+        return item.name || item.title;
+    };
+
+    // Helper function to get localized description
+    const getLocalizedDescription = (item) => {
+        const locale = getCurrentLocale();
+        if (locale === 'en' && item.descriptionEn) {
+            return item.descriptionEn;
+        }
+        return item.description || item.shortDescription;
+    };
+
+    // Helper function to format price with currency
+    const formatPrice = (item) => {
+        const locale = getCurrentLocale();
+        // Backend otomatik olarak doğru fiyatı döner (TL veya EUR)
+        if (item.price) {
+            // TL fiyatı varsa TL kullan, yoksa EUR
+            if (item.tlPrice) {
+                return `${Math.floor(item.tlPrice)} ₺`;
+            } else {
+                return `${Math.floor(item.price)} €`;
+            }
+        }
+        return '';
+    };
+
+    // Helper function to format discounted price
+    const formatDiscountedPrice = (item) => {
+        if (item.tlPrice) {
+            return `${Math.floor(item.tlPrice * 0.8)} ₺`;
+        } else if (item.price) {
+            return `${Math.floor(item.price * 0.8)} €`;
+        }
+        return '';
+    };
 
     return (
         <div>
@@ -256,8 +308,12 @@ const SearchPage = () => {
                                 : () => handleFavoriteActivityClick(item.id);
 
                         // Determine link and image source based on type
-                        const detailLink = `/products/detail/${item.id}/${item.title}`;
-                        const originalImage = (item.photos && item.photos[0] ? item.photos[0].photo : '');
+                        const detailLink = `/products/detail/${item.id}/${getLocalizedName(item)}`;
+
+                        // Backend'ten gelen product_photos array'ini kullan
+                        const originalImage = (item.product_photos && item.product_photos[0]
+                            ? item.product_photos[0].photoUrl
+                            : (item.photos && item.photos[0] ? item.photos[0].photo : ''));
 
                         // Generate prefixed image URLs
                         const smallImageUrl = getPrefixedImage(originalImage, 'small');
@@ -284,7 +340,7 @@ const SearchPage = () => {
                                                 ${largeImageUrl} 1200w
                                             `}
                                             sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                            alt={item.title}
+                                            alt={getLocalizedName(item)}
                                             sx={{
                                                 width: '100%',
                                                 height: { xs: 140, md: 200 },
@@ -296,14 +352,14 @@ const SearchPage = () => {
                                         <Typography
                                             variant="h6"
                                             sx={{
-                                                fontSize: getDynamicFontSize(item.title),
+                                                fontSize: getDynamicFontSize(getLocalizedName(item)),
                                                 fontWeight: 500,
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 whiteSpace: 'nowrap'
                                             }}
                                         >
-                                            {item.title}
+                                            {getLocalizedName(item)}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
                                             {item.date}
@@ -313,8 +369,8 @@ const SearchPage = () => {
                                                 {item.type === 'activities' ? item.activity_location : item.place}
                                             </Typography>
                                         </Box>
-                                        {/* If price is available, show pricing & discount info */}
-                                        {item.price && (
+                                        {/* Fiyat bilgisini göster */}
+                                        {(item.price || item.tlPrice) && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                                 <Typography
                                                     sx={{
@@ -324,7 +380,7 @@ const SearchPage = () => {
                                                         fontSize: '0.9rem'
                                                     }}
                                                 >
-                                                    {Math.floor(item.price)} TL
+                                                    {formatPrice(item)}
                                                 </Typography>
                                                 <Typography
                                                     sx={{
@@ -333,7 +389,7 @@ const SearchPage = () => {
                                                         fontSize: '0.9rem'
                                                     }}
                                                 >
-                                                    {Math.floor(item.price * 0.8)} TL
+                                                    {formatDiscountedPrice(item)}
                                                 </Typography>
                                                 <Box
                                                     sx={{

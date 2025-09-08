@@ -24,38 +24,35 @@ import Footer from "./Footer";
 
 const theme = createTheme({
     typography: {
-        // Ana gövde fontu olarak Montserrat'ı belirliyoruz.
         fontFamily: '"Montserrat", "Helvetica", "Arial", sans-serif',
-
-        // Ürün başlığı gibi alanlar için özel stil
-        // Not: Bu varyantları doğrudan Typography component'inde kullanabilirsiniz.
-        // Örnek: <Typography variant="h6">
         h6: {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
-            fontSize: '1.25rem', // Boyutu isteğe göre ayarlayabilirsiniz
+            fontSize: '1.25rem',
         },
-        // Ürün başlıkları için bu şekilde de kullanabilirsiniz
         productTitle: {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
             fontSize: '1.25rem',
         }
     },
-    // Sitenizin ana renklerini de buradan yönetebilirsiniz.
     palette: {
         primary: {
-            main: '#C84B31', // Örnek bir kına kırmızısı tonu
+            main: '#C84B31',
         },
         secondary: {
-            main: '#ECDCCB', // Örnek bir bej/krem tonu
+            main: '#ECDCCB',
         },
     },
 });
+
 const PAGE_SIZE = 20;
 
-// Helper function to get a prefixed image URL (e.g., "small_", "medium_", "large_")
-
+// Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
+const getPrefixedImage = (url, prefix) => {
+    if (!url) return url;
+    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+};
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -63,10 +60,7 @@ const generateUUID = () => {
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 };
-const getPrefixedImage = (url, prefix) => {
-    if (!url) return url;
-    return url.replace(/([^/]+)$/, `${prefix}_$1`);
-};
+
 export default function Main() {
     const [products, setProducts] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -76,138 +70,153 @@ export default function Main() {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { favorites, isLoggedIn, toggleFavorite, token } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    // Fiyat formatlama (dönüşüm yok)
-    const formatPrice = (amount, isTR) => {
-        const symbol = isTR ? '₺' : '€';
-        const num = Number(amount) || 0;
-        return `${num.toFixed(2)} ${symbol}`;
+    // Get current locale from i18next
+    const getCurrentLocale = () => {
+        const currentLang = i18n.language || 'tr';
+        return currentLang.split('-')[0]; // 'tr-TR' -> 'tr'
+    };
+
+    // Helper function to get localized product name
+    const getLocalizedName = (item) => {
+        const locale = getCurrentLocale();
+        if (locale === 'en' && item.nameEn) {
+            return item.nameEn;
+        }
+        return item.name || item.title;
+    };
+
+    // Helper function to get localized description
+    const getLocalizedDescription = (item) => {
+        const locale = getCurrentLocale();
+        if (locale === 'en' && item.descriptionEn) {
+            return item.descriptionEn;
+        }
+        if (locale === 'en' && item.shortDescriptionEn) {
+            return item.shortDescriptionEn;
+        }
+        return item.description || item.shortDescription;
+    };
+
+    // Helper function to format price with currency
+    const formatPrice = (item) => {
+        // Backend otomatik olarak doğru fiyatı döner (TL veya EUR)
+        if (item && (item.price || item.tlPrice)) {
+            // TL fiyatı varsa TL kullan, yoksa EUR
+            if (item.tlPrice) {
+                return `${Math.floor(item.tlPrice)} ₺`;
+            } else {
+                return `${Math.floor(item.price)} €`;
+            }
+        }
+        return '';
+    };
+
+    // Helper function to format discounted price
+    const formatDiscountedPrice = (item, discountPercent = 20) => {
+        if (item.tlPrice) {
+            return `${Math.floor(item.tlPrice * (1 - discountPercent / 100))} ₺`;
+        } else if (item.price) {
+            return `${Math.floor(item.price * (1 - discountPercent / 100))} €`;
+        }
+        return '';
     };
 
     // Fetch products
     const fetchProducts = async (pageNum) => {
         try {
+            const locale = getCurrentLocale();
             const response = await Axios.get(`${baseURL}/products/all`, {
                 params: {
                     page: pageNum,
                     size: PAGE_SIZE,
-                    sort: 'interested,desc',
+                    locale: locale // Backend otomatik olarak currency tespit edecek
                 },
             });
 
-            const { content, totalPages } = response.data || {};
-            if (content) {
-                setProducts((prev) => [...prev, ...content]);
-                setHasMore(pageNum + 1 < totalPages);
+            const data = response.data;
+            if (pageNum === 0) {
+                setProducts(data.content);
+            } else {
+                setProducts(prev => [...prev, ...data.content]);
             }
+            setHasMore(!data.last);
         } catch (error) {
             console.error('Error fetching products:', error);
-            setSnackbarMessage(t('Error fetching products'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showSnackbar(t('Error loading products'), 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchProducts(0); // Initial fetch
-    }, []);
+        setLoading(true);
+        fetchProducts(0);
+    }, [baseURL, i18n.language]);
 
-    useEffect(() => {
-        // Store guest token
-        localStorage.setItem('guestToken', guestToken);
-
-        // Sync local favorites to server on login
-        if (isLoggedIn && token) {
-            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-            localFavorites.forEach(async (favorite) => {
-                if (favorite && favorite.id && !favorites.favoriteProducts?.some(product => product.id === favorite.id)) {
-                    try {
-                        await toggleFavorite(favorite.id, false, 'product');
-                    } catch (error) {
-                        console.error('Error syncing favorite:', error);
-                        setSnackbarMessage(t('Error syncing favorites'));
-                        setSnackbarSeverity('error');
-                        setSnackbarOpen(true);
-                    }
-                }
-            });
-            localStorage.removeItem('favorites');
-        }
-    }, [isLoggedIn, token, favorites, toggleFavorite, t, guestToken]);
-
-    const handleLoadMore = () => {
-        if (!loading && hasMore) {
+    const loadMore = () => {
+        if (hasMore && !loading) {
             setLoading(true);
-            fetchProducts(page + 1).finally(() => setLoading(false));
-            setPage((prev) => prev + 1);
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchProducts(nextPage);
         }
     };
 
     const handleFavoriteClick = async (productId) => {
         if (!productId || typeof productId !== 'number') {
-            setSnackbarMessage(t('Cannot add to favorites: Invalid product'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showSnackbar(t('Cannot add to favorites: Invalid product'), 'error');
             return;
         }
 
-        // Find the product to get its details
         const product = products.find(p => p.id === productId);
         if (!product) {
-            setSnackbarMessage(t('Cannot add to favorites: Product not found'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showSnackbar(t('Cannot add to favorites: Product not found'), 'error');
             return;
         }
 
         if (isLoggedIn && token) {
-            // Logged-in user: Use toggleFavorite
-            const isAlreadyFavorited = favorites.favoriteProducts?.some(p => p.id === productId);
+            const isAlreadyFavorited = favorites.favoriteEvents?.some(p => p.id === productId);
             try {
-                await toggleFavorite(productId, isAlreadyFavorited, 'product');
-                setSnackbarMessage(isAlreadyFavorited ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️');
-                setSnackbarSeverity('success');
-                setSnackbarOpen(true);
+                await toggleFavorite(productId, isAlreadyFavorited, 'event');
+                showSnackbar(
+                    isAlreadyFavorited ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️',
+                    'success'
+                );
             } catch (error) {
                 console.error('Error syncing favorite to server:', error);
-                setSnackbarMessage(t('Error syncing favorites'));
-                setSnackbarSeverity('error');
-                setSnackbarOpen(true);
+                showSnackbar(t('Error syncing favorites'), 'error');
             }
         } else {
-            // Guest user: Update localStorage and sync with backend
+            // Guest user: Manage local storage favorites
             let localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
             const isAlreadyFavorited = localFavorites.some(fav => fav.id === productId);
 
             if (isAlreadyFavorited) {
-                // Remove from favorites
                 localFavorites = localFavorites.filter(fav => fav.id !== productId);
                 try {
                     await axios.delete(`${baseURL}/users/guest/favorites/${productId}`, {
                         headers: { 'X-Guest-Token': guestToken },
                     });
                     localStorage.setItem('favorites', JSON.stringify(localFavorites));
-                    setSnackbarMessage(t('Removed from favorites') + ' ❌');
-                    setSnackbarSeverity('success');
-                    setSnackbarOpen(true);
+                    showSnackbar(t('Removed from favorites') + ' ❌', 'info');
                 } catch (error) {
-                    console.error('Error removing guest favorite:', error.response?.data || error.message);
-                    setSnackbarMessage(t('Error removing from favorites'));
-                    setSnackbarSeverity('error');
-                    setSnackbarOpen(true);
+                    console.error("Error removing guest favorite:", error.response?.data || error.message);
+                    showSnackbar(t('Error removing from favorites'), 'error');
                 }
             } else {
-                // Add to favorites
                 const favoriteItem = {
                     id: product.id,
-                    title: product.title || product.name || 'Unknown',
-                    price: product.price || 0,
-                    photos: product.photos || [],
-                    date: product.date || '',
-                    activity_location: product.activityLocation || product.location || '',
+                    title: getLocalizedName(product),
+                    name: getLocalizedName(product),
+                    price: product.price,
+                    tlPrice: product.tlPrice,
+                    product_photos: product.product_photos || [],
+                    date: product.date || "",
+                    activity_location: product.activityLocation || product.location || "",
                 };
                 localFavorites.push(favoriteItem);
                 try {
@@ -215,171 +224,217 @@ export default function Main() {
                         headers: { 'X-Guest-Token': guestToken },
                     });
                     localStorage.setItem('favorites', JSON.stringify(localFavorites));
-                    setSnackbarMessage(t('Added to favorites') + ' ❤️');
-                    setSnackbarSeverity('success');
-                    setSnackbarOpen(true);
+                    showSnackbar(t('Added to favorites') + ' ❤️', 'success');
                 } catch (error) {
-                    console.error('Error adding guest favorite:', error.response?.data || error.message);
-                    setSnackbarMessage(t('Error adding to favorites'));
-                    setSnackbarSeverity('error');
-                    setSnackbarOpen(true);
+                    console.error("Error adding guest favorite:", error.response?.data || error.message);
+                    showSnackbar(t('Error adding to favorites'), 'error');
                 }
             }
         }
+    };
+
+    const showSnackbar = (message, severity) => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
     };
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
 
+    const getDynamicFontSize = (title) => {
+        if (title.length < 10) return "1.5rem";
+        if (title.length < 20) return "1.3rem";
+        return "1.1rem";
+    };
+
+    const discountPercent = 20;
+
     return (
         <ThemeProvider theme={theme}>
-            <Helmet>
-                <title>{t('Kına Sepeti - Home')}</title>
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
-            </Helmet>
             <CssBaseline />
+            <Helmet>
+                <title>Kına Sepeti - Kına Gecesi İçin Özel Ürünler</title>
+                <meta name="description" content="Kına geceniz için özel tasarlanmış ürünler. Kına takıları, çeyiz, süsleme malzemeleri ve daha fazlası." />
+                <meta name="keywords" content="kına, kına gecesi, kına takısı, çeyiz, düğün" />
+                <link rel="canonical" href={window.location.origin} />
+            </Helmet>
             <Header />
+            <HeroSection />
 
-            <main>
-                <HeroSection />
-                <Container sx={{ py: 9 }} maxWidth="xl">
-                    <Grid container spacing={4}>
-                        {products.map((item) => {
-                            const isTR = !!item.is_turkey_user;
-                            const baseOriginal = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
-                            const originalPriceNum = Number(baseOriginal) || 0;
-                            const discountPercent = 20;
-                            const discountedPriceNum = originalPriceNum * (1 - discountPercent / 100);
+            <Container maxWidth="xl" sx={{ py: 4 }}>
+                <Typography variant="h3" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+                    {t('Öne Çıkan Ürünler')}
+                </Typography>
 
-                            const originalPhoto = item.photos[0]?.photo || 'https://via.placeholder.com/300x200?text=No+Image';
-                            const smallImageUrl = getPrefixedImage(originalPhoto, 'small');
+                <Grid container spacing={3}>
+                    {products.map((product) => {
+                        // Check if product is favorited
+                        const isProductFavorited = isLoggedIn
+                            ? favorites.favoriteEvents?.some(event => event.id === product.id)
+                            : JSON.parse(localStorage.getItem('favorites') || '[]').some(fav => fav.id === product.id);
 
-                            const isAlreadyFavorited = isLoggedIn
-                                ? favorites.favoriteProducts?.some(product => product.id === item.id)
-                                : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
+                        // Backend'ten gelen product_photos array'ini kullan
+                        const originalImage = (product.product_photos && product.product_photos[0]
+                            ? product.product_photos[0].photoUrl
+                            : product.imageUrl);
 
-                            return (
-                                <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
-                                    <Card
+                        // Generate prefixed image URLs
+                        const smallImageUrl = getPrefixedImage(originalImage, 'small');
+                        const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
+                        const largeImageUrl = getPrefixedImage(originalImage, 'large');
+
+                        return (
+                            <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
+                                <Card sx={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    position: 'relative',
+                                    transition: 'transform 0.2s',
+                                    '&:hover': {
+                                        transform: 'scale(1.02)'
+                                    }
+                                }}>
+                                    <a href={`/products/detail/${product.id}/${getLocalizedName(product)}`} style={{ textDecoration: 'none' }}>
+                                        <CardMedia
+                                            component="img"
+                                            height="200"
+                                            image={smallImageUrl}
+                                            srcSet={`
+                                                ${smallImageUrl} 400w,
+                                                ${mediumImageUrl} 800w,
+                                                ${largeImageUrl} 1200w
+                                            `}
+                                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                            alt={getLocalizedName(product)}
+                                            loading="lazy"
+                                        />
+                                    </a>
+                                    <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        <Typography
+                                            variant="h6"
+                                            component="h3"
+                                            sx={{
+                                                fontSize: getDynamicFontSize(getLocalizedName(product)),
+                                                fontWeight: 600,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                mb: 1
+                                            }}
+                                        >
+                                            {getLocalizedName(product)}
+                                        </Typography>
+
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flex: 1 }}>
+                                            {getLocalizedDescription(product)}
+                                        </Typography>
+
+                                        {/* Fiyat bilgisini göster */}
+                                        {(product.price || product.tlPrice) && (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                <Typography
+                                                    sx={{
+                                                        textDecoration: 'line-through',
+                                                        color: 'gray',
+                                                        mr: 1,
+                                                        fontSize: '0.9rem'
+                                                    }}
+                                                >
+                                                    {formatPrice(product)}
+                                                </Typography>
+                                                <Typography
+                                                    sx={{
+                                                        color: '#1976d2',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '1rem'
+                                                    }}
+                                                >
+                                                    {formatDiscountedPrice(product, discountPercent)}
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        backgroundColor: 'red',
+                                                        color: 'white',
+                                                        px: 1,
+                                                        py: 0.5,
+                                                        borderRadius: 1,
+                                                        ml: 1,
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    20%
+                                                </Box>
+                                            </Box>
+                                        )}
+
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            fullWidth
+                                            href={`/products/detail/${product.id}/${getLocalizedName(product)}`}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            {t('Detayları Görüntüle')}
+                                        </Button>
+                                    </Box>
+
+                                    <IconButton
+                                        aria-label="add to favorites"
+                                        onClick={() => handleFavoriteClick(product.id)}
                                         sx={{
-                                            height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            position: 'relative',
-                                            boxShadow: 'none',
+                                            position: 'absolute',
+                                            top: '8px',
+                                            right: '8px',
+                                            backgroundColor: 'rgba(255,255,255,0.8)',
+                                            borderRadius: '50%',
+                                            padding: '6px',
+                                            zIndex: 2,
                                             '&:hover': {
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                                backgroundColor: 'rgba(255,255,255,0.9)'
                                             }
                                         }}
                                     >
-                                        <a
-                                            href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
-                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                        >
-                                            <CardMedia
-                                                component="img"
-                                                image={smallImageUrl}
-                                                alt={item.title || 'Product'}
-                                                title={item.title || 'Product'}
-                                                sx={{
-                                                    width: '100%',
-                                                    aspectRatio: '1 / 1',
-                                                    objectFit: 'cover',
-                                                }}
-                                            />
-                                        </a>
-                                        <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            {/* Başlık */}
-                                            <Typography
-                                                sx={{
-                                                    fontFamily: 'Montserrat, sans-serif',
-                                                    fontWeight: 'bold',
-                                                    fontSize: { xs: '1rem', sm: '1.1rem' },
-                                                    lineHeight: 1.4,
-                                                    textAlign: 'left',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: 'vertical',
-                                                }}
-                                            >
-                                                {item.title || 'Unknown'}
-                                            </Typography>
-                                            {/* Short description */}
-                                            {item.shortDescription && (
-                                                <Typography
-                                                    sx={{
-                                                        fontFamily: 'Montserrat, sans-serif',
-                                                        fontWeight: 400,
-                                                        fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                                                        color: 'text.secondary',
-                                                        mt: 0.5,
-                                                        textAlign: 'left',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        display: '-webkit-box',
-                                                        WebkitLineClamp: 2,
-                                                        WebkitBoxOrient: 'vertical',
-                                                    }}
-                                                >
-                                                    {item.shortDescription}
-                                                </Typography>
-                                            )}
-                                            {/* Fiyat Bilgisi */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
-                                                <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                                                    {formatPrice(discountedPriceNum, isTR)}
-                                                </Typography>
-                                                <Typography sx={{ textDecoration: 'line-through', color: 'gray', ml: 1, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
-                                                    {formatPrice(originalPriceNum, isTR)}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        {/* Favori butonu */}
-                                        <IconButton
-                                            aria-label="add to favorites"
-                                            onClick={() => handleFavoriteClick(item.id)}
-                                            sx={{
-                                                position: 'absolute',
-                                                top: '8px',
-                                                right: '8px',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
-                                                borderRadius: '50%',
-                                                padding: '6px',
-                                                zIndex: 3,
-                                            }}
-                                        >
-                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                        </IconButton>
-                                    </Card>
-                                </Grid>
-                            );
-                        })}
-                    </Grid>
+                                        {isProductFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+                                    </IconButton>
+                                </Card>
+                            </Grid>
+                        );
+                    })}
+                </Grid>
 
-                    {hasMore && (
-                        <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
-                            {t('Load More')}
+                {hasMore && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                        <Button
+                            variant="contained"
+                            onClick={loadMore}
+                            disabled={loading}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            {loading ? t('Yükleniyor...') : t('Daha Fazla Yükle')}
                         </Button>
-                    )}
-                </Container>
+                    </Box>
+                )}
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </main>
-      <Footer /> {/* Footer bileşenini ekle */}
-    </ThemeProvider>
-  );
+                {products.length === 0 && !loading && (
+                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                        <Typography variant="h6" color="text.secondary">
+                            {t('Hiç ürün bulunamadı')}
+                        </Typography>
+                    </Box>
+                )}
+            </Container>
+
+            <Footer />
+
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
+        </ThemeProvider>
+    );
 }
