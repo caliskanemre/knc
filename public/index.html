@@ -17,7 +17,6 @@
               analytics_storage: 'denied',
               functionality_storage: 'denied',
               personalization_storage: 'denied',
-              security_storage: 'denied'
           });*/
 
           gtag('config', 'G-ERZ1D4VS7L');
@@ -39,10 +38,55 @@
     <link rel="icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-      <meta
-              name="description"
-              content="Henna product discovery with Kina Sepeti! Uncover personalized henna sets, handkerchiefs, veils, ornaments and gifts tailored to your interests"
-      />
+
+    <!-- Dynamic meta description based on URL path -->
+    <script>
+      // Function to set dynamic meta description based on URL
+      function setDynamicMetaDescription() {
+        const path = window.location.pathname;
+        let description, title, lang;
+
+        if (path.includes('/en/')) {
+          // English content
+          lang = 'en';
+          description = "Henna product discovery with Kınasepeti! Uncover personalized henna sets, handkerchiefs, veils, ornaments and gifts tailored to your interests";
+          title = "Kınasepeti - Personalized Wedding and Henna Night Products";
+        } else {
+          // Turkish content (default)
+          lang = 'tr';
+          description = "Kınasepeti ile kına gecesi ürünlerini keşfedin! İlgi alanlarınıza uygun kişiselleştirilmiş kına setleri, mendiller, duvaklar, süsler ve hediyeleri keşfedin";
+          title = "Kınasepeti - Kişiselleştirilmiş Düğün ve Kına Hediyeleri";
+        }
+
+        // Update meta description
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+          metaDesc.setAttribute('content', description);
+        } else {
+          metaDesc = document.createElement('meta');
+          metaDesc.name = 'description';
+          metaDesc.content = description;
+          document.head.appendChild(metaDesc);
+        }
+
+        // Update title
+        document.title = title;
+
+        // Update html lang attribute
+        document.documentElement.lang = lang;
+      }
+
+      // Set initial meta description
+      setDynamicMetaDescription();
+
+      // Update meta description when URL changes (for SPA navigation)
+      window.addEventListener('popstate', setDynamicMetaDescription);
+    </script>
+
+    <meta
+            name="description"
+            content="Kınasepeti ile kına gecesi ürünlerini keşfin! İlgi alanlarınıza uygun kişiselleştirilmiş kına setleri, mendiller, duvaklar, süsler ve hediyeleri keşfedin"
+    />
 
       <link rel="apple-touch-icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
 
