@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Confetti from 'react-confetti';
+
+// 2. Import the useWindowSize hook from react-use
 import { useWindowSize } from 'react-use';
 import SEO from '../shared/SEO';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+  // 3. Get the current window size (this automatically updates on resize)
   const { width, height } = useWindowSize();
 
   const [loading, setLoading] = useState(true);
@@ -92,7 +96,7 @@ const PaymentSuccess = () => {
           width={width}
           height={height}
           numberOfPieces={300}
-          recycle={false}
+          recycle={false} // Let it run once
         />
       )}
 
@@ -100,7 +104,7 @@ const PaymentSuccess = () => {
         <h2>⏳ Ödeme durumu kontrol ediliyor...</h2>
       ) : paymentStatus === 'completed' ? (
         <>
-          <h2>✅ Ödeme Başar��lı!</h2>
+          <h2>✅ Ödeme Başarılı!</h2>
           <p>Teşekkürler! Ana sayfaya yönlendiriliyorsunuz...</p>
         </>
       ) : paymentStatus === 'failed' || timeoutReached ? (
