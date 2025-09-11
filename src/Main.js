@@ -11,7 +11,6 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { Helmet } from 'react-helmet';
 import Axios from 'axios';
 import axios from 'axios';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -21,6 +20,7 @@ import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
 import { useTranslation } from "react-i18next";
 import Footer from "./Footer";
+import SEO from './shared/SEO';
 
 const theme = createTheme({
     typography: {
@@ -234,11 +234,11 @@ export default function Main() {
 
     return (
         <ThemeProvider theme={theme}>
-            <Helmet>
-                <title>{t('Kına Sepeti - Home')}</title>
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
-            </Helmet>
+            <SEO
+                title={t('Kına Sepeti - Home')}
+                description={t('Discover henna night products, accessories and inspirations for unforgettable celebrations.')}
+                type="website"
+            />
             <CssBaseline />
             <Header />
 

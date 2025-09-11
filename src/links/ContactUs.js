@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Typography, Box, TextField, Button } from '@mui/material';
 import Header from "../header/Header";
+import SEO from '../shared/SEO';
 
 const ContactUs = () => {
     // Form verisi
@@ -45,6 +46,26 @@ const ContactUs = () => {
 
     return (
         <div>
+            <SEO
+                title="İletişim | Kina Sepeti"
+                description="Kına Sepeti ile iletişime geçin. Adres, telefon ve mesaj formu üzerinden bize ulaşın."
+                type="website"
+                structuredData={{
+                  '@context': 'https://schema.org',
+                  '@type': 'LocalBusiness',
+                  name: 'Kina Sepeti',
+                  image: 'https://www.kinasepeti.com/ksLogo.jpeg',
+                  address: {
+                    '@type': 'PostalAddress',
+                    streetAddress: 'Yukarı Pazarcı Mah. 4005 sok. Fettah Kaya İş Merkezi No. 5/Z01',
+                    addressLocality: 'Manavgat',
+                    addressRegion: 'Antalya',
+                    addressCountry: 'TR'
+                  },
+                  telephone: '+905348290866',
+                  url: 'https://www.kinasepeti.com'
+                }}
+            />
             <Header />
             <Container>
                 <Box sx={{

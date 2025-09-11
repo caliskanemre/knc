@@ -19,12 +19,12 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { useParams } from "react-router-dom";
 import { ActivityFilter } from "../filter/ActivityFilter";
-import { Helmet } from "react-helmet";
 import { useAuth } from "../auth/AuthProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useTranslation } from "react-i18next";
 import Footer from "../Footer";
+import SEO from "../shared/SEO";
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -260,15 +260,11 @@ const ProductList = () => {
 
     return (
         <div className="activity-list" ref={listRef}>
-            <Helmet>
-                <title>{type ? `${type} Products` : t('All Products')} - Kina Sepeti</title>
-                <meta
-                    name="description"
-                    content={`Explore ${type ? type : 'all'} products on Kina Sepeti. Find henna nights, products.`}
-                />
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
-            </Helmet>
+            <SEO
+                title={(type ? `${type} ` : t('All Products')) + ' | Kina Sepeti'}
+                description={t('Discover henna night products, accessories and inspirations for unforgettable celebrations.')}
+                type="website"
+            />
             <Header />
 
             <Container sx={{ py: 9 }} maxWidth="xl">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import Header from "../header/Header";
+import SEO from "../shared/SEO";
 import {
     Box,
     Card,
@@ -143,6 +144,12 @@ const Favorites = () => {
 
     return (
         <div>
+            <SEO
+                title={t('Favorites') + ' | Kina Sepeti'}
+                description={t('Your saved favorite henna night products and accessories.')}
+                robots="noindex,nofollow"
+                type="website"
+            />
             <Header />
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>

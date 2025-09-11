@@ -20,7 +20,7 @@ import {
     useTheme,
     useMediaQuery
 } from "@mui/material";
-import { Helmet } from "react-helmet";
+import SEO from '../shared/SEO';
 import axios from "axios";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { jwtDecode } from "jwt-decode";
@@ -38,6 +38,13 @@ import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "react-i18next";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Footer from "../Footer";
+
+// Helper to slugify product titles for canonical consistency
+const slugify = (str) => str ? str.toString().toLowerCase()
+  .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .substring(0, 80) : '';
 
 function generateUUID() {
     return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
@@ -64,7 +71,7 @@ const ProductDetails = () => {
     const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -177,15 +184,80 @@ const ProductDetails = () => {
         );
     }
 
-    // Discount Logic
+    // Discount Logic (moved earlier so SEO can use values)
     const discountPercent = 20;
-    const originalPrice = Math.floor(product.price); // Backend için EUR baz (fallback)
-
-    // UI fiyatları
+    const originalPrice = Math.floor(product.price); // Base price fallback (EUR assumed)
     const isTR = !!product.is_turkey_user;
     const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
     const displayOriginalPrice = Number(uiBaseOriginal) || 0;
     const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
+    const currency = isTR ? 'TRY' : 'EUR';
+
+    // SEO meta helpers
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.kinasepeti.com';
+    const currentLang = (i18n.language || 'tr');
+    const generatedSlug = slugify(product.title || title || '');
+    const canonical = `${origin}/${currentLang}/products/detail/${product.id}/${generatedSlug || product.id}`;
+
+    const rawDesc = product.description || '';
+    const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const metaDescription = (plainDesc && plainDesc.length > 160)
+        ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/,'') + '…'
+        : (plainDesc || `${product.title} ${t('Uygun fiyatlı kına gecesi ürünü. Hızlı kargo ve güvenli alışveriş.')}`);
+
+    const seoTitle = `${product.title}${product.category ? ' | ' + product.category : ''} | Kına Sepeti`;
+
+    // Images (prefer large variants for social share)
+    const images = (product.photos || []).map(p => p.photo).filter(Boolean);
+    const primaryImage = images.length > 0 ? images[0] : 'https://www.kinasepeti.com/ksLogo.jpeg';
+
+    // Structured Data: Product
+    const productSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.title,
+        image: images,
+        description: plainDesc || undefined,
+        sku: product.id?.toString(),
+        brand: { '@type': 'Brand', name: 'Kina Sepeti' },
+        offers: {
+            '@type': 'Offer',
+            priceCurrency: currency,
+            price: displayDiscountedPrice.toFixed(2),
+            availability: 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
+            url: canonical
+        }
+    };
+
+    // Structured Data: Breadcrumbs
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Kına Sepeti',
+                item: `${origin}/${currentLang}/`
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: product.category || t('Ürünler'),
+                item: `${origin}/${currentLang}/products${product.category ? '/' + encodeURIComponent(product.category) : ''}`
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: product.title,
+                item: canonical
+            }
+        ]
+    };
+
+    // UI fiyatları
+    const displayPrice = displayDiscountedPrice;
 
     const addToCart = debounce(async () => {
         if (!product || quantity <= 0) {
@@ -241,7 +313,7 @@ const ProductDetails = () => {
             if (window.gtag) {
                 window.gtag('event', 'add_to_cart', {
                     'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                    'value': parseFloat(displayDiscountedPrice * quantity),
+                    'value': parseFloat(displayPrice * quantity),
                     'currency': isTR ? 'TRY' : 'EUR',
                     'items': [{
                         'id': product.id,
@@ -251,7 +323,7 @@ const ProductDetails = () => {
                 });
                 console.log("Google Ads 'add_to_cart' gönderildi:", {
                     id: product.id,
-                    price: displayDiscountedPrice * quantity,
+                    price: displayPrice * quantity,
                     currency: isTR ? 'TRY' : 'EUR'
                 });
             }
@@ -330,78 +402,13 @@ const ProductDetails = () => {
 
     return (
         <div className="activity-details-container">
-            <Helmet>
-                <title>{product.title} - Product Details | Kina Sepeti</title>
-                <meta
-                    name="description"
-                    content={`Discover more about ${product.title}. Contact: ${product.product_email || 'N/A'} | ${product.product_phone || 'N/A'}`}
-                />
-                <link
-                    rel="canonical"
-                    href={`${window.location.origin}${window.location.pathname}`}
-                />
-                <meta property="og:title" content={product.title} />
-                <meta
-                    property="og:description"
-                    content={product.description || 'Learn more about this product.'}
-                />
-                <meta
-                    property="og:image"
-                    content={
-                        product.photos && product.photos.length > 0
-                            ? getPrefixedImage(product.photos[0].photo, 'small')
-                            : undefined
-                    }
-                />
-                <meta
-                    property="og:url"
-                    content={`${window.location.origin}${window.location.pathname}`}
-                />
-                <meta property="og:type" content="website" />
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={product.title} />
-                <meta
-                    name="twitter:description"
-                    content={product.description || 'Learn more about this product.'}
-                />
-                <meta
-                    name="twitter:image"
-                    content={
-                        product.photos && product.photos.length > 0
-                            ? getPrefixedImage(product.photos[0].photo, 'small')
-                            : undefined
-                    }
-                />
-                <script type="application/ld+json">
-                    {JSON.stringify({
-                        "@context": "http://schema.org",
-                        "@type": "TouristAttraction",
-                        "name": product.title,
-                        "description": product.description,
-                        "image": product.photos ? product.photos.map(photo => photo.photo) : [],
-                        "location": {
-                            "@type": "Place",
-                            "name": product.location,
-                        },
-                        "offers": {
-                            "@type": "Offer",
-                            "price": product.price,
-                        },
-                        "telephone": product.product_phone,
-                        "email": product.product_email,
-                        "url": product.product_website,
-                        "publisher": {
-                            "@type": "Organization",
-                            "name": "Kina Sepeti",
-                            "logo": {
-                                "@type": "ImageObject",
-                                "url": "https://kinasepeti.com/logo.png"
-                            }
-                        }
-                    })}
-                </script>
-            </Helmet>
-
+            <SEO
+                title={seoTitle}
+                description={metaDescription}
+                image={primaryImage}
+                type="product"
+                structuredData={[productSchema, breadcrumbSchema]}
+            />
             <Header />
             <Box sx={{
                 px: { xs: 1, sm: 2, md: 3 },
@@ -443,7 +450,7 @@ const ProductDetails = () => {
                                         ${getPrefixedImage(selectedImage, 'large')} 1200w
                                     `}
                                     sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                    alt="Selected"
+                                    alt={product.title || 'Ürün görseli'}
                                     onClick={openModal}
                                     sx={{
                                         width: '100%',
@@ -476,7 +483,7 @@ const ProductDetails = () => {
                                             key={index}
                                             component="img"
                                             src={getPrefixedImage(photo.photo, 'small')}
-                                            alt={`Thumbnail ${index}`}
+                                            alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
                                             onClick={() => setSelectedImage(photo.photo)}
                                             sx={{
                                                 width: { xs: 60, sm: 80, md: 100 },
@@ -879,4 +886,3 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
-

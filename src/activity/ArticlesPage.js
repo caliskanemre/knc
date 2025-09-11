@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Header from "../header/Header";
 import {t} from "i18next";
+import SEO from '../shared/SEO';
 
 
 const articlesData = [
@@ -67,6 +68,11 @@ export default function ArticlesPage() {
 
     return (
         <div>
+            <SEO
+                title={t('Henna Night Ideas') + ' | Articles'}
+                description={t('Discover tips, traditions, and creative ideas for your next henna celebration')}
+                type="article"
+            />
             <Header />
             <Container sx={{ mt: 4 }}>
                 {/* Page Title */}

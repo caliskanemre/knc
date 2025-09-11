@@ -20,6 +20,7 @@ import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { useAuth } from "../auth/AuthProvider"; // AuthProvider import eklendi
+import SEO from '../shared/SEO';
 
 const Cart = () => {
     const { t } = useTranslation();
@@ -268,7 +269,7 @@ const Cart = () => {
             const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : (i18n.language?.toLowerCase().startsWith('tr') ? 'TRY' : 'EUR'));
             const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
 
-            // Ürünün birim fiyatını doğru para birimine göre belirle
+            // Ür��nün birim fiyatını doğru para birimine göre belirle
             const unitPrice = isTR
                 ? (item.tl_price ?? item.price) / item.quantity
                 : (item.eur_price ?? item.price) / item.quantity;
@@ -468,6 +469,7 @@ const Cart = () => {
 
     return (
         <div>
+            <SEO title={t('My Cart') + ' | Kina Sepeti'} description={t('Review your selected henna night products and proceed to checkout.')} robots="noindex,nofollow" />
             <Header />
             <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
                 {isLoading ? (

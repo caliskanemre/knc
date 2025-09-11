@@ -18,6 +18,7 @@ import axios from 'axios';
 import Header from '../header/Header';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import SEO from '../shared/SEO';
 
 const Payment = () => {
     const { t } = useTranslation();
@@ -515,6 +516,7 @@ const Payment = () => {
 
     return (
         <div>
+            <SEO title={t('Checkout') + ' | Kina Sepeti'} description={t('Secure checkout process for your henna night order.')} robots="noindex,nofollow" />
             <Header />
             <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 2 }}>
                 {isLoading ? (

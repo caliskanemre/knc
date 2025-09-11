@@ -29,6 +29,16 @@ import {Helmet} from "react-helmet";
 import ShippingPolicy from "./links/ShippingPolicy";
 import ReturnPolicy from "./links/ReturnPolicy";
 import SalesAgreement from "./links/SalesAggrement";
+import { initGA, trackPageView, grantAllConsent } from './analytics/ga';
+
+// Route change tracker for GA page_view
+const RouteTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname + location.search, document.title);
+  }, [location.pathname, location.search]);
+  return null;
+};
 
 const LanguageRedirect = () => {
     const { i18n } = useTranslation();
@@ -61,71 +71,42 @@ function App() {
   const [, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
-
     useEffect(() => {
-        const script = document.createElement('script');
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
-
+        const gaId = process.env.REACT_APP_GA_MEASUREMENT_ID;
+        const adsId = process.env.REACT_APP_GADS_ID;
+        initGA(gaId, adsId);
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 const decoded = jwtDecode(token);
                 const currentTime = Date.now() / 1000;
                 if (decoded.exp < currentTime) {
-                    // Token expired, remove it and redirect to login
                     localStorage.removeItem('token');
                 } else {
                     setIsAuthenticated(true);
-                    // Optionally decode user information from token and set user state
                 }
             } catch (error) {
                 console.error('Token decoding failed', error);
             }
         }
-
-        return () => {
-            // Clean up the script when the component unmounts
-            document.head.removeChild(script);
-        };
     }, []);
+
     const handleLoginSuccess = (data) => {
-        localStorage.setItem('token', data.accessToken); // Assuming the response contains an accessToken
+        localStorage.setItem('token', data.accessToken);
         setIsAuthenticated(true);
-        setUser(data.user); // Assuming the response contains user information
-        // Redirect to home page or dashboard as needed
+        setUser(data.user);
     };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUser(null);
-        // Redirect to login page or home page as needed
     };
 
     const handleAccept = () => {
-        // Example: Update Google Analytics consent
-        window.dataLayer = window.dataLayer || [];
-
-        // Define a function to utilize window.dataLayer for pushing messages
-        function gtag() {
-            window.dataLayer.push(arguments);
-        }
-
-        // Update consent configuration for Google Analytics using gtag
-        gtag('consent', 'update', {
-            ad_storage: 'granted',
-            ad_user_data: 'granted',
-            ad_personalization: 'granted',
-            analytics_storage: 'granted',
-            functionality_storage: 'granted',
-            personalization_storage: 'granted',
-            security_storage: 'granted',
-        });
-
+        // On cookie consent accept grant GA storage
+        grantAllConsent();
     };
-
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -137,6 +118,7 @@ function App() {
               <html lang={i18n.language || 'tr'} />
             </Helmet>
             <LanguageRedirect />
+            <RouteTracker />
             <Routes>
               {/* Main Routes */}
               <Route path="/:lang/" element={<Main />} />
@@ -172,19 +154,6 @@ function App() {
               <Route path="/:lang/articles/:id" element={<ArticleDetailPage />} />
             </Routes>
             <Chatbot />
-            {/* <CookieConsent
-              onAccept={handleAccept}
-              location="bottom"
-              buttonText="Accept"
-              declineButtonText="Decline"
-              cookieName="activentyUserConsent"
-              style={{ background: '#2B373B' }}
-              buttonStyle={{ color: '#4e503b', fontSize: '13px' }}
-              declineButtonStyle={{ fontSize: '13px' }}
-              expires={150}
-            >
-              This website uses cookies to enhance the user experience.{' '}
-            </CookieConsent> */}
           </div>
         </AuthProvider>
       </Router>

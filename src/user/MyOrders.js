@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import Header from "../header/Header";
 import { useTranslation } from "react-i18next";
+import SEO from "../shared/SEO";
 
 const MyOrders = () => {
   const { email, token } = useAuth();
@@ -92,6 +93,7 @@ const MyOrders = () => {
 
   return (
     <>
+      <SEO title="Siparişlerim | Kina Sepeti" description="Geçmiş siparişlerinizi görüntüleyin." robots="noindex,nofollow" />
       <Header />
       <Box sx={{ maxWidth: 800, margin: "0 auto", padding: 2 }}>
         <Typography variant="h4" gutterBottom>
