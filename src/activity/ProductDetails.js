@@ -38,6 +38,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { useTranslation } from "react-i18next";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Footer from "../Footer";
+import { trackEvent } from "../analytics/ga";
 
 // Helper to slugify product titles for canonical consistency
 const slugify = (str) => str ? str.toString().toLowerCase()
@@ -98,6 +99,24 @@ const ProductDetails = () => {
     useEffect(() => {
         if (product && product.photos && product.photos.length > 0) {
             setSelectedImage(product.photos[0].photo);
+        }
+    }, [product]);
+
+    // GA view_item event: Ürün detayları yüklendiğinde tetiklenir
+    useEffect(() => {
+        if (product && product.id) {
+            trackEvent('view_item', {
+                items: [
+                    {
+                        item_id: product.id,
+                        item_name: product.title,
+                        item_category: product.category,
+                        price: product.price,
+                        currency: currency,
+                        // Ekstra alanlar eklenebilir
+                    }
+                ]
+            });
         }
     }, [product]);
 
