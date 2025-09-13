@@ -235,23 +235,6 @@ const Cart = () => {
             }));
             setCartItems(items);
             calculateTotalPrice(items);
-
-            if (previousCartItems.length < items.length) {
-                const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
-                if (newItem && window.gtag) {
-                    const isTR = !!newItem.is_turkey_user;
-                    const currencyCode = isTR ? 'TRY' : 'EUR';
-                    window.gtag('event', 'conversion', {
-                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                        'value': newItem.price,
-                        'currency': currencyCode,
-                        'event_callback': () => {
-                            console.log('Add to Cart conversion tracked');
-                        }
-                    });
-                }
-            }
-            setPreviousCartItems(items);
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);

@@ -3,7 +3,6 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import Box from '@mui/material/Box';
@@ -94,7 +93,7 @@ export default function Main() {
                 params: {
                     page: pageNum,
                     size: PAGE_SIZE,
-                    sort: 'interested,desc',
+                    sort: 'popularity,desc',
                 },
             });
 
@@ -114,6 +113,21 @@ export default function Main() {
     useEffect(() => {
         fetchProducts(0); // Initial fetch
     }, []);
+
+    // Infinite scroll effect
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.innerHeight + document.documentElement.scrollTop
+                >= document.documentElement.offsetHeight - 1000 && !loading && hasMore) {
+                setLoading(true);
+                fetchProducts(page + 1).finally(() => setLoading(false));
+                setPage((prev) => prev + 1);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [loading, hasMore, page]);
 
     useEffect(() => {
         // Store guest token
@@ -137,14 +151,6 @@ export default function Main() {
             localStorage.removeItem('favorites');
         }
     }, [isLoggedIn, token, favorites, toggleFavorite, t, guestToken]);
-
-    const handleLoadMore = () => {
-        if (!loading && hasMore) {
-            setLoading(true);
-            fetchProducts(page + 1).finally(() => setLoading(false));
-            setPage((prev) => prev + 1);
-        }
-    };
 
     const handleFavoriteClick = async (productId) => {
         if (!productId || typeof productId !== 'number') {
@@ -361,11 +367,11 @@ export default function Main() {
                         })}
                     </Grid>
 
-                    {hasMore && (
+                    {/* {hasMore && (
                         <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
                             {t('Load More')}
                         </Button>
-                    )}
+                    )} */}
                 </Container>
 
         <Snackbar
