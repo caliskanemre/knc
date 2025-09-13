@@ -30,7 +30,6 @@ const Cart = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
     const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
-    const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +41,6 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
-    // Para birimi ve kur - Backend'den gelen fiyatı olduğu gibi göster
     const [currency] = useState(() => {
         try {
             const saved = localStorage.getItem('currency');
@@ -293,7 +291,6 @@ const Cart = () => {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 setCartItems(updatedItems);
-                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 showToast(t("Item removed from cart"), "success");
             } catch (error) {
@@ -307,7 +304,6 @@ const Cart = () => {
                     headers: { 'X-Guest-Token': guestToken },
                 });
                 setCartItems(updatedItems);
-                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 localStorage.setItem('cart', JSON.stringify(updatedItems));
                 showToast(t("Item removed from cart"), "success");
@@ -360,11 +356,9 @@ const Cart = () => {
                 console.error("Error updating quantity:", error);
                 if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
                     showToast(t('Price validation failed. Please refresh the page and try again.'), 'error');
-                    fetchCartItems(email);
-                } else {
-                    fetchCartItems(email);
-                    showToast(error.response?.data || t("Error updating quantity"), "error");
                 }
+                fetchCartItems(email);
+                showToast(error.response?.data || t("Error updating quantity"), "error");
             }
         } else {
             try {
@@ -394,9 +388,8 @@ const Cart = () => {
             const validateUrl = email
                 ? `${baseURL}/cart/validate/${encodeURIComponent(email)}`
                 : `${baseURL}/cart/guest/validate`;
-            console.log("Validating cart with URL:", validateUrl, "Headers:", headers); // Debug log
             const response = await axios.post(validateUrl, cartItems, { headers });
-            console.log("Validation response:", response.data); // Debug log
+
             if (response.data.valid) {
                 const lang = i18n.language || 'tr';
                 console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency, eurToTry }); // Debug log
