@@ -93,7 +93,7 @@ export default function Main() {
                 params: {
                     page: pageNum,
                     size: PAGE_SIZE,
-                    sort: 'popularity,desc',
+                    // sort parametresini kaldırdık çünkü backend otomatik popularity sıralaması yapıyor
                 },
             });
 
