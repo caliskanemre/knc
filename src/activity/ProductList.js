@@ -313,6 +313,10 @@ const ProductList = () => {
                         const mediumImageUrl = getPrefixedImage(originalImageUrl, 'medium');
                         const largeImageUrl = getPrefixedImage(originalImageUrl, 'large');
 
+                        // Backend'den gelen lokalizasyonlu alanları kullan
+                        const productTitle = item.productName || item.title || item.name || 'Unknown';
+                        const productShortDesc = item.shortDescription;
+
                         return (
                             <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                 <Card sx={{
@@ -321,7 +325,7 @@ const ProductList = () => {
                                     flexDirection: 'column',
                                     position: 'relative'
                                 }}>
-                                    <a href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
+                                    <a href={`/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
                                        style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
@@ -332,7 +336,7 @@ const ProductList = () => {
                                                 ${largeImageUrl} 1200w
                                             `}
                                             sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                            alt={item.title || 'Product'}
+                                            alt={productTitle || 'Product'}
                                             sx={{
                                                 width: '100%',
                                                 height: { xs: 140, md: 200 },
@@ -350,7 +354,7 @@ const ProductList = () => {
                                                     whiteSpace: 'nowrap',
                                                 }}
                                             >
-                                                {item.title || 'Unknown'}
+                                                {productTitle}
                                             </Typography>
                                             <Typography
                                                 sx={{
@@ -364,7 +368,7 @@ const ProductList = () => {
                                                     WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {item.short_description || t('No description available.')}
+                                                {productShortDesc || t('No description available.')}
                                             </Typography>
                                             {/* Pricing & Discount Section */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>

@@ -266,6 +266,10 @@ export default function Main() {
                                 ? favorites.favoriteProducts?.some(product => product.id === item.id)
                                 : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
+                            // Backend'den gelen lokalizasyonlu alanları kullan
+                            const productTitle = item.productName || item.title || item.name || 'Unknown';
+                            const productShortDesc = item.shortDescription;
+
                             return (
                                 <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                     <Card
@@ -281,14 +285,14 @@ export default function Main() {
                                         }}
                                     >
                                         <a
-                                            href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
+                                            href={`/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                         >
                                             <CardMedia
                                                 component="img"
                                                 image={smallImageUrl}
-                                                alt={item.title || 'Product'}
-                                                title={item.title || 'Product'}
+                                                alt={productTitle || 'Product'}
+                                                title={productTitle || 'Product'}
                                                 sx={{
                                                     width: '100%',
                                                     aspectRatio: '1 / 1',
@@ -312,10 +316,10 @@ export default function Main() {
                                                     WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {item.title || 'Unknown'}
+                                                {productTitle}
                                             </Typography>
                                             {/* Short description */}
-                                            {item.shortDescription && (
+                                            {productShortDesc && (
                                                 <Typography
                                                     sx={{
                                                         fontFamily: 'Montserrat, sans-serif',
@@ -331,7 +335,7 @@ export default function Main() {
                                                         WebkitBoxOrient: 'vertical',
                                                     }}
                                                 >
-                                                    {item.shortDescription}
+                                                    {productShortDesc}
                                                 </Typography>
                                             )}
                                             {/* Fiyat Bilgisi */}

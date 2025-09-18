@@ -212,19 +212,23 @@ const ProductDetails = () => {
     const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
     const currency = isTR ? 'TRY' : 'EUR';
 
+    // Backend'den gelen lokalizasyonlu alanları kullan
+    const productTitle = product.productName || product.title || product.name || 'Unknown';
+    const productDescription = product.productDescription || product.description || '';
+
     // SEO meta helpers
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.kinasepeti.com';
     const currentLang = (i18n.language || 'tr');
-    const generatedSlug = slugify(product.title || title || '');
+    const generatedSlug = slugify(productTitle || title || '');
     const canonical = `${origin}/${currentLang}/products/detail/${product.id}/${generatedSlug || product.id}`;
 
-    const rawDesc = product.description || '';
+    const rawDesc = productDescription || '';
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
         ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/,'') + '…'
-        : (plainDesc || `${product.title} ${t('Uygun fiyatlı kına gecesi ürünü. Hızlı kargo ve güvenli alışveriş.')}`);
+        : (plainDesc || `${productTitle} ${t('Uygun fiyatlı kına gecesi ürünü. Hızlı kargo ve güvenli alışveriş.')}`);
 
-    const seoTitle = `${product.title}${product.category ? ' | ' + product.category : ''} | Kına Sepeti`;
+    const seoTitle = `${productTitle}${product.category ? ' | ' + product.category : ''} | Kına Sepeti`;
 
     // Images (prefer large variants for social share)
     const images = (product.photos || []).map(p => p.photo).filter(Boolean);
@@ -234,7 +238,7 @@ const ProductDetails = () => {
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: product.title,
+        name: productTitle,
         image: images,
         description: plainDesc || undefined,
         sku: product.id?.toString(),
@@ -269,7 +273,7 @@ const ProductDetails = () => {
             {
                 '@type': 'ListItem',
                 position: 3,
-                name: product.title,
+                name: productTitle,
                 item: canonical
             }
         ]
@@ -288,7 +292,7 @@ const ProductDetails = () => {
             productId: product.id,
             quantity,
             price: originalPrice * quantity, // Backend EUR bekliyor varsayımı ile
-            title: product.name || product.title,
+            title: productTitle, // Lokalizasyonlu başlığı kullan
             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
             orderNote,
             currency: isTR ? 'TRY' : 'EUR', // Currency bilgisini ekle
@@ -336,7 +340,7 @@ const ProductDetails = () => {
                     'currency': isTR ? 'TRY' : 'EUR',
                     'items': [{
                         'id': product.id,
-                        'name': cartItem.title,
+                        'name': productTitle, // Lokalizasyonlu başlığı kullan
                         'quantity': quantity
                     }]
                 });
@@ -388,7 +392,7 @@ const ProductDetails = () => {
         const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
         const totalDiscountedPrice = displayDiscountedPrice * quantity;
 
-        const orderSummary = `\u2022 ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+        const orderSummary = `\u2022 ${productTitle} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
 
         // Emojileri String.fromCodePoint ile kullan
         const message = `${EMOJI.bag} Yeni Siparis:\n\n` +
@@ -404,7 +408,7 @@ const ProductDetails = () => {
     };
 
     const shareUrl = window.location.href;
-    const shareMessage = `${product.title} - Check out this product!`;
+    const shareMessage = `${productTitle} - Check out this product!`;
 
     const isAlreadyFavorited = isLoggedIn
         ? favorites.favoriteProducts?.some((fav) => fav.id === product.id)
@@ -415,8 +419,8 @@ const ProductDetails = () => {
     const closeModal = () => setIsModalOpen(false);
 
     // Split the description into lines for the accordion
-    const descriptionLines = product.description
-        ? product.description.split("\n").filter((line) => line.trim() !== "")
+    const descriptionLines = productDescription
+        ? productDescription.split("\n").filter((line) => line.trim() !== "")
         : [];
 
     return (
@@ -469,7 +473,7 @@ const ProductDetails = () => {
                                         ${getPrefixedImage(selectedImage, 'large')} 1200w
                                     `}
                                     sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                    alt={product.title || 'Ürün görseli'}
+                                    alt={productTitle || 'Ürün görseli'}
                                     onClick={openModal}
                                     sx={{
                                         width: '100%',
@@ -502,7 +506,7 @@ const ProductDetails = () => {
                                             key={index}
                                             component="img"
                                             src={getPrefixedImage(photo.photo, 'small')}
-                                            alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
+                                            alt={`${productTitle || 'Ürün'} küçük görsel ${index + 1}`}
                                             onClick={() => setSelectedImage(photo.photo)}
                                             sx={{
                                                 width: { xs: 60, sm: 80, md: 100 },
@@ -541,7 +545,7 @@ const ProductDetails = () => {
                                     color: '#2c2c2c'
                                 }}
                             >
-                                {product.title}
+                                {productTitle}
                             </Typography>
 
                             {/* Price Section */}

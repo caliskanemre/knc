@@ -19,8 +19,8 @@ import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { useAuth } from "../auth/AuthProvider"; // AuthProvider import eklendi
-import SEO from '../shared/SEO';
+import { useAuth } from "../auth/AuthProvider";
+import SEO from "../shared/SEO"; // AuthProvider import eklendi
 
 const Cart = () => {
     const { t } = useTranslation();
@@ -30,6 +30,7 @@ const Cart = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
     const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -41,6 +42,7 @@ const Cart = () => {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const discountRate = 20;
 
+    // Para birimi ve kur - Backend'den gelen fiyatı olduğu gibi göster
     const [currency] = useState(() => {
         try {
             const saved = localStorage.getItem('currency');
@@ -235,6 +237,23 @@ const Cart = () => {
             }));
             setCartItems(items);
             calculateTotalPrice(items);
+
+            if (previousCartItems.length < items.length) {
+                const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
+                if (newItem && window.gtag) {
+                    const isTR = !!newItem.is_turkey_user;
+                    const currencyCode = isTR ? 'TRY' : 'EUR';
+                    window.gtag('event', 'conversion', {
+                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
+                        'value': newItem.price,
+                        'currency': currencyCode,
+                        'event_callback': () => {
+                            console.log('Add to Cart conversion tracked');
+                        }
+                    });
+                }
+            }
+            setPreviousCartItems(items);
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);
@@ -274,6 +293,7 @@ const Cart = () => {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 setCartItems(updatedItems);
+                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 showToast(t("Item removed from cart"), "success");
             } catch (error) {
@@ -287,6 +307,7 @@ const Cart = () => {
                     headers: { 'X-Guest-Token': guestToken },
                 });
                 setCartItems(updatedItems);
+                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 localStorage.setItem('cart', JSON.stringify(updatedItems));
                 showToast(t("Item removed from cart"), "success");
@@ -339,9 +360,11 @@ const Cart = () => {
                 console.error("Error updating quantity:", error);
                 if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
                     showToast(t('Price validation failed. Please refresh the page and try again.'), 'error');
+                    fetchCartItems(email);
+                } else {
+                    fetchCartItems(email);
+                    showToast(error.response?.data || t("Error updating quantity"), "error");
                 }
-                fetchCartItems(email);
-                showToast(error.response?.data || t("Error updating quantity"), "error");
             }
         } else {
             try {
@@ -371,8 +394,9 @@ const Cart = () => {
             const validateUrl = email
                 ? `${baseURL}/cart/validate/${encodeURIComponent(email)}`
                 : `${baseURL}/cart/guest/validate`;
+            console.log("Validating cart with URL:", validateUrl, "Headers:", headers); // Debug log
             const response = await axios.post(validateUrl, cartItems, { headers });
-
+            console.log("Validation response:", response.data); // Debug log
             if (response.data.valid) {
                 const lang = i18n.language || 'tr';
                 console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency, eurToTry }); // Debug log
@@ -445,7 +469,7 @@ const Cart = () => {
 
     return (
         <div>
-            <SEO title={t('My Cart') + ' | Kina Sepeti'} description={t('Review your selected henna night products and proceed to checkout.')} robots="noindex,nofollow" />
+            <SEO title={t('My Cart') + ' | Kinasepeti'} description={t('Review your selected henna night products and proceed to checkout.')} robots="noindex,nofollow" />
             <Header />
             <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 2 }}>
                 {isLoading ? (
@@ -488,6 +512,9 @@ const Cart = () => {
                                     }
                                     const totalPrice = unitPrice * item.quantity;
 
+                                    // Backend'den gelen lokalizasyonlu alanları kullan
+                                    const productTitle = item.productName || item.title;
+
                                     const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
@@ -508,7 +535,7 @@ const Cart = () => {
                                             }}
                                         >
                                             <CardContent sx={{ p: 3 }}>
-                                                <a href={`/products/detail/${id}/${encodeURIComponent(item.title || '')}`}>
+                                                <a href={`/products/detail/${id}/${encodeURIComponent(productTitle || '')}`}>
                                                     <CardMedia
                                                         component="img"
                                                         image={smallImageUrl}
@@ -518,7 +545,7 @@ const Cart = () => {
                                                             ${largeImageUrl} 300w
                                                         `}
                                                         sizes="(max-width: 600px) 100px, 300px"
-                                                        alt={item.title || t("Product Image")}
+                                                        alt={productTitle || t("Product Image")}
                                                         sx={{
                                                             width: '100px',
                                                             height: '100px',
@@ -537,7 +564,7 @@ const Cart = () => {
                                                             mb: 1
                                                         }}
                                                     >
-                                                        {item.title}
+                                                        {productTitle}
                                                     </Typography>
                                                 </a>
                                                 <Typography
