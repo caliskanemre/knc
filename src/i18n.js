@@ -15,7 +15,9 @@ i18n
             escapeValue: false, // Not needed for React as it escapes by default
         },
         detection: {
-            order: ['navigator'], // Use the 'navigator' detector
+            // First try to detect from URL path like /en/, then from navigator as a fallback
+            order: ['path', 'navigator'],
+            lookupFromPathIndex: 0,
             caches: [] // Do not cache the language setting to respect user's preference in each session
         }
     });

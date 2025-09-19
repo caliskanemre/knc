@@ -85,7 +85,11 @@ const ProductDetails = () => {
     };
 
     useEffect(() => {
-        Axios.get(`${baseURL}/products/detail/${id}/${title}`)
+        Axios.get(`${baseURL}/products/detail/${id}/${title}` , {
+            headers: {
+                'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
+            }
+        })
             .then((response) => {
                 setProduct(response.data);
             })
@@ -93,7 +97,7 @@ const ProductDetails = () => {
                 console.error('Error fetching product:', error);
                 showSnackbar(t("Failed to load product") + " ❌", "error");
             });
-    }, [id, title, baseURL]);
+    }, [id, title, baseURL, i18n.language]);
 
     // Set default selected image
     useEffect(() => {
@@ -130,7 +134,13 @@ const ProductDetails = () => {
     const fetchSimilarProducts = async (typeValue) => {
         if (!typeValue) return;
         try {
-            const response = await Axios.get(`${baseURL}/products/${typeValue}?page=0&size=5`);
+
+
+            const response = await Axios.get(`${baseURL}/products/${typeValue}?page=0&size=5`, {
+                headers: {
+                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
+                }
+            });
             const fetched = response.data.content || [];
             const filtered = fetched.filter((p) => p.id !== product.id);
             setSimilarProducts(filtered);
@@ -212,23 +222,19 @@ const ProductDetails = () => {
     const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
     const currency = isTR ? 'TRY' : 'EUR';
 
-    // Backend'den gelen lokalizasyonlu alanları kullan
-    const productTitle = product.productName || product.title || product.name || 'Unknown';
-    const productDescription = product.productDescription || product.description || '';
-
     // SEO meta helpers
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.kinasepeti.com';
     const currentLang = (i18n.language || 'tr');
-    const generatedSlug = slugify(productTitle || title || '');
+    const generatedSlug = slugify(product.title || title || '');
     const canonical = `${origin}/${currentLang}/products/detail/${product.id}/${generatedSlug || product.id}`;
 
-    const rawDesc = productDescription || '';
+    const rawDesc = product.description || '';
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
         ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/,'') + '…'
-        : (plainDesc || `${productTitle} ${t('Uygun fiyatlı kına gecesi ürünü. Hızlı kargo ve güvenli alışveriş.')}`);
+        : (plainDesc || `${product.title} ${t('Uygun fiyatlı kına gecesi ürünü. Hızlı kargo ve güvenli alışveriş.')}`);
 
-    const seoTitle = `${productTitle}${product.category ? ' | ' + product.category : ''} | Kına Sepeti`;
+    const seoTitle = `${product.title}${product.category ? ' | ' + product.category : ''} | Kına Sepeti`;
 
     // Images (prefer large variants for social share)
     const images = (product.photos || []).map(p => p.photo).filter(Boolean);
@@ -238,7 +244,7 @@ const ProductDetails = () => {
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: productTitle,
+        name: product.title,
         image: images,
         description: plainDesc || undefined,
         sku: product.id?.toString(),
@@ -273,7 +279,7 @@ const ProductDetails = () => {
             {
                 '@type': 'ListItem',
                 position: 3,
-                name: productTitle,
+                name: product.title,
                 item: canonical
             }
         ]
@@ -292,7 +298,7 @@ const ProductDetails = () => {
             productId: product.id,
             quantity,
             price: originalPrice * quantity, // Backend EUR bekliyor varsayımı ile
-            title: productTitle, // Lokalizasyonlu başlığı kullan
+            title: product.name || product.title,
             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
             orderNote,
             currency: isTR ? 'TRY' : 'EUR', // Currency bilgisini ekle
@@ -340,7 +346,7 @@ const ProductDetails = () => {
                     'currency': isTR ? 'TRY' : 'EUR',
                     'items': [{
                         'id': product.id,
-                        'name': productTitle, // Lokalizasyonlu başlığı kullan
+                        'name': cartItem.title,
                         'quantity': quantity
                     }]
                 });
@@ -392,7 +398,7 @@ const ProductDetails = () => {
         const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
         const totalDiscountedPrice = displayDiscountedPrice * quantity;
 
-        const orderSummary = `\u2022 ${productTitle} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+        const orderSummary = `\u2022 ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
 
         // Emojileri String.fromCodePoint ile kullan
         const message = `${EMOJI.bag} Yeni Siparis:\n\n` +
@@ -408,7 +414,7 @@ const ProductDetails = () => {
     };
 
     const shareUrl = window.location.href;
-    const shareMessage = `${productTitle} - Check out this product!`;
+    const shareMessage = `${product.title} - Check out this product!`;
 
     const isAlreadyFavorited = isLoggedIn
         ? favorites.favoriteProducts?.some((fav) => fav.id === product.id)
@@ -419,8 +425,8 @@ const ProductDetails = () => {
     const closeModal = () => setIsModalOpen(false);
 
     // Split the description into lines for the accordion
-    const descriptionLines = productDescription
-        ? productDescription.split("\n").filter((line) => line.trim() !== "")
+    const descriptionLines = product.description
+        ? product.description.split("\n").filter((line) => line.trim() !== "")
         : [];
 
     return (
@@ -473,7 +479,7 @@ const ProductDetails = () => {
                                         ${getPrefixedImage(selectedImage, 'large')} 1200w
                                     `}
                                     sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                    alt={productTitle || 'Ürün görseli'}
+                                    alt={product.title || 'Ürün görseli'}
                                     onClick={openModal}
                                     sx={{
                                         width: '100%',
@@ -506,7 +512,7 @@ const ProductDetails = () => {
                                             key={index}
                                             component="img"
                                             src={getPrefixedImage(photo.photo, 'small')}
-                                            alt={`${productTitle || 'Ürün'} küçük görsel ${index + 1}`}
+                                            alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
                                             onClick={() => setSelectedImage(photo.photo)}
                                             sx={{
                                                 width: { xs: 60, sm: 80, md: 100 },
@@ -545,7 +551,7 @@ const ProductDetails = () => {
                                     color: '#2c2c2c'
                                 }}
                             >
-                                {productTitle}
+                                {product.title}
                             </Typography>
 
                             {/* Price Section */}
@@ -780,7 +786,7 @@ const ProductDetails = () => {
                                             color: '#2c2c2c'
                                         }}
                                     >
-                                        Ürün Açıklaması
+                                        {t('Product Description')}
                                     </Typography>
                                     <AccordionDetails sx={{ px: 0 }}>
                                         {descriptionLines.map((line, index) => (
@@ -880,7 +886,7 @@ const ProductDetails = () => {
                                             variant="contained"
                                             size="small"
                                             sx={{ mt: 1 }}
-                                            onClick={() => window.open(`/products/detail/${sp.id}/${sp.title}`, "_blank")}
+                                            onClick={() => window.open(`/${i18n.language}/products/detail/${sp.id}/${sp.title}`, "_blank")}
                                         >
                                             {t("View")}
                                         </Button>

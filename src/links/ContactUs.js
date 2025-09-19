@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Container, Typography, Box, TextField, Button } from '@mui/material';
 import Header from "../header/Header";
 import SEO from '../shared/SEO';
+import { useTranslation } from 'react-i18next';
 
 const ContactUs = () => {
+    const { t, i18n } = useTranslation();
     // Form verisi
     const [formData, setFormData] = useState({
         name: '',
@@ -21,34 +23,33 @@ const ContactUs = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // Burada form verisini sunucuya veya e-posta servisine göndermek için gerekli işlemleri yapabilirsiniz.
         try {
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
                 },
                 body: JSON.stringify(formData),
             });
 
             if (response.ok) {
                 console.log("Email sent successfully!");
-                // Başarılı gönderim için mesaj göstermek vs.
             } else {
                 console.error("Failed to send email.");
-                // Başarısız gönderim için hata göstermek vs.
             }
         } catch (error) {
             console.error("There was an error sending the email: ", error);
-            // Hata mesajı göstermek vs.
         }
     };
+
+    const currentYear = new Date().getFullYear();
 
     return (
         <div>
             <SEO
-                title="İletişim | Kina Sepeti"
-                description="Kına Sepeti ile iletişime geçin. Adres, telefon ve mesaj formu üzerinden bize ulaşın."
+                title={`${t('contact_us.title')} | Kina Sepeti`}
+                description={t('contact_us.description')}
                 type="website"
                 structuredData={{
                   '@context': 'https://schema.org',
@@ -75,12 +76,12 @@ const ContactUs = () => {
                     alignItems: 'center',
                 }}>
                     <Typography variant="h4" component="h1" gutterBottom>
-                        Bize Ulaşın
+                        {t('contact_us.title')}
                     </Typography>
                     <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '500px' }}>
                         <TextField
                             name="name"
-                            label="İsim"
+                            label={t('Name')}
                             variant="outlined"
                             fullWidth
                             margin="normal"
@@ -90,7 +91,7 @@ const ContactUs = () => {
                         />
                         <TextField
                             name="email"
-                            label="E-posta"
+                            label={t('Email')}
                             type="email"
                             variant="outlined"
                             fullWidth
@@ -101,7 +102,7 @@ const ContactUs = () => {
                         />
                         <TextField
                             name="message"
-                            label="Mesajınız"
+                            label={t('Your Message')}
                             variant="outlined"
                             fullWidth
                             margin="normal"
@@ -113,7 +114,7 @@ const ContactUs = () => {
                         />
                         <Box textAlign='center' marginTop="20px">
                             <Button type="submit" variant="contained" color="primary">
-                                Gönder
+                                {t('Send')}
                             </Button>
                         </Box>
                     </form>
@@ -121,10 +122,10 @@ const ContactUs = () => {
                     {/* Adres Bilgisi ve Google Haritalar iframe */}
                     <Box sx={{ marginTop: '40px', textAlign: 'center' }}>
                         <Typography variant="h6" component="h2" gutterBottom>
-                            KNC Kına Organizasyon
+                            {t('company_name')}
                         </Typography>
                         <Typography variant="body1"  gutterBottom>
-                            Tel :  +90 534 829 08 66
+                            {t('Phone')}:  +90 534 829 08 66
                         </Typography>
                         <Typography variant="body1" gutterBottom>
                             Yukarı Pazarcı Mah. 4005 sok. Fettah Kaya İş Merkezi No. 5/Z01
@@ -136,13 +137,13 @@ const ContactUs = () => {
                             src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d230.72800106050315!2d31.448723186392876!3d36.78840467823479!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2see!4v1741204055421!5m2!1sen!2see"
                             allowFullScreen=""
                             loading="lazy"
-                            title="Firma Konumu"
+                            title={t('Company Location')}
                         />
                     </Box>
 
                     <Box sx={{ marginTop: '40px', fontSize: '0.8rem', opacity: 0.8 }}>
                         <Typography variant="body2">
-                            © 2025 Kına Sepeti. Tüm hakları saklıdır.
+                            © {currentYear} Kina Sepeti. {t('All rights reserved.')}
                         </Typography>
                     </Box>
                 </Box>

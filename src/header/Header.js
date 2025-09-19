@@ -170,6 +170,11 @@ export default function Header() {
     setOpenLoginDialog(false);
   };
 
+  // Sync selected flag when i18n language changes (e.g., via URL redirect)
+  useEffect(() => {
+    setSelectedLanguage(i18n.language);
+  }, [i18n.language]);
+
   return (
       <>
         <Helmet>
@@ -390,6 +395,45 @@ export default function Header() {
                     />
                   </IconButton>
                 </Tooltip>
+            )}
+
+            {/* Desktop Language Menu */}
+            {(!isMobile && !isTablet) && (
+              <Menu
+                anchorEl={languageAnchorEl}
+                open={Boolean(languageAnchorEl)}
+                onClose={handleLanguageMenuClose}
+                PaperProps={{
+                  sx: {
+                    border: '1px solid #8B0000',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    borderRadius: '8px',
+                    bgcolor: 'white',
+                    '& .MuiMenuItem-root': {
+                      color: 'black',
+                      fontFamily: "'Lora', serif !important",
+                      padding: '8px 16px',
+                      '&:hover': {
+                        bgcolor: '#f5f5f5',
+                        color: '#8B0000',
+                      },
+                    },
+                  },
+                }}
+              >
+                <MenuItem onClick={() => changeLanguage('en')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src="https://flagcdn.com/24x18/gb.png" alt="English" style={{ width: '24px', height: '24px' }} />
+                    <Typography>English</Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem onClick={() => changeLanguage('tr')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src="https://flagcdn.com/24x18/tr.png" alt="Türkçe" style={{ width: '24px', height: '24px' }} />
+                    <Typography>Türkçe</Typography>
+                  </Box>
+                </MenuItem>
+              </Menu>
             )}
 
             {/* Cart Icon with Count */}

@@ -25,6 +25,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useTranslation } from "react-i18next";
 import Footer from "../Footer";
+import i18n from "i18next";
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -163,11 +164,16 @@ const ProductList = () => {
 
     const fetchInitialActivities = async () => {
         try {
+            // Sadece header ile dil gönderiyoruz
             let fetchUrl = type === undefined
                 ? `${baseURL}/products/all?page=0&size=20`
                 : `${baseURL}/products/${type}?page=0&size=20`;
 
-            const response = await Axios.get(fetchUrl);
+            const response = await Axios.get(fetchUrl, {
+                headers: {
+                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
+                }
+            });
             const fetchedActivities = response.data.content;
             setActivities(fetchedActivities);
             setHasMore(response.data.totalPages > 1);
@@ -193,7 +199,7 @@ const ProductList = () => {
         };
 
         fetchActivities();
-    }, [type, guestToken]);
+    }, [type, guestToken, i18n.language]);
 
     useEffect(() => {
         const saveScrollPosition = () => {
@@ -208,25 +214,34 @@ const ProductList = () => {
         };
     }, []);
 
-    // Sync local favorites to server on login
+    // Sync local favorites to server on login - Promise.all ile düzgün async handling
     useEffect(() => {
-        if (isLoggedIn && token) {
-            const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-            localFavorites.forEach(async (favorite) => {
-                if (favorite && favorite.id && !favorites.favoriteProducts?.some(product => product.id === favorite.id)) {
-                    try {
-                        await toggleFavorite(favorite.id, false, "product");
-                    } catch (error) {
-                        console.error("Error syncing favorite:", error);
-                        setSnackbarMessage(t('Error syncing favorites'));
-                        setSnackbarSeverity("error");
-                        setSnackbarOpen(true);
-                    }
+        const syncFavorites = async () => {
+            if (isLoggedIn && token) {
+                const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+                const syncPromises = localFavorites
+                    .filter(favorite => favorite && favorite.id && !favorites.favoriteProducts?.some(product => product.id === favorite.id))
+                    .map(async (favorite) => {
+                        try {
+                            await toggleFavorite(favorite.id, false, "product");
+                        } catch (error) {
+                            console.error("Error syncing favorite:", error);
+                            setSnackbarMessage(t('Error syncing favorites'));
+                            setSnackbarSeverity("error");
+                            setSnackbarOpen(true);
+                        }
+                    });
+
+                await Promise.all(syncPromises);
+
+                if (localFavorites.length > 0) {
+                    localStorage.removeItem('favorites');
                 }
-            });
-            // Clear local favorites after syncing
-            localStorage.removeItem('favorites');
-        }
+            }
+        };
+
+        syncFavorites();
     }, [isLoggedIn, token, favorites, toggleFavorite, t]);
 
     const handleCloseFilterDialog = () => {
@@ -236,11 +251,16 @@ const ProductList = () => {
     const loadMoreActivities = async () => {
         try {
             let nextPage = page + 1;
+            // Sadece header ile dil gönderiyoruz
             let fetchUrl = type === undefined
                 ? `${baseURL}/products/all?page=${nextPage}&size=20`
                 : `${baseURL}/products/${type}?page=${nextPage}&size=20`;
 
-            const response = await Axios.get(fetchUrl);
+            const response = await Axios.get(fetchUrl, {
+                headers: {
+                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
+                }
+            });
             setActivities(prevActivities => [...prevActivities, ...response.data.content]);
             setHasMore(response.data.totalPages > nextPage + 1);
             setPage(nextPage);
@@ -272,17 +292,6 @@ const ProductList = () => {
             <Header />
 
             <Container sx={{ py: 9 }} maxWidth="xl">
-                {/*<Typography variant="h2" component="div" style={{ fontSize: '2rem', marginBottom: '20px' }}>
-                    {type || t('All Products')} {Object.keys(filters).length > 0 ?
-                    Object.entries(filters).map(([_, filterValue]) => {
-                        if (typeof filterValue === 'object' && filterValue !== null) {
-                            return filterValue.name;
-                        } else {
-                            return filterValue;
-                        }
-                    }).join(', ') : ''}
-                </Typography>*/}
-
                 <Stack direction="row" spacing={1} justifyContent="flex-end" padding="5px">
                     {Object.entries(filters).map(([filterType, filterValue]) => (
                         <Chip
@@ -313,10 +322,6 @@ const ProductList = () => {
                         const mediumImageUrl = getPrefixedImage(originalImageUrl, 'medium');
                         const largeImageUrl = getPrefixedImage(originalImageUrl, 'large');
 
-                        // Backend'den gelen lokalizasyonlu alanları kullan
-                        const productTitle = item.productName || item.title || item.name || 'Unknown';
-                        const productShortDesc = item.shortDescription;
-
                         return (
                             <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                                 <Card sx={{
@@ -325,7 +330,7 @@ const ProductList = () => {
                                     flexDirection: 'column',
                                     position: 'relative'
                                 }}>
-                                    <a href={`/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
+                                    <a href={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
                                        style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
@@ -336,7 +341,7 @@ const ProductList = () => {
                                                 ${largeImageUrl} 1200w
                                             `}
                                             sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                            alt={productTitle || 'Product'}
+                                            alt={item.title || 'Product'}
                                             sx={{
                                                 width: '100%',
                                                 height: { xs: 140, md: 200 },
@@ -354,7 +359,7 @@ const ProductList = () => {
                                                     whiteSpace: 'nowrap',
                                                 }}
                                             >
-                                                {productTitle}
+                                                {item.title || 'Unknown'}
                                             </Typography>
                                             <Typography
                                                 sx={{
@@ -368,7 +373,7 @@ const ProductList = () => {
                                                     WebkitBoxOrient: 'vertical',
                                                 }}
                                             >
-                                                {productShortDesc || t('No description available.')}
+                                                {item.short_description || t('No description available.')}
                                             </Typography>
                                             {/* Pricing & Discount Section */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -481,4 +486,3 @@ const ProductList = () => {
 };
 
 export default ProductList;
-

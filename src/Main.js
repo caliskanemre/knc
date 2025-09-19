@@ -20,41 +20,33 @@ import HeroSection from './shared/HeroSection';
 import { useTranslation } from "react-i18next";
 import Footer from "./Footer";
 import SEO from './shared/SEO';
+import i18n from './i18n';
 
 const theme = createTheme({
     typography: {
-        // Ana gövde fontu olarak Montserrat'ı belirliyoruz.
         fontFamily: '"Montserrat", "Helvetica", "Arial", sans-serif',
-
-        // Ürün başlığı gibi alanlar için özel stil
-        // Not: Bu varyantları doğrudan Typography component'inde kullanabilirsiniz.
-        // Örnek: <Typography variant="h6">
         h6: {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
-            fontSize: '1.25rem', // Boyutu isteğe göre ayarlayabilirsiniz
+            fontSize: '1.25rem',
         },
-        // Ürün başlıkları için bu şekilde de kullanabilirsiniz
         productTitle: {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
             fontSize: '1.25rem',
         }
     },
-    // Sitenizin ana renklerini de buradan yönetebilirsiniz.
     palette: {
         primary: {
-            main: '#C84B31', // Örnek bir kına kırmızısı tonu
+            main: '#C84B31',
         },
         secondary: {
-            main: '#ECDCCB', // Örnek bir bej/krem tonu
+            main: '#ECDCCB',
         },
     },
 });
+
 const PAGE_SIZE = 20;
-
-// Helper function to get a prefixed image URL (e.g., "small_", "medium_", "large_")
-
 
 // Generate UUID for guest token
 const generateUUID = () => {
@@ -62,10 +54,12 @@ const generateUUID = () => {
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 };
+
 const getPrefixedImage = (url, prefix) => {
     if (!url) return url;
     return url.replace(/([^/]+)$/, `${prefix}_$1`);
 };
+
 export default function Main() {
     const [products, setProducts] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -93,13 +87,19 @@ export default function Main() {
                 params: {
                     page: pageNum,
                     size: PAGE_SIZE,
-                    // sort parametresini kaldırdık çünkü backend otomatik popularity sıralaması yapıyor
                 },
+                headers: {
+                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
+                }
             });
 
             const { content, totalPages } = response.data || {};
             if (content) {
-                setProducts((prev) => [...prev, ...content]);
+                if (pageNum === 0) {
+                    setProducts(content);
+                } else {
+                    setProducts((prev) => [...prev, ...content]);
+                }
                 setHasMore(pageNum + 1 < totalPages);
             }
         } catch (error) {
@@ -111,8 +111,11 @@ export default function Main() {
     };
 
     useEffect(() => {
-        fetchProducts(0); // Initial fetch
-    }, []);
+        setProducts([]);
+        setPage(0);
+        setHasMore(true);
+        fetchProducts(0);
+    }, [i18n.language]);
 
     // Infinite scroll effect
     useEffect(() => {
@@ -130,10 +133,8 @@ export default function Main() {
     }, [loading, hasMore, page]);
 
     useEffect(() => {
-        // Store guest token
         localStorage.setItem('guestToken', guestToken);
 
-        // Sync local favorites to server on login
         if (isLoggedIn && token) {
             const localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
             localFavorites.forEach(async (favorite) => {
@@ -160,7 +161,6 @@ export default function Main() {
             return;
         }
 
-        // Find the product to get its details
         const product = products.find(p => p.id === productId);
         if (!product) {
             setSnackbarMessage(t('Cannot add to favorites: Product not found'));
@@ -170,7 +170,6 @@ export default function Main() {
         }
 
         if (isLoggedIn && token) {
-            // Logged-in user: Use toggleFavorite
             const isAlreadyFavorited = favorites.favoriteProducts?.some(p => p.id === productId);
             try {
                 await toggleFavorite(productId, isAlreadyFavorited, 'product');
@@ -184,12 +183,10 @@ export default function Main() {
                 setSnackbarOpen(true);
             }
         } else {
-            // Guest user: Update localStorage and sync with backend
             let localFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
             const isAlreadyFavorited = localFavorites.some(fav => fav.id === productId);
 
             if (isAlreadyFavorited) {
-                // Remove from favorites
                 localFavorites = localFavorites.filter(fav => fav.id !== productId);
                 try {
                     await axios.delete(`${baseURL}/users/guest/favorites/${productId}`, {
@@ -206,10 +203,9 @@ export default function Main() {
                     setSnackbarOpen(true);
                 }
             } else {
-                // Add to favorites
                 const favoriteItem = {
                     id: product.id,
-                    title: product.title || product.name || 'Unknown',
+                    title: product.productName || product.title || product.name || 'Unknown',
                     price: product.price || 0,
                     photos: product.photos || [],
                     date: product.date || '',
@@ -266,7 +262,6 @@ export default function Main() {
                                 ? favorites.favoriteProducts?.some(product => product.id === item.id)
                                 : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
 
-                            // Backend'den gelen lokalizasyonlu alanları kullan
                             const productTitle = item.productName || item.title || item.name || 'Unknown';
                             const productShortDesc = item.shortDescription;
 
@@ -285,7 +280,7 @@ export default function Main() {
                                         }}
                                     >
                                         <a
-                                            href={`/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
+                                            href={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                         >
                                             <CardMedia
@@ -301,7 +296,6 @@ export default function Main() {
                                             />
                                         </a>
                                         <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            {/* Başlık */}
                                             <Typography
                                                 sx={{
                                                     fontFamily: 'Montserrat, sans-serif',
@@ -318,7 +312,6 @@ export default function Main() {
                                             >
                                                 {productTitle}
                                             </Typography>
-                                            {/* Short description */}
                                             {productShortDesc && (
                                                 <Typography
                                                     sx={{
@@ -338,7 +331,6 @@ export default function Main() {
                                                     {productShortDesc}
                                                 </Typography>
                                             )}
-                                            {/* Fiyat Bilgisi */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
                                                 <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                                                     {formatPrice(discountedPriceNum, isTR)}
@@ -348,7 +340,6 @@ export default function Main() {
                                                 </Typography>
                                             </Box>
                                         </Box>
-                                        {/* Favori butonu */}
                                         <IconButton
                                             aria-label="add to favorites"
                                             onClick={() => handleFavoriteClick(item.id)}
@@ -370,26 +361,20 @@ export default function Main() {
                             );
                         })}
                     </Grid>
-
-                    {/* {hasMore && (
-                        <Button onClick={handleLoadMore} variant="contained" sx={{ marginTop: '20px' }}>
-                            {t('Load More')}
-                        </Button>
-                    )} */}
                 </Container>
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </main>
-      <Footer /> {/* Footer bileşenini ekle */}
-    </ThemeProvider>
-  );
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={4000}
+                    onClose={handleSnackbarClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
+            </main>
+            <Footer />
+        </ThemeProvider>
+    );
 }

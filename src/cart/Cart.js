@@ -96,7 +96,7 @@ const Cart = () => {
                     if (decodedToken?.sub && decodedToken.sub.includes('@')) {
                         setEmail(decodedToken.sub);
                         await syncLocalCartToServer(decodedToken.sub);
-                        // Email state'i güncellenmeden ������������nce fetch erken dönmesin diye email'i parametre olarak geçir
+                        // Email state'i güncellenmeden önce fetch erken dönmesin diye email'i parametre olarak geçir
                         await fetchCartItems(decodedToken.sub);
                     }
                 } catch (error) {
@@ -113,10 +113,28 @@ const Cart = () => {
         initializeCart();
     }, [authCart, isLoggedIn]); // AuthProvider cart'ını dinle
 
+    useEffect(() => {
+        // Dil değişince sepet öğelerini yeniden yükle (başlıklar vb. lokalizasyon için)
+        const token = localStorage.getItem('token');
+        if (isLoggedIn && token) {
+            try {
+                const decoded = jwtDecode(token);
+                if (decoded?.sub) {
+                    fetchCartItems(decoded.sub);
+                }
+            } catch (_) {
+                // ignore decode errors
+            }
+        } else {
+            fetchGuestCart();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [i18n.language, isLoggedIn]);
+
     const fetchGuestCart = async () => {
         try {
             const response = await axios.get(`${baseURL}/cart/guest`, {
-                headers: { 'X-Guest-Token': guestToken },
+                headers: { 'X-Guest-Token': guestToken, 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' },
             });
             const serverCart = response.data || [];
             const normalizedServerCart = serverCart.map(item => ({
@@ -225,7 +243,7 @@ const Cart = () => {
 
         try {
             const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(effectiveEmail)}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' },
             });
             const items = (response.data ?? []).map(item => ({
                 ...item,
@@ -426,6 +444,41 @@ const Cart = () => {
         calendar: String.fromCodePoint(0x1F4C5)
     };
 
+    // Ürün başlığını geçerli dile göre seçer; birden çok muhtemel alanı dener ve fallback uygular
+    const getItemTitle = (item) => {
+        const lang = (i18n?.language || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+
+        // İç içe translations yapısı varsa önce onu dene
+        if (item?.translations) {
+            const trans = item.translations[lang] || item.translations[lang.toUpperCase()] || item.translations[lang === 'en' ? 'En' : 'Tr'];
+            if (trans) {
+                const nestedTitle = trans.title || trans.name || trans.productTitle;
+                if (nestedTitle && typeof nestedTitle === 'string' && nestedTitle.trim()) return nestedTitle.trim();
+            }
+        }
+
+        const bases = ['title', 'name', 'productTitle'];
+        const variantsFor = (base) => [
+            base,
+            `${base}_${lang}`,          // title_en
+            `${base}${lang.toUpperCase()}`, // titleEN
+            `${base}${lang === 'en' ? 'En' : 'Tr'}`, // titleEn/titleTr
+            `${lang}_${base}`,          // en_title
+            `${lang}${base.charAt(0).toUpperCase()}${base.slice(1)}`, // enTitle
+            `${base}${lang === 'en' ? 'English' : 'Turkish'}`, // titleEnglish/titleTurkish
+        ];
+
+        for (const base of bases) {
+            for (const key of variantsFor(base)) {
+                const val = item?.[key];
+                if (val && typeof val === 'string' && val.trim()) return val.trim();
+            }
+        }
+
+        // Son çare, düz title'a dön
+        return (typeof item?.title === 'string' ? item.title : '') || '';
+    };
+
     const handleWhatsAppOrder = () => {
         if (cartItems.length === 0) {
             showToast(t('Cart is empty'), 'warning');
@@ -446,7 +499,7 @@ const Cart = () => {
             const totalPrice = unitPrice * item.quantity;
             const discountedPrice = totalPrice * (1 - discountRate / 100);
 
-            return `\u2022 ${item.title} - ${item.quantity} adet - ${formatPrice(discountedPrice, isTR)}${item.orderNote ? ` (Not: ${item.orderNote})` : ''}`;
+            return `\u2022 ${getItemTitle(item)} - ${item.quantity} adet - ${formatPrice(discountedPrice, isTR)}${item.orderNote ? ` (Not: ${item.orderNote})` : ''}`;
         }).join('\n');
 
         // Toplam fiyat hesapla
@@ -512,9 +565,6 @@ const Cart = () => {
                                     }
                                     const totalPrice = unitPrice * item.quantity;
 
-                                    // Backend'den gelen lokalizasyonlu alanları kullan
-                                    const productTitle = item.productName || item.title;
-
                                     const originalImageUrl = item.image || 'https://via.placeholder.com/100x100?text=No+Image';
                                     const smallImageUrl = originalImageUrl.replace(/([^/]+)$/, 'small_$1');
                                     const mediumImageUrl = originalImageUrl.replace(/([^/]+)$/, 'medium_$1');
@@ -535,7 +585,7 @@ const Cart = () => {
                                             }}
                                         >
                                             <CardContent sx={{ p: 3 }}>
-                                                <a href={`/products/detail/${id}/${encodeURIComponent(productTitle || '')}`}>
+                                                <a href={`/${i18n.language}/products/detail/${id}/${encodeURIComponent(getItemTitle(item) || '')}`}>
                                                     <CardMedia
                                                         component="img"
                                                         image={smallImageUrl}
@@ -545,7 +595,7 @@ const Cart = () => {
                                                             ${largeImageUrl} 300w
                                                         `}
                                                         sizes="(max-width: 600px) 100px, 300px"
-                                                        alt={productTitle || t("Product Image")}
+                                                        alt={getItemTitle(item) || t("Product Image")}
                                                         sx={{
                                                             width: '100px',
                                                             height: '100px',
@@ -564,7 +614,7 @@ const Cart = () => {
                                                             mb: 1
                                                         }}
                                                     >
-                                                        {productTitle}
+                                                        {getItemTitle(item)}
                                                     </Typography>
                                                 </a>
                                                 <Typography
