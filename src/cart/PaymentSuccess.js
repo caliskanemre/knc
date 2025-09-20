@@ -16,68 +16,99 @@ const PaymentSuccess = () => {
 
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState('pending');
-  const [orderId, setOrderId] = useState(null);
-  const [timeoutReached, setTimeoutReached] = useState(false);
 
+  // YENİ: Sipariş detaylarını ve etiket gönderim durumunu tutmak için state'ler
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [conversionSent, setConversionSent] = useState(false); // Etiketin tekrar tekrar gönderilmesini engeller
+
+  // DEĞİŞTİ: Artık sadece orderId değil, tüm sipariş detaylarını bekliyoruz.
   useEffect(() => {
-    fetchLatestOrderId();
-  }, []);
-
-  useEffect(() => {
-    if (orderId) {
-      const interval = setInterval(() => {
-        checkPaymentStatus(orderId);
-      }, 3000);
-
-      const timeout = setTimeout(() => {
-        setTimeoutReached(true);
-        clearInterval(interval);
-        setLoading(false);
-      }, 30000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [orderId]);
-
-  const fetchLatestOrderId = async () => {
-    try {
-      const response = await axios.get(`${baseURL}/api/payment/latest-order`);
-      if (response.data.orderId) {
-        setOrderId(response.data.orderId);
-      } else {
+    const fetchLatestOrderDetails = async () => {
+      try {
+        const response = await axios.get(`${baseURL}/api/payment/latest-order`);
+        if (response.data && response.data.orderId) {
+          setOrderDetails(response.data); // Gelen tüm veriyi state'e ata
+        } else {
+          setPaymentStatus('failed');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching order details:', error);
         setPaymentStatus('failed');
         setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching order ID:', error);
-      setPaymentStatus('failed');
-      setLoading(false);
+    };
+    fetchLatestOrderDetails();
+  }, []); // Sadece ilk render'da çalışır
+
+  // DEĞİŞTİ: Ödeme durumu kontrolü ve dönüşüm etiketini tetikleme
+  useEffect(() => {
+    // Sadece sipariş detayları geldiyse devam et
+    if (!orderDetails) {
+      return;
     }
-  };
+
+    const interval = setInterval(() => {
+      checkPaymentStatus(orderDetails.orderId);
+    }, 3000);
+
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      if (paymentStatus !== 'completed') {
+        setPaymentStatus('failed'); // Timeout'a girerse başarısız say
+      }
+      clearInterval(interval);
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [orderDetails]); // orderDetails geldiğinde bu useEffect'i başlat
+
+  // YENİ: Ödeme durumu "completed" olduğunda dönüşüm etiketini GÖNDER!
+  useEffect(() => {
+    // Durum "completed" ise VE etiket daha önce gönderilmediyse VE sipariş detayları varsa
+    if (paymentStatus === 'completed' && !conversionSent && orderDetails) {
+
+      console.log('Payment completed. Sending conversion tag to Google Ads...');
+
+      // Google Ads'e dönüşüm olayını gönder
+      if (typeof window.gtag === 'function') {
+        try {
+          window.gtag('event', 'conversion', {
+            // ÖNEMLİ: Bu ID'yi Google Ads'ten aldığınız yeni etiket ID'si ile değiştirin
+            'send_to': 'AW-16834301094',
+            'value': orderDetails.totalValue,
+            'currency': orderDetails.currency,
+            'transaction_id': orderDetails.orderId
+          });
+
+          // Etiketin gönderildiğini işaretle
+          setConversionSent(true);
+          console.log('Conversion tag sent successfully:', orderDetails);
+
+        } catch (error) {
+          console.error('Failed to send conversion tag:', error);
+        }
+      }
+
+      // 5 saniye sonra ana sayfaya yönlendir
+      setTimeout(() => {
+        navigate('/');
+      }, 5000);
+    }
+  }, [paymentStatus, orderDetails, conversionSent]); // Bu değişkenler değiştiğinde çalışır
 
   const checkPaymentStatus = async (orderId) => {
     try {
       const response = await axios.get(`${baseURL}/api/payment/status`, {
         params: { orderId },
       });
-
       const status = response.data.status;
-      console.log('Payment status:', status); // Debug log
       setPaymentStatus(status);
-
-      if (status === 'completed') {
+      if (status === 'completed' || status === 'failed') {
         setLoading(false);
-        console.log('Confetti should show now'); // Debug log
-        setTimeout(() => {
-          navigate('/');
-        }, 5000);
-      } else if (status === 'failed') {
-        setLoading(false);
-      } else {
-        console.log(`Payment status is "${status}", will keep checking...`);
       }
     } catch (error) {
       console.error('Error checking payment status:', error);
@@ -86,7 +117,6 @@ const PaymentSuccess = () => {
     }
   };
 
-  console.log('Window size:', { width, height }); // Debug log
 
   return (
     <div style={{ textAlign: 'center', padding: '20px', position: 'relative' }}>
