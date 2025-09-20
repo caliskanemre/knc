@@ -338,22 +338,40 @@ const ProductDetails = () => {
                 });
             }
 
-            // Google Ads conversion tracking - UI para birimine göre
-            if (window.gtag) {
-                window.gtag('event', 'add_to_cart', {
-                    'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                    'value': parseFloat(displayPrice * quantity),
-                    'currency': isTR ? 'TRY' : 'EUR',
-                    'items': [{
-                        'id': product.id,
-                        'name': cartItem.title,
-                        'quantity': quantity
-                    }]
-                });
-                console.log("Google Ads 'add_to_cart' gönderildi:", {
+            // Google Ads conversion + GA4 add_to_cart
+            if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+                const currencyCode = isTR ? 'TRY' : 'EUR';
+                const unitPriceUI = Number(displayOriginalPrice) || 0; // indirim uygulanmaz
+                const totalValueUI = unitPriceUI * quantity;
+
+                try {
+                    // Google Ads Conversion (doğru event adı ve send_to)
+                    window.gtag('event', 'conversion', {
+                        send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
+                        value: totalValueUI,
+                        currency: currencyCode,
+                        event_callback: () => { /* no-op */ }
+                    });
+                } catch (_) { /* ignore */ }
+
+                try {
+                    // GA4 add_to_cart (analitik amaçlı)
+                    window.gtag('event', 'add_to_cart', {
+                        currency: currencyCode,
+                        value: totalValueUI,
+                        items: [{
+                            item_id: String(product.id),
+                            item_name: cartItem.title || 'Product',
+                            quantity: quantity,
+                            price: unitPriceUI
+                        }]
+                    });
+                } catch (_) { /* ignore */ }
+
+                console.log("Conversion & GA4 add_to_cart gönderildi:", {
                     id: product.id,
-                    price: displayPrice * quantity,
-                    currency: isTR ? 'TRY' : 'EUR'
+                    value: totalValueUI,
+                    currency: currencyCode
                 });
             }
 

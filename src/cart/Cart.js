@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     Box,
     Button,
@@ -30,7 +30,6 @@ const Cart = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [email, setEmail] = useState('');
     const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
-    const [previousCartItems, setPreviousCartItems] = useState([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -69,6 +68,89 @@ const Cart = () => {
         );
     }
 
+    // Eklenen miktarları sağlam tespit etmek için önceki miktarları tutan ref'ler
+    const hasInitializedRef = useRef(false);
+    const prevQuantitiesRef = useRef(new Map()); // id -> quantity
+    const skipDiffOnceRef = useRef(false); // İlk yükleme ve fetch senaryolarında conversion'ı atla
+
+    useEffect(() => {
+        // cartItems ilk kez yüklendiğinde snapshot al ve çık
+        const buildMap = (items) => new Map(items.map(it => [it.productId || it.id, it.quantity]));
+
+        // Eğer bir sonraki değişimi atlamamız gerekiyorsa baseline'ı güncelle ve çık
+        if (skipDiffOnceRef.current) {
+            prevQuantitiesRef.current = buildMap(cartItems);
+            skipDiffOnceRef.current = false;
+            return;
+        }
+
+        if (!hasInitializedRef.current) {
+            prevQuantitiesRef.current = buildMap(cartItems);
+            hasInitializedRef.current = true;
+            return;
+        }
+
+        if (!Array.isArray(cartItems) || cartItems.length === 0) {
+            prevQuantitiesRef.current = new Map();
+            return;
+        }
+
+        const prevMap = prevQuantitiesRef.current;
+        const additions = [];
+        for (const item of cartItems) {
+            const id = item.productId || item.id;
+            if (id == null) continue;
+            const prevQ = Number(prevMap.get(id) || 0);
+            const delta = Number(item.quantity || 0) - prevQ;
+            if (delta > 0) additions.push({ item, delta });
+        }
+
+        // Snapshot'ı yeni duruma güncelle
+        prevQuantitiesRef.current = buildMap(cartItems);
+
+        if (additions.length === 0) return; // ekleme yoksa çık
+
+        // Her ekleme için hem Google Ads dönüşümü, hem GA4 add_to_cart olayı gönder
+        for (const { item, delta } of additions) {
+            const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : 'EUR');
+            const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
+            const safeQuantity = Math.max(1, Number(delta) || 1);
+
+            // Birim fiyatı doğru para birimine göre al
+            const unitPrice = isTR
+                ? ((item.tl_price ?? item.price) / Math.max(1, Number(item.quantity) || 1)) || 0
+                : ((item.eur_price ?? item.price) / Math.max(1, Number(item.quantity) || 1)) || 0;
+
+            const value = unitPrice * safeQuantity; // reklam dönüşüm değeri için indirim uygulamıyoruz
+
+            if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+                try {
+                    // Google Ads conversion (send_to label sabitiniz)
+                    window.gtag('event', 'conversion', {
+                        send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
+                        value: value,
+                        currency: isTR ? 'TRY' : 'EUR',
+                        event_callback: () => { /* no-op */ }
+                    });
+                } catch (_) { /* ignore */ }
+
+                try {
+                    // GA4 add_to_cart (raporlama için faydalı)
+                    window.gtag('event', 'add_to_cart', {
+                        currency: isTR ? 'TRY' : 'EUR',
+                        value: value,
+                        items: [{
+                            item_id: String(item.productId || item.id || ''),
+                            item_name: getItemTitle(item) || 'Product',
+                            quantity: safeQuantity,
+                            price: unitPrice
+                        }]
+                    });
+                } catch (_) { /* ignore */ }
+            }
+        }
+    }, [cartItems]);
+
     useEffect(() => {
         // AuthProvider'dan gelen cart verilerini kullan
         if (isLoggedIn && authCart && authCart.length > 0) {
@@ -78,6 +160,7 @@ const Cart = () => {
                 currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
                 is_turkey_user: item.is_turkey_user ?? (i18n.language?.toLowerCase().startsWith('tr') || false)
             }));
+            skipDiffOnceRef.current = true; // başlangıç verisi, conversion tetikleme
             setCartItems(normalizedAuthCart);
             calculateTotalPrice(normalizedAuthCart);
             return; // AuthProvider'da veri varsa kendi fetch'i yapma
@@ -137,7 +220,7 @@ const Cart = () => {
     const fetchGuestCart = async () => {
         try {
             const response = await axios.get(`${baseURL}/cart/guest`, {
-                headers: { 'X-Guest-Token': guestToken, 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' },
+                headers: { 'X-Guest-Token': guestToken, 'Accept-Language': (i18n.language || '').toLowerCase().startsWith('en') ? 'en' : 'tr' },
             });
             const serverCart = response.data || [];
             const normalizedServerCart = serverCart.map(item => ({
@@ -146,6 +229,7 @@ const Cart = () => {
                 // Currency bilgisini güvence altına al
                 currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
             }));
+            skipDiffOnceRef.current = true; // fetch sonrası baseline güncelle
             setCartItems(normalizedServerCart);
             calculateTotalPrice(normalizedServerCart);
             localStorage.setItem('cart', JSON.stringify(normalizedServerCart)); // Sync localStorage
@@ -158,6 +242,7 @@ const Cart = () => {
                 // Local cart'ta da currency bilgisini güvence altına al
                 currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
             }));
+            skipDiffOnceRef.current = true; // localden yükleme, baseline'a al
             setCartItems(normalizedCart);
             calculateTotalPrice(normalizedCart);
             if (localCart.length > 0) {
@@ -228,6 +313,7 @@ const Cart = () => {
                 ...item,
                 price: parseFloat(item.price) || 0,
             }));
+            skipDiffOnceRef.current = true; // sync sonrası tetikleme yapma
             setCartItems(normalizedCart);
             calculateTotalPrice(normalizedCart);
 
@@ -246,7 +332,7 @@ const Cart = () => {
 
         try {
             const response = await axios.get(`${baseURL}/cart/${encodeURIComponent(effectiveEmail)}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' },
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Accept-Language': (i18n.language || '').toLowerCase().startsWith('en') ? 'en' : 'tr' },
             });
             const items = (response.data ?? []).map(item => ({
                 ...item,
@@ -256,25 +342,9 @@ const Cart = () => {
                 // Eğer is_turkey_user da yoksa, browser dilinden tahmin et
                 is_turkey_user: item.is_turkey_user ?? (i18n.language?.toLowerCase().startsWith('tr') || false)
             }));
+            skipDiffOnceRef.current = true; // server fetch baseline
             setCartItems(items);
             calculateTotalPrice(items);
-
-            if (previousCartItems.length < items.length) {
-                const newItem = items.find(item => !previousCartItems.some(prev => (prev.productId || prev.id) === (item.productId || item.id)));
-                if (newItem && window.gtag) {
-                    const isTR = !!newItem.is_turkey_user;
-                    const currencyCode = isTR ? 'TRY' : 'EUR';
-                    window.gtag('event', 'conversion', {
-                        'send_to': 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-                        'value': newItem.price,
-                        'currency': currencyCode,
-                        'event_callback': () => {
-                            console.log('Add to Cart conversion tracked');
-                        }
-                    });
-                }
-            }
-            setPreviousCartItems(items);
         } catch (error) {
             console.error("Error fetching cart items:", error);
             setCartItems([]);
@@ -290,7 +360,7 @@ const Cart = () => {
             const currencyCode = item.currency ?? (item.is_turkey_user ? 'TRY' : (i18n.language?.toLowerCase().startsWith('tr') ? 'TRY' : 'EUR'));
             const isTR = currencyCode === 'TL' || currencyCode === 'TRY';
 
-            // Ür��nün birim fiyatını doğru para birimine göre belirle
+            // Ürünün birim fiyatını doğru para birimine göre belirle
             const unitPrice = isTR
                 ? (item.tl_price ?? item.price) / item.quantity
                 : (item.eur_price ?? item.price) / item.quantity;
@@ -314,7 +384,6 @@ const Cart = () => {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 setCartItems(updatedItems);
-                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 showToast(t("Item removed from cart"), "success");
             } catch (error) {
@@ -328,7 +397,6 @@ const Cart = () => {
                     headers: { 'X-Guest-Token': guestToken },
                 });
                 setCartItems(updatedItems);
-                setPreviousCartItems(updatedItems);
                 calculateTotalPrice(updatedItems);
                 localStorage.setItem('cart', JSON.stringify(updatedItems));
                 showToast(t("Item removed from cart"), "success");
@@ -419,7 +487,7 @@ const Cart = () => {
             const response = await axios.post(validateUrl, cartItems, { headers });
             console.log("Validation response:", response.data); // Debug log
             if (response.data.valid) {
-                const lang = i18n.language || 'tr';
+                const lang = routeLang;
                 console.log("Guest checkout - Navigating to:", `/${lang}/payment`, "with state:", { totalPrice, cartItems, email, guestToken, currency, eurToTry }); // Debug log
                 navigate(`/${lang}/payment`, { state: { totalPrice, cartItems, email, guestToken, currency, eurToTry } });
                 console.log("Guest checkout - Navigation called successfully"); // Debug log
@@ -461,25 +529,30 @@ const Cart = () => {
         }
 
         const bases = ['title', 'name', 'productTitle'];
-        const variantsFor = (base) => [
-            base,
-            `${base}_${lang}`,          // title_en
-            `${base}${lang.toUpperCase()}`, // titleEN
-            `${base}${lang === 'en' ? 'En' : 'Tr'}`, // titleEn/titleTr
-            `${lang}_${base}`,          // en_title
-            `${lang}${base.charAt(0).toUpperCase()}${base.slice(1)}`, // enTitle
-            `${base}${lang === 'en' ? 'English' : 'Turkish'}`, // titleEnglish/titleTurkish
-        ];
+        const variantsFor = (base) => {
+            // Önce dil-özgü varyantları dene, en sonda genel anahtar (base)
+            const vLang = [
+                `${base}_${lang}`,                 // title_en
+                `${base}${lang.toUpperCase()}`,    // titleEN
+                `${base}${lang === 'en' ? 'En' : 'Tr'}`, // titleEn/titleTr
+                `${lang}_${base}`,                 // en_title
+                `${lang}${base.charAt(0).toUpperCase()}${base.slice(1)}`, // enTitle
+                `${base}${lang === 'en' ? 'English' : 'Turkish'}`, // titleEnglish/titleTurkish
+            ];
+            return [...vLang, base];
+        };
 
         for (const base of bases) {
-            for (const key of variantsFor(base)) {
+            const candidates = variantsFor(base);
+            for (const key of candidates) {
                 const val = item?.[key];
                 if (val && typeof val === 'string' && val.trim()) return val.trim();
             }
         }
 
-        // Son çare, düz title'a dön
-        return (typeof item?.title === 'string' ? item.title : '') || '';
+        // Son çare, düz title'a dön (dil-özgü olmayan)
+        if (typeof item?.title === 'string' && item.title.trim()) return item.title.trim();
+        return '';
     };
 
     const handleWhatsAppOrder = () => {
@@ -588,7 +661,7 @@ const Cart = () => {
                                             }}
                                         >
                                             <CardContent sx={{ p: 3 }}>
-                                                <a href={`/${i18n.language}/products/detail/${id}/${encodeURIComponent(getItemTitle(item) || '')}`}>
+                                                <a href={`/${routeLang}/products/detail/${id}/${encodeURIComponent(getItemTitle(item) || '')}`}>
                                                     <CardMedia
                                                         component="img"
                                                         image={smallImageUrl}

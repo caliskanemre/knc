@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="tr">
   <head>
+      <script>
+        // Early redirect: If path has no /en or /tr prefix, redirect based on browser language
+        (function() {
+          try {
+            var path = window.location.pathname || '/';
+            var hasLangPrefix = /^\/(en|tr)(\/|$)/i.test(path);
+            if (!hasLangPrefix) {
+              var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+              var targetLang = navLang.indexOf('tr') === 0 ? 'tr' : 'en';
+              var newPath = '/' + targetLang + (path.startsWith('/') ? path : ('/' + path));
+              var search = window.location.search || '';
+              var hash = window.location.hash || '';
+              // Ensure trailing slash for bare language root
+              if (newPath === '/tr' || newPath === '/en') newPath += '/';
+              window.location.replace(newPath + search + hash);
+            }
+          } catch (e) { /* no-op */ }
+        })();
+      </script>
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-ERZ1D4VS7L"></script>
       <script>
           window.dataLayer = window.dataLayer || [];

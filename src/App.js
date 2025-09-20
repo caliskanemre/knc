@@ -45,23 +45,43 @@ const LanguageRedirect = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Tarayıcı/HTML diline göre tercih edilen dil kodunu belirle
+    const getPreferredLang = () => {
+        const htmlLang = (typeof document !== 'undefined' && document.documentElement.getAttribute('lang')) || '';
+        const navLang = (typeof navigator !== 'undefined' && (navigator.language || navigator.userLanguage)) || '';
+        const src = (htmlLang || navLang || '').toLowerCase();
+        return src.startsWith('tr') ? 'tr' : 'en';
+    };
+
     useEffect(() => {
         const validLangs = ['en', 'tr'];
-        const pathSegments = location.pathname.split('/').filter(Boolean);
-        const lang = pathSegments[0];
+        const path = location.pathname || '/';
+        const segments = path.split('/').filter(Boolean);
+        const currentLang = segments[0];
 
-        if (!validLangs.includes(lang)) {
-            const defaultLang = i18n.language || 'tr';
-            navigate(`/${defaultLang}${location.pathname}`, { replace: true });
-        } else {
-            i18n.changeLanguage(lang);
+        // www olmayan domaine gelindiyse www'ye yönlendir (tam sayfa yönlendirme)
+        if (typeof window !== 'undefined' && window.location.hostname === 'kinasepeti.com') {
+            const target = 'https://www.kinasepeti.com' + window.location.pathname + (window.location.search || '') + (window.location.hash || '');
+            window.location.replace(target);
+            return;
         }
 
-        // www kontrolü
-        if (window.location.hostname === 'kinasepeti.com') {
-            navigate(`https://www.kinasepeti.com${location.pathname}`, { replace: true });
+        // Yol dil öneki içermiyorsa, tercih edilen dile göre yönlendir
+        const hasLangPrefix = validLangs.includes(currentLang);
+        if (!hasLangPrefix) {
+            const pref = getPreferredLang();
+            let newPath = `/${pref}${path.startsWith('/') ? path : '/' + path}`;
+            if (newPath === '/tr' || newPath === '/en') newPath += '/';
+            const full = newPath + (location.search || '') + (location.hash || '');
+            navigate(full, { replace: true });
+            return;
         }
-    }, [location.pathname, i18n, navigate]);
+
+        // URL'deki dil öneki geçerliyse i18n dilini ayarla
+        if (i18n.language !== currentLang) {
+            i18n.changeLanguage(currentLang);
+        }
+    }, [location.pathname, location.search, location.hash, i18n, navigate]);
 
     return null;
 };
