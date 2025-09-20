@@ -306,7 +306,7 @@ export default function Header() {
                     {t('Articles')}
                   </NavLink>
                   <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
-                    {t('How it works')}
+                    {t('About Us')}
                   </NavLink>
                   <NavLink
                       to="#"

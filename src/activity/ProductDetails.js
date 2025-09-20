@@ -14,12 +14,12 @@ import {
     Alert,
     CircularProgress,
     AccordionDetails,
-    debounce,
     Box,
     Grid,
     useTheme,
     useMediaQuery
 } from "@mui/material";
+import { debounce } from '@mui/material/utils';
 import SEO from '../shared/SEO';
 import axios from "axios";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -39,6 +39,7 @@ import { useTranslation } from "react-i18next";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Footer from "../Footer";
 import { trackEvent } from "../analytics/ga";
+import { useInitialData } from "../shared/InitialDataContext";
 
 // Helper to slugify product titles for canonical consistency
 const slugify = (str) => str ? str.toString().toLowerCase()
@@ -58,9 +59,19 @@ const getPrefixedImage = (url, prefix) => {
     return url.replace(/([^/]+)$/, `${prefix}_$1`);
 };
 
+// Detect if a media URL is a video file (basic extension check)
+const isVideoUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const u = url.toLowerCase();
+    const clean = u.split('#')[0].split('?')[0];
+    return /\.(mp4|webm|ogg|mov|m4v)$/.test(clean);
+};
+
 const ProductDetails = () => {
     const { id, title } = useParams();
-    const [product, setProduct] = useState(null);
+    const initialData = useInitialData();
+    const initialProduct = initialData?.product;
+    const [product, setProduct] = useState(initialProduct || null);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,7 +80,7 @@ const ProductDetails = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [orderNote, setOrderNote] = useState("");
-    const [guestToken] = useState(localStorage.getItem('guestToken') || generateUUID());
+    const [guestToken] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : ''));
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const { t, i18n } = useTranslation();
@@ -85,6 +96,7 @@ const ProductDetails = () => {
     };
 
     useEffect(() => {
+        if (product && product.id) return; // already have
         Axios.get(`${baseURL}/products/detail/${id}/${title}` , {
             headers: {
                 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
@@ -238,7 +250,8 @@ const ProductDetails = () => {
 
     // Images (prefer large variants for social share)
     const images = (product.photos || []).map(p => p.photo).filter(Boolean);
-    const primaryImage = images.length > 0 ? images[0] : 'https://www.kinasepeti.com/ksLogo.jpeg';
+    // Prefer non-video as primary image for SEO/share
+    const primaryImage = images.find(u => !isVideoUrl(u)) || images[0] || 'https://www.kinasepeti.com/ksLogo.jpeg';
 
     // Structured Data: Product
     const productSchema = {
@@ -284,9 +297,6 @@ const ProductDetails = () => {
             }
         ]
     };
-
-    // UI fiyatları
-    const displayPrice = displayDiscountedPrice;
 
     const addToCart = debounce(async () => {
         if (!product || quantity <= 0) {
@@ -376,7 +386,9 @@ const ProductDetails = () => {
             }
 
             // Sepet güncellendiğini bildir
-            window.dispatchEvent(new Event('cartUpdated'));
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('cartUpdated'));
+            }
 
             showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
@@ -431,7 +443,7 @@ const ProductDetails = () => {
         showSnackbar(t('Redirecting to WhatsApp...'), 'info');
     };
 
-    const shareUrl = window.location.href;
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
     const shareMessage = `${product.title} - Check out this product!`;
 
     const isAlreadyFavorited = isLoggedIn
@@ -446,6 +458,19 @@ const ProductDetails = () => {
     const descriptionLines = product.description
         ? product.description.split("\n").filter((line) => line.trim() !== "")
         : [];
+
+    // Poster helpers for videos
+    const getPosterFromPhotos = (photos, size = 'small') => {
+        const list = Array.isArray(photos) ? photos : [];
+        const firstImage = list.map(p => p?.photo).find(u => u && !isVideoUrl(u));
+        if (firstImage) return getPrefixedImage(firstImage, size);
+        return '/ksLogo.jpeg';
+    };
+
+    const getPosterFor = (url, size = 'medium') => {
+        if (!isVideoUrl(url)) return undefined;
+        return getPosterFromPhotos(product?.photos || [], size);
+    };
 
     return (
         <div className="activity-details-container">
@@ -480,7 +505,7 @@ const ProductDetails = () => {
                 </Typography>
 
                 <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-                    {/* Left Section - Image */}
+                    {/* Left Section - Image/Video */}
                     <Grid item xs={12} md={6}>
                         <Box sx={{
                             display: 'flex',
@@ -488,32 +513,57 @@ const ProductDetails = () => {
                             alignItems: 'center'
                         }}>
                             {selectedImage && (
-                                <Box
-                                    component="img"
-                                    src={getPrefixedImage(selectedImage, 'small')}
-                                    srcSet={`
+                                isVideoUrl(selectedImage) ? (
+                                    <Box
+                                        component="video"
+                                        src={selectedImage}
+                                        poster={getPosterFor(selectedImage, 'large')}
+                                        preload="metadata"
+                                        controls
+                                        onClick={openModal}
+                                        sx={{
+                                            width: '100%',
+                                            maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+                                            height: 'auto',
+                                            borderRadius: 2,
+                                            cursor: 'pointer',
+                                            mb: 2,
+                                            boxShadow: 2,
+                                            '&:hover': {
+                                                boxShadow: 4,
+                                                transform: 'scale(1.02)',
+                                                transition: 'all 0.3s ease'
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <Box
+                                        component="img"
+                                        src={getPrefixedImage(selectedImage, 'small')}
+                                        srcSet={`
                                         ${getPrefixedImage(selectedImage, 'small')} 400w,
                                         ${getPrefixedImage(selectedImage, 'medium')} 800w,
                                         ${getPrefixedImage(selectedImage, 'large')} 1200w
                                     `}
-                                    sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                    alt={product.title || 'Ürün görseli'}
-                                    onClick={openModal}
-                                    sx={{
-                                        width: '100%',
-                                        maxWidth: { xs: '100%', sm: '400px', md: '500px' },
-                                        height: 'auto',
-                                        borderRadius: 2,
-                                        cursor: 'pointer',
-                                        mb: 2,
-                                        boxShadow: 2,
-                                        '&:hover': {
-                                            boxShadow: 4,
-                                            transform: 'scale(1.02)',
-                                            transition: 'all 0.3s ease'
-                                        }
-                                    }}
-                                />
+                                        sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                        alt={product.title || 'Ürün görseli'}
+                                        onClick={openModal}
+                                        sx={{
+                                            width: '100%',
+                                            maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+                                            height: 'auto',
+                                            borderRadius: 2,
+                                            cursor: 'pointer',
+                                            mb: 2,
+                                            boxShadow: 2,
+                                            '&:hover': {
+                                                boxShadow: 4,
+                                                transform: 'scale(1.02)',
+                                                transition: 'all 0.3s ease'
+                                            }
+                                        }}
+                                    />
+                                )
                             )}
 
                             {/* Thumbnail Container */}
@@ -525,28 +575,53 @@ const ProductDetails = () => {
                                     justifyContent: 'center',
                                     maxWidth: '100%'
                                 }}>
-                                    {product.photos.map((photo, index) => (
-                                        <Box
-                                            key={index}
-                                            component="img"
-                                            src={getPrefixedImage(photo.photo, 'small')}
-                                            alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
-                                            onClick={() => setSelectedImage(photo.photo)}
-                                            sx={{
-                                                width: { xs: 60, sm: 80, md: 100 },
-                                                height: { xs: 60, sm: 80, md: 100 },
-                                                objectFit: 'cover',
-                                                borderRadius: 1,
-                                                cursor: 'pointer',
-                                                border: selectedImage === photo.photo ? '3px solid #1976d2' : '1px solid #ccc',
-                                                '&:hover': {
-                                                    border: '2px solid #1976d2',
-                                                    transform: 'scale(1.05)',
-                                                    transition: 'all 0.2s ease'
-                                                }
-                                            }}
-                                        />
-                                    ))}
+                                    {product.photos.map((photo, index) => {
+                                        const url = photo.photo;
+                                        const video = isVideoUrl(url);
+                                        return (
+                                            <Box
+                                                key={index}
+                                                onClick={() => setSelectedImage(url)}
+                                                sx={{
+                                                    width: { xs: 60, sm: 80, md: 100 },
+                                                    height: { xs: 60, sm: 80, md: 100 },
+                                                    borderRadius: 1,
+                                                    cursor: 'pointer',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: selectedImage === url ? '3px solid #1976d2' : '1px solid #ccc',
+                                                    '&:hover': {
+                                                        border: '2px solid #1976d2',
+                                                        transform: 'scale(1.05)',
+                                                        transition: 'all 0.2s ease'
+                                                    }
+                                                }}
+                                                aria-label={video ? 'Video küçük önizleme' : 'Görsel küçük önizleme'}
+                                                title={video ? 'Video' : 'Görsel'}
+                                            >
+                                                {video ? (
+                                                    <video
+                                                        src={url}
+                                                        poster={getPosterFor(url, 'small')}
+                                                        preload="metadata"
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <Box
+                                                        component="img"
+                                                        src={getPrefixedImage(url, 'small')}
+                                                        alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
+                                                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                )}
+                                            </Box>
+                                        );
+                                    })}
                                 </Box>
                             )}
                         </Box>
@@ -846,18 +921,30 @@ const ProductDetails = () => {
             {isModalOpen && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content">
-                        <img
-                            src={getPrefixedImage(selectedImage, 'large')}
-                            srcSet={`
+                        {isVideoUrl(selectedImage) ? (
+                            <video
+                                src={selectedImage}
+                                poster={getPosterFor(selectedImage, 'large')}
+                                preload="metadata"
+                                controls
+                                className="modal-image"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{ maxWidth: '100%', maxHeight: '80vh' }}
+                            />
+                        ) : (
+                            <img
+                                src={getPrefixedImage(selectedImage, 'large')}
+                                srcSet={`
                                 ${getPrefixedImage(selectedImage, 'small')} 400w,
                                 ${getPrefixedImage(selectedImage, 'medium')} 800w,
                                 ${getPrefixedImage(selectedImage, 'large')} 1200w
                             `}
-                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                            alt="Full Size"
-                            className="modal-image"
-                            onClick={(e) => e.stopPropagation()}
-                        />
+                                sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                alt="Full Size"
+                                className="modal-image"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
                     </div>
                 </div>
             )}
@@ -879,20 +966,36 @@ const ProductDetails = () => {
                             const spBaseOriginal = spIsTR ? (sp.tl_price ?? sp.price) : (sp.eur_price ?? sp.price);
                             const spOriginalNum = Number(spBaseOriginal) || 0;
                             const spOriginal = sp.photos?.[0]?.photo || "https://via.placeholder.com/300x200?text=No+Image";
+                            const spIsVideo = isVideoUrl(spOriginal);
+                            const spPoster = getPosterFromPhotos(sp.photos, 'small');
                             return (
                                 <Card key={sp.id} style={{ marginRight: '30px', minWidth: '200px', maxWidth: '300px', textAlign: 'center', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)' }}>
-                                    <CardMedia
-                                        component="img"
-                                        alt={sp.title}
-                                        height="140"
-                                        image={getPrefixedImage(spOriginal, 'small')}
-                                        srcSet={`
+                                    {spIsVideo ? (
+                                        <CardMedia
+                                            component="video"
+                                            src={spOriginal}
+                                            poster={spPoster}
+                                            preload="metadata"
+                                            height="140"
+                                            muted
+                                            loop
+                                            playsInline
+                                            style={{ objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <CardMedia
+                                            component="img"
+                                            alt={sp.title}
+                                            height="140"
+                                            image={getPrefixedImage(spOriginal, 'small')}
+                                            srcSet={`
                                             ${getPrefixedImage(spOriginal, 'small')} 400w,
                                             ${getPrefixedImage(spOriginal, 'medium')} 800w,
                                             ${getPrefixedImage(spOriginal, 'large')} 1200w
                                         `}
-                                        sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
-                                    />
+                                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                        />
+                                    )}
                                     <CardContent>
                                         <Typography variant="subtitle1" component="div">
                                             {sp.title}

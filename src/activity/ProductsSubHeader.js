@@ -32,7 +32,7 @@ function ProductsSubHeader() {
                 activeClassName="active"
                 onMouseEnter={handleMouseEnter}
             >
-                {t('Activities')}
+                {t('Products')}
             </NavLink>
             <Menu
                 anchorEl={anchorEl}

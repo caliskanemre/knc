@@ -1,41 +1,31 @@
 import React from 'react';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// YENİ: Örnek video ve poster (kendi dosyalarınızla değiştirin)
-import videoPoster from './../images/IMG_6719.JPG'// Video yüklenemezse görünecek resim
+import bgImage from './../images/IMG_6719.JPG';
 
 export default function HeroSection() {
     const { t } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // S3'teki videonun URL'si (kendi bucket URL'nizle değiştirin)
-    const heroVideo = 'https://kinasepeti.s3.eu-north-1.amazonaws.com/kina-video-3.mp4';
+    // Çeviri hazır değilse key yerine fallback metin göster
+    const tTitle = t('heroTitle');
+    const tSubtitle = t('heroSubtitle');
+    const heroTitle = tTitle === 'heroTitle' ? 'Hayalinizdeki Kına Gecesi' : tTitle;
+    const heroSubtitle = tSubtitle === 'heroSubtitle' ? 'En özel gününüz için ihtiyacınız olan her şey bir tık uzağınızda.' : tSubtitle;
 
     return (
-        <Box sx={{ position: 'relative', height: { xs: '30vh', md: '50vh' }, width: '100%', overflow: 'hidden' }}>
-            <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                poster={videoPoster}
-                style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    top: '50%',
-                    left: '50%',
-                    objectFit: 'cover', // Değişiklik burada: cover -> contain
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1,
-                }}
-            >
-                <source src={heroVideo} type="video/mp4" />
-                Tarayıcınız video etiketini desteklemiyor.
-            </video>
-
-            {/* YENİ: Karartma Efekti */}
+        <Box sx={{
+            position: 'relative',
+            height: { xs: '30vh', md: '50vh' },
+            width: '100%',
+            overflow: 'hidden',
+            backgroundImage: `url(${bgImage || ''})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+        }}>
+            {/* Karartma Efekti */}
             <Box
                 sx={{
                     position: 'absolute',
@@ -43,12 +33,12 @@ export default function HeroSection() {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Yazının okunabilirliği için
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
                     zIndex: 2,
                 }}
             />
 
-            {/* YENİ: Yazı ve Buton Alanı */}
+            {/* Yazı ve Buton Alanı */}
             <Box
                 sx={{
                     position: 'relative',
@@ -66,7 +56,7 @@ export default function HeroSection() {
                 <Typography
                     variant={isMobile ? 'h4' : 'h2'}
                     component="h1"
-                    color = "white"
+                    color="white"
                     gutterBottom
                     sx={{
                         fontFamily: "'Dancing Script', cursive",
@@ -74,10 +64,10 @@ export default function HeroSection() {
                         textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
                     }}
                 >
-                    {t('heroTitle')}
+                    {heroTitle}
                 </Typography>
                 <Typography
-                    color = "white"
+                    color="white"
                     variant={isMobile ? 'body1' : 'h6'}
                     sx={{
                         marginBottom: 4,
@@ -85,9 +75,8 @@ export default function HeroSection() {
                         textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
                     }}
                 >
-                    {t('heroSubtitle')}
+                    {heroSubtitle}
                 </Typography>
-
             </Box>
         </Box>
     );

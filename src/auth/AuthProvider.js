@@ -8,13 +8,14 @@ const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''));
   const [username, setUsername] = useState(''); // Renamed from email to username
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
 
   // On component mount, check localStorage for a token
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       try {

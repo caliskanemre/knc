@@ -3,7 +3,27 @@ import { useParams, Link } from 'react-router-dom';
 import { Container, Typography, Box, Card, CardMedia, CardContent, Button, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import Header from '../header/Header';
-import ReactMarkdown from 'react-markdown';
+
+// ReactMarkdown dinamik import için state
+const DynamicMarkdown = ({ children }) => {
+  const [ReactMarkdown, setReactMarkdown] = useState(null);
+
+  useEffect(() => {
+    // Browser tarafında dinamik import
+    if (typeof window !== 'undefined') {
+      import('react-markdown').then((module) => {
+        setReactMarkdown(() => module.default);
+      });
+    }
+  }, []);
+
+  // Server tarafında veya henüz yüklenmemişse basit div döndür
+  if (!ReactMarkdown) {
+    return <div>{children}</div>;
+  }
+
+  return <ReactMarkdown>{children}</ReactMarkdown>;
+};
 
 export default function ArticleDetailPage() {
     const { id } = useParams();

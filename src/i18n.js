@@ -1,25 +1,79 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
-import LanguageDetector from 'i18next-browser-languagedetector'; // Import the language detector
 
-i18n
-    .use(HttpBackend) // Load translations via http
-    .use(LanguageDetector) // Detect language
-    .use(initReactI18next) // Pass the i18n instance to react-i18next
-    .init({
-        lng: 'tr',
-        fallbackLng: 'en', // Fallback language is English
-        debug: true,
-        interpolation: {
-            escapeValue: false, // Not needed for React as it escapes by default
-        },
-        detection: {
-            // First try to detect from URL path like /en/, then from navigator as a fallback
-            order: ['path', 'navigator'],
-            lookupFromPathIndex: 0,
-            caches: [] // Do not cache the language setting to respect user's preference in each session
-        }
-    });
+const isServer = typeof window === 'undefined';
+
+// Temel çeviriler - her durumda mevcut olacak
+const baseResources = {
+  en: {
+    translation: {
+      heroTitle: 'Your Dream Henna Night',
+      heroSubtitle: 'Everything you need for your special day is just a click away.',
+      'About Us': 'About Us',
+      'Contact Us': 'Contact',
+      'Privacy Policy': 'Privacy Policy',
+      'Policies': 'Policies',
+      'Articles': 'Blog',
+      'Products': 'Products',
+      'Login': 'Login',
+      'Register': 'Register',
+      'Search': 'Search'
+    }
+  },
+  tr: {
+    translation: {
+      heroTitle: 'Hayalinizdeki Kına Gecesi',
+      heroSubtitle: 'En özel gününüz için ihtiyacınız olan her şey bir tık uzağınızda.',
+      'About Us': 'Hakkımızda',
+      'Contact Us': 'İletişim',
+      'Privacy Policy': 'Gizlilik Politikası',
+      'Policies': 'Politikalar',
+      'Articles': 'Blog',
+      'Products': 'Ürünler',
+      'Login': 'Giriş Yap',
+      'Register': 'Kayıt Ol',
+      'Search': 'Ara'
+    }
+  }
+};
+
+// Tek seferlik init
+i18n.use(initReactI18next).init({
+  lng: 'tr',
+  fallbackLng: 'en',
+  supportedLngs: ['en', 'tr'],
+  load: 'languageOnly',
+  debug: false,
+  resources: baseResources,
+  interpolation: { escapeValue: false },
+  react: { useSuspense: false }
+});
+
+// Client tarafında ek çeviriler yükle
+if (!isServer) {
+  // Async olarak tam çeviri dosyalarını yükle
+  const loadFullTranslations = async () => {
+    try {
+      const [trResponse, enResponse] = await Promise.all([
+        fetch('/locales/tr/translation.json'),
+        fetch('/locales/en/translation.json')
+      ]);
+
+      if (trResponse.ok && enResponse.ok) {
+        const [trData, enData] = await Promise.all([
+          trResponse.json(),
+          enResponse.json()
+        ]);
+
+        i18n.addResourceBundle('tr', 'translation', trData, true, true);
+        i18n.addResourceBundle('en', 'translation', enData, true, true);
+      }
+    } catch (error) {
+      console.warn('Failed to load full translations:', error);
+    }
+  };
+
+  loadFullTranslations();
+}
 
 export default i18n;
