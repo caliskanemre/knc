@@ -59,6 +59,9 @@ const Cart = () => {
         return `${num.toFixed(2)} ${symbol}`;
     };
 
+    // Rota dili: en-GB gibi varyantları normalize et
+    const routeLang = (i18n?.language || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+
     // Generate UUID for guest token
     function generateUUID() {
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
