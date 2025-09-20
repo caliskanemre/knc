@@ -137,7 +137,7 @@ const PaymentSuccess = () => {
           <h2>✅ Ödeme Başarılı!</h2>
           <p>Teşekkürler! Ana sayfaya yönlendiriliyorsunuz...</p>
         </>
-      ) : paymentStatus === 'failed' || timeoutReached ? (
+      ) : paymentStatus === 'failed' ? (
         <>
           <h2>❌ Ödeme Başarısız</h2>
           <p>Ödeme onaylanamadı. Lütfen tekrar deneyin.</p>
