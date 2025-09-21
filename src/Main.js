@@ -1,4 +1,4 @@
-import React, {Suspense, useEffect, useState} from 'react';
+import React, {lazy, Suspense, useEffect, useState} from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
@@ -18,9 +18,10 @@ import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
 import { useTranslation } from "react-i18next";
-import Footer from "./Footer";
 import SEO from './shared/SEO';
 import i18n from './i18n';
+
+const Footer = lazy(() => import('./Footer'));
 
 const theme = createTheme({
     typography: {
