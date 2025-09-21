@@ -49,9 +49,48 @@ try {
 }
 
 // Serve static assets
-app.use('/static', express.static(path.join(buildDir, 'static'), { maxAge: '1y', fallthrough: true }));
-app.use('/locales', express.static(path.join(__dirname, 'public', 'locales'), { fallthrough: true }));
-app.use(express.static(buildDir, { fallthrough: true }));
+app.use('/static', express.static(path.join(buildDir, 'static'), {
+  maxAge: '1y',
+  etag: true,
+  fallthrough: true,
+  setHeaders: (res) => {
+    // Hash'li dosyalar: güvenle uzun süre cache'lenebilir
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+}));
+
+app.use('/locales', express.static(path.join(__dirname, 'public', 'locales'), {
+  maxAge: '1h', // Çeviri dosyaları sık değişirse kısa tut
+  etag: true,
+  fallthrough: true
+}));
+
+// Build kök dosyaları: index.html hariç orta süreli cache
+app.use(express.static(buildDir, {
+  etag: true,
+  fallthrough: true,
+  setHeaders: (res, filePath) => {
+    const basename = path.basename(filePath);
+    if (basename === 'index.html') {
+      // HTML her zaman en güncel olsun
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      return;
+    }
+
+    // asset-manifest gibi manifest dosyalarını kısa cache'le
+    if (/asset-manifest\.json$/i.test(basename)) {
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=300');
+      return;
+    }
+
+    // Diğer kök statikler (favicon, logo, manifest, robots, css)
+    if (/\.(?:ico|png|jpg|jpeg|svg|webp|gif|css|js|xml|json)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400'); // 7 gün
+    }
+  }
+}));
 
 // Helper: fetch initial data for routes
 async function getInitialData(url) {
@@ -78,6 +117,11 @@ app.get('*', async (req, res) => {
     res.status(500).send('Build not found. Run "npm run build" first.');
     return;
   }
+
+  // SSR HTML için cache kapat
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
 
   // URL'den dil belirle
   const segments = (req.url || '/').split('/').filter(Boolean);
