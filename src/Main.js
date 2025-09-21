@@ -20,6 +20,7 @@ import HeroSection from './shared/HeroSection';
 import { useTranslation } from "react-i18next";
 import SEO from './shared/SEO';
 import i18n from './i18n';
+import ProductGrid from "./ProductGrid";
 
 const Footer = lazy(() => import('./Footer'));
 
@@ -275,120 +276,14 @@ export default function Main() {
             <main>
                 <HeroSection />
                 <Container sx={{ py: 9 }} maxWidth="xl">
-                    <Grid container spacing={4}>
-                        {products.map((item) => {
-                            const isTR = !!item.is_turkey_user;
-                            const baseOriginal = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
-                            const originalPriceNum = Number(baseOriginal) || 0;
-                            const discountPercent = 20;
-                            const discountedPriceNum = originalPriceNum * (1 - discountPercent / 100);
-
-                            const originalPhoto = item.photos[0]?.photo || 'https://via.placeholder.com/300x200?text=No+Image';
-                            const smallImageUrl = getPrefixedImage(originalPhoto, 'small');
-
-                            const isAlreadyFavorited = isLoggedIn
-                                ? favorites.favoriteProducts?.some(product => product.id === item.id)
-                                : (JSON.parse(localStorage.getItem('favorites')) || []).some(fav => fav.id === item.id);
-
-                            const productTitle = item.productName || item.title || item.name || 'Unknown';
-                            const productShortDesc = item.shortDescription;
-
-                            return (
-                                <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
-                                    <Card
-                                        sx={{
-                                            height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            position: 'relative',
-                                            boxShadow: 'none',
-                                            '&:hover': {
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                            }
-                                        }}
-                                    >
-                                        <a
-                                            href={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
-                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                        >
-                                            <CardMedia
-                                                component="img"
-                                                image={smallImageUrl}
-                                                alt={productTitle || 'Product'}
-                                                title={productTitle || 'Product'}
-                                                sx={{
-                                                    width: '100%',
-                                                    aspectRatio: '1 / 1',
-                                                    objectFit: 'cover',
-                                                }}
-                                            />
-                                        </a>
-                                        <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <Typography
-                                                sx={{
-                                                    fontFamily: 'Montserrat, sans-serif',
-                                                    fontWeight: 'bold',
-                                                    fontSize: { xs: '1rem', sm: '1.1rem' },
-                                                    lineHeight: 1.4,
-                                                    textAlign: 'left',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: 'vertical',
-                                                }}
-                                            >
-                                                {productTitle}
-                                            </Typography>
-                                            {productShortDesc && (
-                                                <Typography
-                                                    sx={{
-                                                        fontFamily: 'Montserrat, sans-serif',
-                                                        fontWeight: 400,
-                                                        fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                                                        color: 'text.secondary',
-                                                        mt: 0.5,
-                                                        textAlign: 'left',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        display: '-webkit-box',
-                                                        WebkitLineClamp: 2,
-                                                        WebkitBoxOrient: 'vertical',
-                                                    }}
-                                                >
-                                                    {productShortDesc}
-                                                </Typography>
-                                            )}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
-                                                <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                                                    {formatPrice(discountedPriceNum, isTR)}
-                                                </Typography>
-                                                <Typography sx={{ textDecoration: 'line-through', color: 'gray', ml: 1, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
-                                                    {formatPrice(originalPriceNum, isTR)}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <IconButton
-                                            aria-label="add to favorites"
-                                            onClick={() => handleFavoriteClick(item.id)}
-                                            sx={{
-                                                position: 'absolute',
-                                                top: '8px',
-                                                right: '8px',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
-                                                borderRadius: '50%',
-                                                padding: '6px',
-                                                zIndex: 3,
-                                            }}
-                                        >
-                                            {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-                                        </IconButton>
-                                    </Card>
-                                </Grid>
-                            );
-                        })}
-                    </Grid>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <ProductGrid
+                            products={products}
+                            favorites={favorites}
+                            isLoggedIn={isLoggedIn}
+                            handleFavoriteClick={handleFavoriteClick}
+                        />
+                    </Suspense>
                 </Container>
 
                 <Snackbar
