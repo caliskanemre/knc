@@ -1,142 +1,269 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-      <script>
-        // Early redirect: If path has no /en or /tr prefix, redirect based on browser language
-        (function() {
-          try {
-            var path = window.location.pathname || '/';
-            var hasLangPrefix = /^\/(en|tr)(\/|$)/i.test(path);
-            if (!hasLangPrefix) {
-              var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-              var targetLang = navLang.indexOf('tr') === 0 ? 'tr' : 'en';
-              var newPath = '/' + targetLang + (path.startsWith('/') ? path : ('/' + path));
-              var search = window.location.search || '';
-              var hash = window.location.hash || '';
-              // Ensure trailing slash for bare language root
-              if (newPath === '/tr' || newPath === '/en') newPath += '/';
-              window.location.replace(newPath + search + hash);
-            }
-          } catch (e) { /* no-op */ }
-        })();
-      </script>
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-ERZ1D4VS7L"></script>
-      <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag()
-
-          {dataLayer.push(arguments);}
-          gtag('js', new Date());
-
-          // Set default consent to 'denied' and initialize gtag
-       /*   gtag('consent', 'default', {
-              ad_storage: 'denied',
-              ad_user_data: 'denied',
-              ad_personalization: 'denied',
-              analytics_storage: 'denied',
-              functionality_storage: 'denied',
-              personalization_storage: 'denied',
-          });*/
-
-          gtag('config', 'G-ERZ1D4VS7L');
-         /* gtag('config', 'AW-854444729');*/
-          gtag('config', 'AW-16834301094');
-      </script>
-      <!-- Consent Update Functions -->
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-      <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-      <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
-      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-      <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <meta charset="utf-8" />
-
-    <link rel="icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
+<head>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    <meta name="p:domain_verify" content="0aea55f5005c56f09bf6cddba522016e"/> <link rel="icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
 
-    <!-- Dynamic meta description based on URL path -->
     <script>
-      // Function to set dynamic meta description based on URL
+      // Early redirect: If path has no /en or /tr prefix, redirect based on browser language
+      (function() {
+        try {
+          var path = window.location.pathname || '/';
+          var hasLangPrefix = /^\/(en|tr)(\/|$)/i.test(path);
+          if (!hasLangPrefix) {
+            var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+            var targetLang = navLang.indexOf('tr') === 0 ? 'tr' : 'en';
+            var newPath = '/' + targetLang + (path.startsWith('/') ? path : ('/' + path));
+            var search = window.location.search || '';
+            var hash = window.location.hash || '';
+            if (newPath === '/tr' || newPath === '/en') newPath += '/';
+            window.location.replace(newPath + search + hash);
+          }
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
+
+    <style id="critical-css">
+      /* Critical Path CSS - Above the fold styles */
+
+      /* Font Variables */
+      :root {
+        --font-primary: 'Lora', serif;
+        --font-heading: 'Playfair Display', serif;
+        --font-ui: 'Inter', sans-serif;
+        --font-brand: 'Dancing Script', cursive;
+        --fw-normal: 400;
+        --fw-medium: 500;
+        --fw-semibold: 600;
+        --fw-bold: 700;
+        --ls-normal: 0;
+        --ls-tight: -0.025em;
+        --ls-wide: 0.025em;
+      }
+
+      /* Base styles */
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-primary);
+        font-weight: var(--fw-normal);
+        line-height: 1.6;
+        letter-spacing: var(--ls-normal);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #333;
+        background-color: #fff;
+      }
+
+      /* Header/Navbar Critical Styles */
+      .navbar {
+        background-image: linear-gradient(to right, #f0f0f0, #ffffff);
+        font-family: var(--font-ui);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .navbar-brand {
+        font-family: var(--font-brand);
+        font-size: 1.5rem;
+        font-weight: var(--fw-bold);
+        color: #333;
+        text-decoration: none;
+      }
+
+      .nav-link {
+        font-family: var(--font-primary);
+        font-size: 1rem;
+        font-weight: var(--fw-normal);
+        color: #666;
+        margin: 0 0.5rem;
+        padding-bottom: 0.25rem;
+        text-decoration: none;
+        transition: color 0.3s ease, border-bottom-color 0.3s ease;
+      }
+
+      .nav-link:hover, .nav-link.active {
+        color: #000;
+        border-bottom: 2px solid #ff5722;
+        font-weight: bold;
+      }
+
+      .navbar-icons {
+        font-size: 1.2rem;
+        color: #666;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .navbar-icons:hover {
+        background-color: #eee;
+        border-radius: 50%;
+        padding: 0.5rem;
+      }
+
+      /* Typography Critical Styles */
+      h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: var(--fw-semibold);
+        letter-spacing: var(--ls-tight);
+        line-height: 1.2;
+        color: #2c2c2c;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: var(--fw-bold);
+      }
+
+      h2 {
+        font-size: clamp(1.75rem, 4vw, 2.75rem);
+      }
+
+      /* Loading states to prevent layout shift */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Mobile responsive navbar */
+      @media only screen and (max-width: 768px) {
+        .navbar {
+          padding: 0.5rem 1rem;
+        }
+
+        .navbar-brand {
+          font-size: 2rem;
+        }
+
+        .desktop-app-title {
+          display: none;
+        }
+
+        .nav-link.nav-item {
+          margin-left: 15px;
+          font-size: 1.4rem;
+        }
+
+        .sub-header {
+          display: flex;
+          justify-content: space-around;
+          padding: 10px;
+          background-color: #f8f8f8;
+        }
+
+        .search-desktop-image {
+          display: none;
+        }
+
+        .search-mobile-image {
+          display: block;
+          cursor: pointer;
+          margin-top: 5px;
+          margin-right: 5px;
+        }
+      }
+
+      @media only screen and (min-width: 768px) {
+        .mobile-app-title {
+          display: none;
+        }
+
+        .nav-link.nav-item {
+          margin-left: 40px;
+          font-size: 1.9rem;
+        }
+
+        .sub-header {
+          display: none;
+        }
+
+        .search-mobile-image {
+          display: none;
+        }
+      }
+
+      /* Prevent flash of unstyled content */
+      .MuiListItemText-primary {
+        font-family: var(--font-primary) !important;
+      }
+
+      /* Loading skeleton to prevent layout shift */
+      .content-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+
+      @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preload" href="https://fonts.gstatic.com/s/dancingscript/v29/If2RXTr6YS-zF4S-kcSWSVi_szLgiuE.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://fonts.gstatic.com/s/lora/v37/0QIvMX1D_JOuMwr7Iw.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://fonts.gstatic.com/s/playfairdisplay/v40/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2" as="font" type="font/woff2" crossorigin>
+
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Lora:wght@400;700&family=Montserrat:wght@400,500,700&family=Playfair+Display:wght@700&family=Roboto+Slab:wght@400,700&display=swap">
+
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="index.css">
+
+    <title>Kınasepeti</title>
+    <meta name="description" content="Kınasepeti ile kına gecesi ürünlerini keşfedin! İlgi alanlarınıza uygun kişiselleştirilmiş kına setleri, mendiller, duvaklar, süsler ve hediyeleri keşfedin"/>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ERZ1D4VS7L"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ERZ1D4VS7L');
+        gtag('config', 'AW-16834301094');
+    </script>
+
+    <script>
       function setDynamicMetaDescription() {
         const path = window.location.pathname;
         let description, title, lang;
-
         if (path.includes('/en/')) {
-          // English content
           lang = 'en';
           description = "Henna product discovery with Kınasepeti! Uncover personalized henna sets, handkerchiefs, veils, ornaments and gifts tailored to your interests";
           title = "Kınasepeti - Personalized Wedding and Henna Night Products";
         } else {
-          // Turkish content (default)
           lang = 'tr';
           description = "Kınasepeti ile kına gecesi ürünlerini keşfedin! İlgi alanlarınıza uygun kişiselleştirilmiş kına setleri, mendiller, duvaklar, süsler ve hediyeleri keşfedin";
           title = "Kınasepeti - Kişiselleştirilmiş Düğün ve Kına Hediyeleri";
         }
-
-        // Update meta description
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) {
-          metaDesc.setAttribute('content', description);
-        } else {
-          metaDesc = document.createElement('meta');
-          metaDesc.name = 'description';
-          metaDesc.content = description;
-          document.head.appendChild(metaDesc);
-        }
-
-        // Update title
+        document.querySelector('meta[name="description"]').setAttribute('content', description);
         document.title = title;
-
-        // Update html lang attribute
         document.documentElement.lang = lang;
       }
-
-      // Set initial meta description
-      setDynamicMetaDescription();
-
-      // Update meta description when URL changes (for SPA navigation)
+      // Set initial meta description on DOMContentLoaded to ensure elements exist
+      document.addEventListener('DOMContentLoaded', setDynamicMetaDescription);
       window.addEventListener('popstate', setDynamicMetaDescription);
     </script>
+</head>
 
-    <meta
-            name="description"
-            content="Kınasepeti ile kına gecesi ürünlerini keşfin! İlgi alanlarınıza uygun kişiselleştirilmiş kına setleri, mendiller, duvaklar, süsler ve hediyeleri keşfedin"
-    />
-
-      <link rel="apple-touch-icon" href="%PUBLIC_URL%/ksLogo.jpeg" />
-
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <!-- Other meta tags, scripts, and links -->
-
-      <!-- Importing the index.css stylesheet -->
-      <link rel="stylesheet" href="index.css">
-      <title>Kınasepeti</title>
-      <meta name="p:domain_verify" content="0aea55f5005c56f09bf6cddba522016e"/> <!--pinterest-->
-      <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
-  </head>
-
-  <body>
+<body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-
-  </body>
+</body>
 </html>
