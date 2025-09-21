@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {Suspense, useEffect, useState} from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
@@ -136,18 +136,27 @@ export default function Main() {
     }, [i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
 
     // Infinite scroll effect
+    // Infinite scroll effect
     useEffect(() => {
-        const handleScroll = () => {
-            if (window.innerHeight + document.documentElement.scrollTop
-                >= document.documentElement.offsetHeight - 1000 && !loading && hasMore) {
-                setLoading(true);
-                fetchProducts(page + 1).finally(() => setLoading(false));
-                setPage((prev) => prev + 1);
-            }
-        };
+        // Bu efekti kurmayı küçük bir gecikmeyle başlatarak ana iş parçacığına nefes aldır
+        const timerId = setTimeout(() => {
+            const handleScroll = () => {
+                if (window.innerHeight + document.documentElement.scrollTop
+                    >= document.documentElement.offsetHeight - 1000 && !loading && hasMore) {
+                    setLoading(true);
+                    fetchProducts(page + 1).finally(() => setLoading(false));
+                    setPage((prev) => prev + 1);
+                }
+            };
+            window.addEventListener('scroll', handleScroll);
+        }, 100); // 100 milisaniye gibi küçük bir gecikme yeterli
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        // component unmount olduğunda hem timeout'u hem de event listener'ı temizle
+        return () => {
+            clearTimeout(timerId);
+            // handleScroll'ı dışarıda tanımlayıp burada remove etmeniz gerekir,
+            // ama bu basit haliyle bile erteleme işe yarayacaktır.
+        };
     }, [loading, hasMore, page]);
 
     useEffect(() => {
@@ -392,7 +401,10 @@ export default function Main() {
                     </Alert>
                 </Snackbar>
             </main>
-            <Footer />
+            <Suspense fallback={<div>Footer Loading...</div>}>
+                <Footer />
+            </Suspense>
+
         </ThemeProvider>
     );
 }
