@@ -93,23 +93,42 @@ app.use(express.static(buildDir, {
 }));
 
 // Helper: fetch initial data for routes
+// server.js dosyanızdaki getInitialData fonksiyonunu bununla değiştirin
+
 async function getInitialData(url) {
-  try {
-    const match = url.match(/^\/(en|tr)\/products\/detail\/([^\/]+)(?:\/[^\?]*)?/i);
-    if (match) {
-      const id = match[2];
-      const title = '';
-      const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-      const lang = match[1];
-      const res = await axios.get(`${baseURL}/products/detail/${id}/${title}`, {
-        headers: { 'Accept-Language': lang === 'en' ? 'en' : 'tr' }
-      });
-      return { product: res.data };
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    // URL'den dili en başta belirleyelim
+    const segments = (url || '/').split('/').filter(Boolean);
+    const lang = (segments[0] === 'en' || segments[0] === 'tr') ? segments[0] : 'tr';
+
+    try {
+        // Ürün Detay Sayfası için veri çekme (mevcut kodunuz)
+        const productMatch = url.match(/^\/(en|tr)\/products\/detail\/([^\/]+)/i);
+        if (productMatch) {
+            const id = productMatch[2];
+            const res = await axios.get(`${baseURL}/products/detail/${id}/`, {
+                headers: { 'Accept-Language': lang }
+            });
+            return { product: res.data };
+        }
+
+        // YENİ EKLENEN KISIM: Ana Sayfa için veri çekme
+        // URL'nin ana sayfa olduğunu kontrol et (dil koduyla birlikte)
+        if (url === '/' || url === '/en/' || url === '/tr/') {
+            const res = await axios.get(`${baseURL}/products/all`, {
+                params: { page: 0, size: 20 }, // İlk 20 ürünü sunucuda çek
+                headers: { 'Accept-Language': lang }
+            });
+            // API'nizden dönen verinin yapısına göre ayarlayın. Genellikle `res.data.content` olur.
+            return { products: res.data.content || [] };
+        }
+
+    } catch (e) {
+        console.error('Initial data fetch failed:', e?.response?.data || e.message);
     }
-  } catch (e) {
-    console.error('Initial data fetch failed:', e?.response?.data || e.message);
-  }
-  return {};
+
+    // Hiçbir koşul eşleşmezse veya hata olursa boş dön
+    return {};
 }
 
 app.get('*', async (req, res) => {

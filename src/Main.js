@@ -111,11 +111,29 @@ export default function Main() {
     };
 
     useEffect(() => {
-        setProducts([]);
-        setPage(0);
-        setHasMore(true);
-        fetchProducts(0);
-    }, [i18n.language]);
+        // 1. ADIM: Sunucudan gelen veri var mı diye kontrol et
+        // Sunucu Taraflı Oluşturma (SSR) sırasında server.js, veriyi bu global değişkene yazar.
+        if (window.__INITIAL_DATA__ && window.__INITIAL_DATA__.products) {
+
+            // 2. ADIM: Sunucudan gelen veriyi doğrudan state'e ata
+            setProducts(window.__INITIAL_DATA__.products);
+            setPage(0); // Sayfalamayı sıfırla
+            setHasMore(true); // Daha fazla veri olabileceğini varsay
+
+            // 3. ADIM: Tekrar kullanılmaması için veriyi temizle
+            // Bu, kullanıcı sitede başka bir sayfaya gidip geri geldiğinde
+            // gereksiz yere eski verinin kullanılmasını engeller.
+            delete window.__INITIAL_DATA__.products;
+
+        } else {
+            // 4. ADIM: Sadece sunucudan veri gelmediyse API isteği yap
+            // Bu blok, sayfa içi gezinmelerde (client-side navigation) çalışır.
+            setProducts([]);
+            setPage(0);
+            setHasMore(true);
+            fetchProducts(0);
+        }
+    }, [i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
 
     // Infinite scroll effect
     useEffect(() => {
