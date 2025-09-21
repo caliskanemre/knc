@@ -301,30 +301,19 @@ export default function Main() {
                                             href={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`}
                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                         >
-                                            {/* --- CLS DÜZELTMESİ 1. ADIM: Resim Boyutlarını Belirtme --- */}
-                                            {/* Tarayıcıya resmin boyutlarını ve en-boy oranını önceden bildiriyoruz. */}
                                             <CardMedia
                                                 component="img"
-                                                // Resimlerinizin gerçek boyutlarını buraya girin.
-                                                // Örneğin, küçük resimleriniz 400x400 piksel ise:
-                                                width="400"
-                                                height="400"
                                                 image={smallImageUrl}
                                                 alt={productTitle || 'Product'}
                                                 title={productTitle || 'Product'}
                                                 sx={{
                                                     width: '100%',
-                                                    height: 'auto', // Yüksekliği otomatik yaparak en-boy oranını korur
-                                                    aspectRatio: '1 / 1', // En-boy oranını CSS ile garanti altına alır
+                                                    aspectRatio: '1 / 1',
                                                     objectFit: 'cover',
-                                                    // Resim yüklenene kadar bir arkaplan rengi göstererek kaymayı engeller
-                                                    backgroundColor: '#f0f0f0',
                                                 }}
                                             />
                                         </a>
-                                        {/* --- CLS DÜZELTMESİ 2. ADIM: İçerik Alanına Minimum Yükseklik --- */}
-                                        {/* Bu kutunun yüksekliğinin, içindeki metnin uzunluğuna göre çok değişmesini engelleriz. */}
-                                        <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '150px' /* Örnek bir min yükseklik */ }}>
+                                        <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
                                             <Typography
                                                 sx={{
                                                     fontFamily: 'Montserrat, sans-serif',
@@ -337,8 +326,6 @@ export default function Main() {
                                                     display: '-webkit-box',
                                                     WebkitLineClamp: 2,
                                                     WebkitBoxOrient: 'vertical',
-                                                    // Başlık alanı için minimum yükseklik vererek 1 satır ve 2 satır başlıklar arasında kaymayı önleriz.
-                                                    minHeight: '2.8rem', // (lineHeight * fontSize * 2 satır)
                                                 }}
                                             >
                                                 {productTitle}
@@ -362,7 +349,6 @@ export default function Main() {
                                                     {productShortDesc}
                                                 </Typography>
                                             )}
-                                            {/* Fiyat bölümü en alta yapışık kalır */}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
                                                 <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                                                     {formatPrice(discountedPriceNum, isTR)}
@@ -373,7 +359,18 @@ export default function Main() {
                                             </Box>
                                         </Box>
                                         <IconButton
-                                            // ... IconButton kodunuz aynı kalabilir ...
+                                            aria-label="add to favorites"
+                                            onClick={() => handleFavoriteClick(item.id)}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+                                                borderRadius: '50%',
+                                                padding: '6px',
+                                                zIndex: 3,
+                                            }}
                                         >
                                             {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                         </IconButton>
