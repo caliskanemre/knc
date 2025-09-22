@@ -1,6 +1,7 @@
 // src/components/Chatbot.js
 import React, { useState, useEffect } from 'react';
-import './Chatbot.css'; // Stil dosyası
+// import './Chatbot.css'; // Stil dosyası
+import styles from './Chatbot.module.css';
 import { useTranslation } from 'react-i18next';
 
 const Chatbot = () => {
@@ -43,49 +44,49 @@ const Chatbot = () => {
     };
 
     return (
-        <div className={`chatbot ${isOpen ? 'open' : ''}`}>
+        <div className={`${styles.chatbot} ${isOpen ? styles.open : ''}`}>
             {!isOpen ? (
-                <div className="chatbot-toggle" onClick={() => setIsOpen(true)}>
-                    <div className="chat-icon">
-                        <span className="message-icon">💬</span>
-                        {onlineStatus && <div className="online-indicator"></div>}
+                <div className={styles['chatbot-toggle']} onClick={() => setIsOpen(true)}>
+                    <div className={styles['chat-icon']}>
+                        <span className={styles['message-icon']}>💬</span>
+                        {onlineStatus && <div className={styles['online-indicator']}></div>}
                     </div>
-                    <span className="chat-text">{t('liveSupport')}</span>
-                    {onlineStatus && <div className="pulse-animation"></div>}
+                    <span className={styles['chat-text']}>{t('liveSupport')}</span>
+                    {onlineStatus && <div className={styles['pulse-animation']}></div>}
                 </div>
             ) : (
-                <div className="chatbot-container">
-                    <div className="chatbot-header">
-                        <div className="agent-info">
-                            <div className="agent-avatar">
+                <div className={styles['chatbot-container']}>
+                    <div className={styles['chatbot-header']}>
+                        <div className={styles['agent-info']}>
+                            <div className={styles['agent-avatar']}>
                                 <span>👩‍💼</span>
-                                <div className={`status-dot ${onlineStatus ? 'online' : 'offline'}`}></div>
+                                <div className={`${styles['status-dot']} ${onlineStatus ? styles.online : styles.offline}`}></div>
                             </div>
-                            <div className="agent-details">
-                                <span className="agent-name">{t('customerRepresentative')}</span>
-                                <span className="agent-status">
+                            <div className={styles['agent-details']}>
+                                <span className={styles['agent-name']}>{t('customerRepresentative')}</span>
+                                <span className={styles['agent-status']}>
                                     {onlineStatus ? t('online') : t('comingBackSoon')}
                                 </span>
                             </div>
                         </div>
-                        <button className="close-btn" onClick={() => setIsOpen(false)}>
+                        <button className={styles['close-btn']} onClick={() => setIsOpen(false)}>
                             ✕
                         </button>
                     </div>
 
-                    <div className="chat-body">
-                        <div className="welcome-message">
-                            <div className="message-bubble received">
+                    <div className={styles['chat-body']}>
+                        <div className={styles['welcome-message']}>
+                            <div className={`${styles['message-bubble']} ${styles.received}`}>
                                 <p>{t('hello')}</p>
                                 <p>{t('howCanIHelp')}</p>
-                                <span className="message-time">{t('now')}</span>
+                                <span className={styles['message-time']}>{t('now')}</span>
                             </div>
                         </div>
 
                         {isTyping && (
-                            <div className="typing-indicator">
-                                <div className="typing-bubble">
-                                    <div className="typing-dots">
+                            <div className={styles['typing-indicator']}>
+                                <div className={styles['typing-bubble']}>
+                                    <div className={styles['typing-dots']}>
                                         <span></span>
                                         <span></span>
                                         <span></span>
@@ -95,7 +96,7 @@ const Chatbot = () => {
                         )}
                     </div>
 
-                    <div className="chat-input">
+                    <div className={styles['chat-input']}>
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
@@ -106,13 +107,13 @@ const Chatbot = () => {
                         <button
                             onClick={handleSendMessage}
                             disabled={!message.trim() || isTyping}
-                            className="send-btn"
+                            className={styles['send-btn']}
                         >
                             {isTyping ? '⏳' : '📤'}
                         </button>
                     </div>
 
-                    <div className="powered-by">
+                    <div className={styles['powered-by']}>
                         <span>{t('secureMessagingWhatsApp')}</span>
                     </div>
                 </div>

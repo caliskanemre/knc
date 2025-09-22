@@ -10,6 +10,7 @@ import i18n from '../src/i18n';
 import createEmotionCache from '../src/mui/createEmotionCache';
 import theme from '../src/mui/theme';
 import '../src/index.css';
+import '../src/chatbot/Chatbot.css';
 import NextHeader from '../src/components/NextHeader';
 import Footer from '../src/Footer';
 import { AuthProvider } from '../src/auth/AuthProvider';
@@ -54,16 +55,19 @@ export default function MyApp({ Component, pageProps, emotionCache = clientSideE
 
             <CssBaseline />
 
-            {/* Global Header */}
-            <NextHeader locale={locale} defaultLocale={defaultLocale} asPath={asPath} />
+            {/* Sayfa düzeni: footer sabit değil, en altta */}
+            <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+              {/* Global Header */}
+              <NextHeader locale={locale} defaultLocale={defaultLocale} asPath={asPath} />
 
-            {/* Page Content with bottom padding for fixed footer */}
-            <Box sx={{ pb: 'var(--footer-h, 120px)' }}>
-              <Component {...pageProps} />
+              {/* Sayfa içeriği */}
+              <Box component="main" sx={{ flexGrow: 1 }}>
+                <Component {...pageProps} />
+              </Box>
+
+              {/* Global Footer (sabit değil) */}
+              <Footer />
             </Box>
-
-            {/* Global Footer (fixed) */}
-            <Footer />
           </AuthProvider>
         </ThemeProvider>
       </I18nextProvider>

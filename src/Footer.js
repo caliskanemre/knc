@@ -1,60 +1,28 @@
 // src/components/Footer.js
-import React, { useEffect, useRef } from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import React from 'react';
+import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import paymentLogos from './images/logo_band_colored@1X.png'; // yol projene göre değişebilir
 
 
 export default function Footer() {
     const { t } = useTranslation();
-    const rootRef = useRef(null);
-
-    useEffect(() => {
-        const updateVar = () => {
-            const h = rootRef.current?.offsetHeight || 120;
-            if (typeof document !== 'undefined') {
-                document.documentElement.style.setProperty('--footer-h', `${h}px`);
-                document.body.style.setProperty('--footer-h', `${h}px`);
-            }
-        };
-        updateVar();
-        window.addEventListener('resize', updateVar);
-
-        // Dinamik yükseklik değişimleri için ResizeObserver
-        let ro;
-        if (typeof ResizeObserver !== 'undefined') {
-            ro = new ResizeObserver(() => updateVar());
-            if (rootRef.current) ro.observe(rootRef.current);
-        }
-        return () => {
-            window.removeEventListener('resize', updateVar);
-            if (ro) ro.disconnect();
-        };
-    }, []);
 
     return (
         <Box
-            ref={rootRef}
             component="footer"
             sx={{
-                position: 'fixed',
-                left: 0,
-                right: 0,
-                bottom: 0,
                 width: '100%',
                 bgcolor: 'background.paper',
                 borderTop: '1px solid #eee',
-                zIndex: (theme) => theme.zIndex.appBar,
-                // Hafif cam efekti
-                backdropFilter: 'saturate(180%) blur(8px)'
             }}
-        >
-            <Box sx={{ p: 6 }}>
-                <Typography variant="h6" align="center" gutterBottom>
+       >
+            <Box sx={{ py: { xs: 1.5, sm: 2 }, px: { xs: 2, sm: 3 } }}>
+                <Typography variant="body2" align="center" gutterBottom sx={{ fontWeight: 600 }}>
                     Kına Sepeti
                 </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                    <Typography variant="subtitle1" color="text.secondary" component="p">
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Typography variant="caption" color="text.secondary" component="p">
                         {t('All rights reserved © 2025 Kına Sepeti')}
                     </Typography>
 
@@ -64,7 +32,7 @@ export default function Footer() {
                         <img
                             src={paymentLogos}
                             alt="Visa, Mastercard, American Express, Troy logos"
-                            style={{ height: '32px' }}
+                            style={{ height: '18px' }}
                         />
                     </Box>
                 </Box>
