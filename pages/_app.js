@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { I18nextProvider } from 'react-i18next';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
+import Box from '@mui/material/Box';
 import { useRouter } from 'next/router';
 import i18n from '../src/i18n';
 import createEmotionCache from '../src/mui/createEmotionCache';
@@ -56,10 +57,12 @@ export default function MyApp({ Component, pageProps, emotionCache = clientSideE
             {/* Global Header */}
             <NextHeader locale={locale} defaultLocale={defaultLocale} asPath={asPath} />
 
-            {/* Page Content */}
-            <Component {...pageProps} />
+            {/* Page Content with bottom padding for fixed footer */}
+            <Box sx={{ pb: 'var(--footer-h, 120px)' }}>
+              <Component {...pageProps} />
+            </Box>
 
-            {/* Global Footer */}
+            {/* Global Footer (fixed) */}
             <Footer />
           </AuthProvider>
         </ThemeProvider>

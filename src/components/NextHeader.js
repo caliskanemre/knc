@@ -212,7 +212,8 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
 
   return (
     <>
-      <AppBar position="sticky" color="transparent" elevation={0} sx={{ borderBottom: '1px solid #eee' }}>
+      {/* Fixed header */}
+      <AppBar position="fixed" color="transparent" elevation={0} sx={{ borderBottom: '1px solid #eee', backdropFilter: 'saturate(180%) blur(8px)', bgcolor: 'rgba(255,255,255,0.9)' }}>
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
           {/* Mobile menu button */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}>
@@ -402,6 +403,9 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
           </Menu>
         </Toolbar>
       </AppBar>
+
+      {/* Spacer to offset fixed header height */}
+      <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }} />
 
       {/* Mobile drawer */}
       <Drawer anchor="left" open={mobileOpen} onClose={() => setMobileOpen(false)}>
