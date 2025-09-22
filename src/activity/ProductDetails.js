@@ -48,9 +48,33 @@ const slugify = (str) => str ? str.toString().toLowerCase()
   .replace(/^-+|-+$/g, '')
   .substring(0, 80) : '';
 
+
+// Locale-aware description selector (SPA)
+const pickLocalizedDescription = (p, lang) => {
+    if (!p) return '';
+    const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+
+    // translations alanı varsa öncelik ver
+    const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+    if (trans) {
+        const d = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+        if (typeof d === 'string' && d.trim()) return d.trim();
+    }
+
+    if (l === 'en') {
+        const enList = [p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc, p.longDescriptionEn, p.shortDescriptionEn];
+        for (const c of enList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    } else {
+        const trList = [p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc, p.longDescriptionTr, p.shortDescriptionTr];
+        for (const c of trList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    }
+
+    return (typeof p.description === 'string' && p.description.trim()) ? p.description.trim() : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+};
+
 function generateUUID() {
     return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
     );
 }
 
@@ -227,7 +251,6 @@ const ProductDetails = () => {
 
     // Discount Logic (moved earlier so SEO can use values)
     const discountPercent = 20;
-    const originalPrice = Math.floor(product.price); // Base price fallback (EUR assumed)
     const isTR = !!product.is_turkey_user;
     const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
     const displayOriginalPrice = Number(uiBaseOriginal) || 0;
@@ -240,7 +263,7 @@ const ProductDetails = () => {
     const generatedSlug = slugify(product.title || title || '');
     const canonical = `${origin}/${currentLang}/products/detail/${product.id}/${generatedSlug || product.id}`;
 
-    const rawDesc = product.description || '';
+    const rawDesc = pickLocalizedDescription(product, i18n.language) || '';
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
         ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/,'') + '…'
@@ -304,16 +327,17 @@ const ProductDetails = () => {
             return;
         }
 
+        const unitPrice = Number(displayOriginalPrice) || 0; // backend’den gelen tl_price/eur_price
         const cartItem = {
-            productId: product.id,
-            quantity,
-            price: originalPrice * quantity, // Backend EUR bekliyor varsayımı ile
-            title: product.name || product.title,
-            image: product.imageUrl || (product.photos && product.photos[0]?.photo),
-            orderNote,
-            currency: isTR ? 'TRY' : 'EUR', // Currency bilgisini ekle
-            is_turkey_user: isTR // IP bazlı bilgiyi de ekle
-        };
+             productId: product.id,
+             quantity,
+             price: unitPrice * quantity,
+             title: product.name || product.title,
+             image: product.imageUrl || (product.photos && product.photos[0]?.photo),
+             orderNote,
+             currency: isTR ? 'TRY' : 'EUR', // Currency bilgisini ekle
+             is_turkey_user: isTR // IP bazlı bilgiyi de ekle
+         };
 
         try {
             const token = localStorage.getItem('token');
@@ -333,7 +357,7 @@ const ProductDetails = () => {
                 const existingItem = localCart.find(item => item.productId === cartItem.productId);
                 if (existingItem) {
                     existingItem.quantity += cartItem.quantity;
-                    existingItem.price = originalPrice * existingItem.quantity;
+                    existingItem.price = unitPrice * existingItem.quantity;
                     existingItem.orderNote = orderNote || existingItem.orderNote;
                 } else {
                     localCart.push(cartItem);
@@ -455,8 +479,9 @@ const ProductDetails = () => {
     const closeModal = () => setIsModalOpen(false);
 
     // Split the description into lines for the accordion
-    const descriptionLines = product.description
-        ? product.description.split("\n").filter((line) => line.trim() !== "")
+    const localizedDescription = pickLocalizedDescription(product, i18n.language);
+    const descriptionLines = localizedDescription
+        ? localizedDescription.split("\n").filter((line) => line.trim() !== "")
         : [];
 
     // Poster helpers for videos

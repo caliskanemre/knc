@@ -192,38 +192,26 @@ const SearchPage = () => {
         return item.name || item.title;
     };
 
-    // Helper function to get localized description
-    const getLocalizedDescription = (item) => {
-        const locale = getCurrentLocale();
-        if (locale === 'en' && item.descriptionEn) {
-            return item.descriptionEn;
-        }
-        return item.description || item.shortDescription;
-    };
 
     // Helper function to format price with currency
     const formatPrice = (item) => {
-        const locale = getCurrentLocale();
-        // Backend otomatik olarak doğru fiyatı döner (TL veya EUR)
-        if (item.price) {
-            // TL fiyatı varsa TL kullan, yoksa EUR
-            if (item.tlPrice) {
-                return `${Math.floor(item.tlPrice)} ₺`;
-            } else {
-                return `${Math.floor(item.price)} €`;
-            }
-        }
-        return '';
+        const isTR = !!item.is_turkey_user;
+        const base = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
+        if (base == null) return '';
+        const num = Number(base) || 0;
+        const symbol = isTR ? '₺' : '€';
+        return `${Math.floor(num)} ${symbol}`;
     };
 
     // Helper function to format discounted price
     const formatDiscountedPrice = (item) => {
-        if (item.tlPrice) {
-            return `${Math.floor(item.tlPrice * 0.8)} ₺`;
-        } else if (item.price) {
-            return `${Math.floor(item.price * 0.8)} €`;
-        }
-        return '';
+        const isTR = !!item.is_turkey_user;
+        const base = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
+        if (base == null) return '';
+        const num = Number(base) || 0;
+        const discounted = Math.floor(num * 0.8);
+        const symbol = isTR ? '₺' : '€';
+        return `${discounted} ${symbol}`;
     };
 
     return (
@@ -370,7 +358,7 @@ const SearchPage = () => {
                                             </Typography>
                                         </Box>
                                         {/* Fiyat bilgisini göster */}
-                                        {(item.price || item.tlPrice) && (
+                                        {(item.tl_price != null || item.eur_price != null || item.price != null) && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                                 <Typography
                                                     sx={{

@@ -27,7 +27,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
   const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
   const [quantity, setQuantity] = useState(1);
-  const [orderNote, setOrderNote] = useState('');
+  const [orderNote] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [similar, setSimilar] = useState([]);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
@@ -79,10 +79,14 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const handleAddToCart = async () => {
     if (!product?.id || quantity <= 0) return show(t('Invalid quantity'), 'warning');
     try {
+      const unitPrice = isTR
+        ? (Number(product?.tl_price ?? product?.price) || 0)
+        : (Number(product?.eur_price ?? product?.price) || 0);
+
       const cartItem = {
         productId: product.id,
         quantity,
-        price: (Number(product?.price) || 0) * quantity, // backend EUR varsayılanı
+        price: unitPrice * quantity,
         title: product.name || product.title,
         image: product.imageUrl || product.photos?.[0]?.photo,
         orderNote,
@@ -102,12 +106,12 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
           });
         } else {
           // local cart sync
-          let localCart = [];
-          try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
+          let localCart;
+           try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
           const existing = localCart.find(i => i.productId === cartItem.productId);
           if (existing) {
             existing.quantity += cartItem.quantity;
-            existing.price = (Number(product?.price) || 0) * existing.quantity;
+            existing.price = unitPrice * existing.quantity;
             existing.orderNote = orderNote || existing.orderNote;
           } else {
             localCart.push(cartItem);
@@ -158,8 +162,8 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
         await toggleFavorite(product.id, isFav, 'product');
         show(isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️', 'success');
       } else if (typeof window !== 'undefined') {
-        let localFavorites = [];
-        try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
+        let localFavorites;
+         try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
         const exists = localFavorites.some(f => f.id === product.id);
         if (exists) {
           localFavorites = localFavorites.filter(f => f.id !== product.id);
@@ -193,6 +197,54 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
     if (typeof window !== 'undefined') window.open(url, '_blank');
     show(t('Redirecting to WhatsApp...'), 'info');
   };
+
+  // Locale-aware description selector
+  const getLocalizedDescription = (p, lang) => {
+    if (!p) return '';
+    const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+
+    // translations yapısı varsa deneyin
+    const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+    if (trans) {
+      const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+      if (typeof desc === 'string' && desc.trim()) return desc.trim();
+    }
+
+    // Alan varyantları (en)
+    if (l === 'en') {
+      const candidatesEN = [
+        p.descriptionEn,
+        p.descriptionEN,
+        p.en_description,
+        p.descEn,
+        p.descEN,
+        p.enDesc,
+        p.longDescriptionEn,
+        p.shortDescriptionEn
+      ];
+      for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    } else {
+      // Alan varyantları (tr)
+      const candidatesTR = [
+        p.descriptionTr,
+        p.descriptionTR,
+        p.tr_description,
+        p.descTr,
+        p.descTR,
+        p.trDesc,
+        p.longDescriptionTr,
+        p.shortDescriptionTr
+      ];
+      for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    }
+
+    // Genel fallback
+    return (typeof p.description === 'string' && p.description.trim())
+      ? p.description.trim()
+      : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+  };
+
+  const localizedDescription = useMemo(() => getLocalizedDescription(product, pageLocale), [product, pageLocale]);
 
   if (!product) {
     return (
@@ -293,10 +345,10 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
             </Box>
 
             {/* Description */}
-            {product.description && (
+            {localizedDescription && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h6" sx={{ mb: 1 }}>{t('Description', 'Açıklama')}</Typography>
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{product.description}</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{localizedDescription}</Typography>
               </Box>
             )}
           </Grid>
@@ -345,12 +397,32 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     });
     const product = res.data || null;
 
+    // Helper: locale-aware description (SSR)
+    const pickLocalizedDescription = (p, loc) => {
+      if (!p) return '';
+      const l = (loc || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+      const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+      if (trans) {
+        const d = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+        if (typeof d === 'string' && d.trim()) return d.trim();
+      }
+      if (l === 'en') {
+        const enList = [p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc, p.longDescriptionEn, p.shortDescriptionEn];
+        for (const c of enList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+      } else {
+        const trList = [p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc, p.longDescriptionTr, p.shortDescriptionTr];
+        for (const c of trList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+      }
+      return (typeof p.description === 'string' && p.description.trim()) ? p.description.trim() : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+    };
+
     const headers = req?.headers || {};
     const proto = headers['x-forwarded-proto'] || 'http';
     const host = headers['host'] || 'localhost:3000';
     const origin = `${proto}://${host}`;
 
-    const rawDesc = product?.description || '';
+    // Use localized description for meta
+    const rawDesc = pickLocalizedDescription(product, locale);
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
       ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/, '') + '…'
@@ -377,6 +449,11 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       }
     };
 
+    const schemaCurrency = product?.is_turkey_user ? 'TRY' : 'EUR';
+    const schemaUnitPrice = product?.is_turkey_user
+      ? (Number(product?.tl_price ?? product?.price) || 0)
+      : (Number(product?.eur_price ?? product?.price) || 0);
+
     const productSchema = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -387,8 +464,8 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       brand: { '@type': 'Brand', name: 'Kina Sepeti' },
       offers: {
         '@type': 'Offer',
-        priceCurrency: product?.is_turkey_user ? 'TRY' : 'EUR',
-        price: (product?.eur_price ?? product?.tl_price ?? product?.price ?? 0).toFixed?.(2) || String(product?.price || 0),
+        priceCurrency: schemaCurrency,
+        price: schemaUnitPrice.toFixed(2),
         availability: 'https://schema.org/InStock',
         itemCondition: 'https://schema.org/NewCondition',
         url: canonical

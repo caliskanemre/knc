@@ -23,11 +23,31 @@ axios.interceptors.request.use(config => {
 const detectLanguageFromUrl = () => {
   const path = window.location.pathname;
   const langMatch = path.match(/^\/(en|tr)/);
-  return langMatch ? langMatch[1] : 'tr';
+  return langMatch ? langMatch[1] : null;
+};
+
+const detectBrowserLang = () => {
+  const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  return navLang.startsWith('en') ? 'en' : 'tr';
+};
+
+const ensureLocalePrefix = () => {
+  const hasLocale = detectLanguageFromUrl();
+  if (!hasLocale) {
+    const pref = detectBrowserLang();
+    const { pathname, search, hash } = window.location;
+    const target = `/${pref}${pathname.startsWith('/') ? pathname : '/' + pathname}${search || ''}${hash || ''}`;
+    window.location.replace(target);
+    return false; // redirected
+  }
+  return true;
 };
 
 const initializeApp = async () => {
-  const currentLang = detectLanguageFromUrl();
+  // Dil öneki yoksa, render etmeden önce yönlendir
+  if (!ensureLocalePrefix()) return;
+
+  const currentLang = detectLanguageFromUrl() || 'tr';
 
   // i18n dilini URL'e göre senkron ayarla
   if (i18n.language !== currentLang) {
