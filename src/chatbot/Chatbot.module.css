@@ -3,7 +3,7 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1600;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -388,8 +388,8 @@
 /* Mobile Responsive */
 @media (max-width: 480px) {
     .chatbot {
-        bottom: 15px;
-        right: 15px;
+        bottom: 12px;
+        right: 12px;
     }
 
     .chatbot-container {
@@ -398,7 +398,16 @@
     }
 
     .chatbot-toggle {
-        padding: 10px 16px;
+        padding: 8px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        gap: 0;
+        justify-content: center;
+    }
+
+    .message-icon {
+        font-size: 18px;
     }
 
     .chat-text {

@@ -1,5 +1,6 @@
 // src/components/Chatbot.js
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // import './Chatbot.css'; // Stil dosyası
 import styles from './Chatbot.module.css';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,12 @@ const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [onlineStatus, setOnlineStatus] = useState(true);
+    const [mounted, setMounted] = useState(false); // SSR/CSR guard
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
 
     // Online durumunu simüle et
     useEffect(() => {
@@ -29,7 +36,9 @@ const Chatbot = () => {
                 const phoneNumber = '905348290866';
                 const finalMessage = `${t('helloWebsiteMessage')}\n\n${message}`;
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(finalMessage)}`;
-                window.open(whatsappUrl, '_blank');
+                if (typeof window !== 'undefined') {
+                    window.open(whatsappUrl, '_blank');
+                }
                 setMessage('');
                 setIsTyping(false);
             }, 1000);
@@ -43,8 +52,8 @@ const Chatbot = () => {
         }
     };
 
-    return (
-        <div className={`${styles.chatbot} ${isOpen ? styles.open : ''}`}>
+    const content = (
+        <div className={`${styles.chatbot} ${isOpen ? styles.open : ''}`} style={{ position: 'fixed' }}>
             {!isOpen ? (
                 <div className={styles['chatbot-toggle']} onClick={() => setIsOpen(true)}>
                     <div className={styles['chat-icon']}>
@@ -120,6 +129,9 @@ const Chatbot = () => {
             )}
         </div>
     );
+
+    if (!mounted || typeof document === 'undefined') return null;
+    return createPortal(content, document.body);
 };
 
 export default Chatbot;
