@@ -4,7 +4,6 @@ import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ProductGrid from '../../src/ProductGrid';
-import NextHeader from '../../src/components/NextHeader';
 
 export default function ProductsPage({ products, seo }) {
   const favorites = { favoriteProducts: [] };
@@ -24,7 +23,7 @@ export default function ProductsPage({ products, seo }) {
         {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
       </Head>
       <CssBaseline />
-      <NextHeader />
+      {/* Header _app.js içinde global olarak render edilmekte */}
       <main>
         <Container sx={{ py: 6 }} maxWidth="xl">
           <ProductGrid

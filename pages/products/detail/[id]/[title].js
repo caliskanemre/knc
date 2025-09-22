@@ -6,15 +6,13 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import NextHeader from '../../../../src/components/NextHeader';
 import Image from 'next/image';
 
-export default function ProductDetailPage({ product, seo, structuredData, pageLocale = 'tr', defaultLocale = 'tr', asPath = '/' }) {
+export default function ProductDetailPage({ product, seo }) {
   if (!product) {
     return (
       <Container maxWidth="md">
         <CssBaseline />
-        <NextHeader locale={pageLocale} defaultLocale={defaultLocale} asPath={asPath} />
         <Typography variant="h5" sx={{ mt: 4 }}>Product not found</Typography>
       </Container>
     );
@@ -45,15 +43,14 @@ export default function ProductDetailPage({ product, seo, structuredData, pageLo
         {metaDescription && <meta name="twitter:description" content={metaDescription} />}
         {ogImage && <meta name="twitter:image" content={ogImage} />}
         {/* JSON-LD */}
-        {structuredData?.product && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData.product) }} />
+        {product.structuredData?.product && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.product) }} />
         )}
-        {structuredData?.breadcrumbs && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData.breadcrumbs) }} />
+        {product.structuredData?.breadcrumbs && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.breadcrumbs) }} />
         )}
       </Head>
       <CssBaseline />
-      <NextHeader locale={pageLocale} defaultLocale={defaultLocale} asPath={asPath} />
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>{title}</Typography>
@@ -140,7 +137,7 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     const structuredData = { product: productSchema, breadcrumbs };
 
-    return { props: { product, seo, structuredData, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
+    return { props: { product: { ...product, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
   } catch (e) {
     console.error('SSR product fetch failed:', e?.response?.data || e.message);
     return { props: { product: null, seo: null, structuredData: null, pageLocale: 'tr', defaultLocale: 'tr', asPath: '/' } };
