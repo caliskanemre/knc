@@ -4,7 +4,7 @@ import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ProductGrid from '../src/ProductGrid';
-import NextHeader from '../src/components/NextHeader';
+import HeroSection from '../src/shared/HeroSection';
 
 export default function HomePage({ products, seo, pageLocale = 'tr', defaultLocale = 'tr', asPath = '/' }) {
   const favorites = { favoriteProducts: [] };
@@ -24,7 +24,7 @@ export default function HomePage({ products, seo, pageLocale = 'tr', defaultLoca
         {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
       </Head>
       <CssBaseline />
-      <NextHeader locale={pageLocale} defaultLocale={defaultLocale} asPath={asPath} />
+      <HeroSection />
       <main>
         <Container sx={{ py: 6 }} maxWidth="xl">
           <ProductGrid
