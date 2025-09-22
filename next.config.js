@@ -16,6 +16,13 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      // AWS S3 bucket (for next/image external loader)
+      {
+        protocol: 'https',
+        hostname: 'kinasepeti.s3.eu-north-1.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {

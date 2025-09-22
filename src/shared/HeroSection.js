@@ -1,8 +1,7 @@
 import React from 'react';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// Artık resmi buradan import etmiyoruz. CDN'den çekeceğiz.
-// import bgImage from './../images/IMG_6719.JPG';
+import Image from 'next/image';
 
 export default function HeroSection() {
     const { t } = useTranslation();
@@ -25,20 +24,18 @@ export default function HeroSection() {
             overflow: 'hidden',
             // Arkaplan resmini Box stilinden kaldırıyoruz.
         }}>
-            {/* PERFORMANS İÇİN KRİTİK DEĞİŞİKLİK */}
-            <img
+            {/* PERFORMANS İÇİN KRİTİK DEĞİŞİKLİK: next/image kullanımı */}
+            <Image
                 src={imageUrl}
                 alt="Kına gecesi organizasyonu"
-                // Bu nitelik, tarayıcıya bu resmin çok önemli olduğunu ve hemen indirmesi gerektiğini söyler.
-                fetchpriority="high"
+                priority
+                // LCP için responsive srcset üretimi ve tarayıcıya doğru boyutu seçtirme
+                sizes="100vw"
+                // Container'ı kaplamak için fill + objectFit kullanıyoruz
+                fill
                 style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover', // background-size: cover ile aynı etkiyi yaratır.
-                    zIndex: 1, // Yazıların ve karartma efektinin arkasında kalacak.
+                    objectFit: 'cover',
+                    zIndex: 1,
                 }}
             />
 

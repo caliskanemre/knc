@@ -3,10 +3,15 @@ import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import ProductGrid from '../src/ProductGrid';
+import dynamic from 'next/dynamic';
 import HeroSection from '../src/shared/HeroSection';
+// ProductGrid SSR'siz ve dinamik yüklenir (below-the-fold içerik)
+const ProductGrid = dynamic(() => import('../src/ProductGrid'), {
+  ssr: false,
+  loading: () => <div style={{ height: 200 }} />,
+});
 
-export default function HomePage({ products, seo, pageLocale = 'tr', defaultLocale = 'tr', asPath = '/' }) {
+export default function HomePage({ products, seo, pageLocale = 'tr', defaultLocale = 'tr' }) {
   const favorites = { favoriteProducts: [] };
   const isLoggedIn = false;
   const handleFavoriteClick = () => {};
@@ -41,63 +46,58 @@ export default function HomePage({ products, seo, pageLocale = 'tr', defaultLoca
   );
 }
 
-export async function getServerSideProps(context) {
+export async function getStaticProps(context) {
   try {
-    const { locale, defaultLocale, resolvedUrl, req } = context;
+    const { locale = 'tr', defaultLocale = 'tr' } = context || {};
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
     const res = await axios.get(`${baseURL}/products/all`, {
       params: { page: 0, size: 20 },
       headers: { 'Accept-Language': locale },
-      timeout: 5000
+      timeout: 5000,
     });
     const { content = [] } = res.data || {};
-
-    const headers = req?.headers || {};
-    const proto = headers['x-forwarded-proto'] || 'http';
-    const host = headers['host'] || 'localhost:3000';
-    const origin = `${proto}://${host}`;
 
     const pathTR = `/`;
     const pathEN = `/en`;
 
-    const canonical = `${origin}${locale === 'tr' ? pathTR : pathEN}`;
+    const canonical = `${siteUrl}${locale === 'tr' ? pathTR : pathEN}`;
 
     const seo = {
       title: 'Kınasepeti - Kına ve Düğün Ürünleri',
       description: 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin. Kişiselleştirilmiş setler, hediyelikler ve daha fazlası.',
       canonical,
       alternates: {
-        tr: `${origin}${pathTR}`,
-        en: `${origin}${pathEN}`,
-        xDefault: `${origin}${pathTR}`
-      }
+        tr: `${siteUrl}${pathTR}`,
+        en: `${siteUrl}${pathEN}`,
+        xDefault: `${siteUrl}${pathTR}`,
+      },
     };
 
-    return { props: { products: content, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
+    return {
+      props: { products: content, seo, pageLocale: locale, defaultLocale },
+      revalidate: 120, // 2 dakikada bir güncelle
+    };
   } catch (e) {
-    if (e?.response?.status === 401) {
-      // Yetki yoksa boş liste ile devam et
-      const { locale, defaultLocale, resolvedUrl, req } = context;
-      const headers = req?.headers || {};
-      const proto = headers['x-forwarded-proto'] || 'http';
-      const host = headers['host'] || 'localhost:3000';
-      const origin = `${proto}://${host}`;
-      const pathTR = `/`;
-      const pathEN = `/en`;
-      const canonical = `${origin}${(context.locale === 'en') ? pathEN : pathTR}`;
-      const seo = {
-        title: 'Kınasepeti - Kına ve Düğün Ürünleri',
-        description: 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin. Kişiselleştirilmiş setler, hediyelikler ve daha fazlası.',
-        canonical,
-        alternates: {
-          tr: `${origin}${pathTR}`,
-          en: `${origin}${pathEN}`,
-          xDefault: `${origin}${pathTR}`
-        }
-      };
-      return { props: { products: [], seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
-    }
-    console.info('SSR fetch skipped or failed:', e?.message || e);
-    return { props: { products: [], seo: null, pageLocale: context.locale || 'tr', defaultLocale: context.defaultLocale || 'tr', asPath: context.resolvedUrl || '/' } };
+    console.info('SSG fetch failed:', e?.message || e);
+
+    const { locale = 'tr', defaultLocale = 'tr' } = context || {};
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const pathTR = `/`;
+    const pathEN = `/en`;
+    const canonical = `${siteUrl}${locale === 'en' ? pathEN : pathTR}`;
+    const seo = {
+      title: 'Kınasepeti - Kına ve Düğün Ürünleri',
+      description: 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin. Kişiselleştirilmiş setler, hediyelikler ve daha fazlası.',
+      canonical,
+      alternates: {
+        tr: `${siteUrl}${pathTR}`,
+        en: `${siteUrl}${pathEN}`,
+        xDefault: `${siteUrl}${pathTR}`,
+      },
+    };
+
+    return { props: { products: [], seo, pageLocale: locale, defaultLocale }, revalidate: 300 };
   }
 }

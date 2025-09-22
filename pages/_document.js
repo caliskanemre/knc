@@ -11,11 +11,39 @@ export default class MyDocument extends Document {
           {/* Preconnects for faster font fetching */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-          {/* Consolidated Google Fonts stylesheet */}
+
+          {/* Critical font (used in hero title): load non-blocking with preload-as-style */}
           <link
-            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
+            rel="preload"
+            as="style"
+            href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap"
+            onLoad="this.onload=null;this.rel='stylesheet'"
           />
+          <noscript>
+            <link
+              rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap"
+            />
+          </noscript>
+
+          {/* Defer the rest of font families non-blocking */}
+          <link
+            rel="preload"
+            as="style"
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+            onLoad="this.onload=null;this.rel='stylesheet'"
+          />
+          <noscript>
+            <link
+              rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+            />
+          </noscript>
+
+          {/* Hint the browser early about the image CDN used for the LCP hero image */}
+          <link rel="dns-prefetch" href="//d2830psw11bu27.cloudfront.net" />
+          <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="anonymous" />
+
           {/* Emotion SSR styles will be injected below by getInitialProps */}
         </Head>
         <body>
