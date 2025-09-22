@@ -7,7 +7,16 @@ const nextConfig = {
     localeDetection: false,
   },
   images: {
-    unoptimized: true
+    // Next/Image optimizasyonunu etkin kullan
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'd2830psw11bu27.cloudfront.net',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   async headers() {
     return [

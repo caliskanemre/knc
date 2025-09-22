@@ -16,6 +16,7 @@
     "@mui/lab": "^5.0.0-alpha.162",
     "@mui/material": "^5.14.12",
     "@mui/x-date-pickers": "^6.19.2",
+    "@next/env": "^14.2.5",
     "@react-google-maps/api": "^2.19.2",
     "@revolut/checkout": "^1.1.19",
     "@testing-library/jest-dom": "^5.17.0",
@@ -49,8 +50,8 @@
     "react-swipeable": "^7.0.1",
     "react-use": "^17.6.0",
     "serve": "^14.2.1",
-    "web-vitals": "^2.1.4",
-    "@next/env": "^14.2.5"
+    "sharp": "^0.33.5",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "dev": "next dev",

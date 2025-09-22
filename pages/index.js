@@ -3,8 +3,13 @@ import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import ProductGrid from '../src/ProductGrid';
+import dynamic from 'next/dynamic';
 import HeroSection from '../src/shared/HeroSection';
+
+const ProductGrid = dynamic(() => import('../src/ProductGrid'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function HomePage({ products, seo, pageLocale = 'tr', defaultLocale = 'tr', asPath = '/' }) {
   const favorites = { favoriteProducts: [] };
@@ -22,6 +27,9 @@ export default function HomePage({ products, seo, pageLocale = 'tr', defaultLoca
         {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
         {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
         {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
+        {/* LCP hero resmi için CDN preconnect/dns-prefetch */}
+        <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
+        <link rel="dns-prefetch" href="//d2830psw11bu27.cloudfront.net" />
       </Head>
       <CssBaseline />
       <HeroSection />
