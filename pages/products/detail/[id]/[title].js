@@ -1,48 +1,231 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 import Card from '@mui/material/Card';
 import Image from 'next/image';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import ShareIcon from '@mui/icons-material/Share';
+import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '../../../../src/auth/AuthProvider';
+import { useTranslation } from 'react-i18next';
 
-export default function ProductDetailPage({ product, seo }) {
+export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
+  const { t } = useTranslation();
+  const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
+  const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
+  const [quantity, setQuantity] = useState(1);
+  const [orderNote, setOrderNote] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [similar, setSimilar] = useState([]);
+  const [loadingSimilar, setLoadingSimilar] = useState(false);
+
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+  const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
+  useEffect(() => { if (!selectedUrl && images[0]) setSelectedUrl(images[0]); }, [images, selectedUrl]);
+
+  const isVideoUrl = (url) => {
+    if (!url) return false;
+    const clean = url.toLowerCase().split('#')[0].split('?')[0];
+    return /\.(mp4|webm|ogg|mov|m4v)$/.test(clean);
+  };
+
+  // Price and currency display
+  const isTR = !!product?.is_turkey_user;
+  const baseUIPrice = isTR ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
+  const displayOriginal = Number(baseUIPrice) || 0;
+  const discountPercent = 20;
+  const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
+  const currencySymbol = isTR ? '₺' : '€';
+
+  // Similar products (client-side)
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!product?.category) return;
+      try {
+        setLoadingSimilar(true);
+        const res = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
+          params: { page: 0, size: 6 },
+          headers: { 'Accept-Language': pageLocale === 'en' ? 'en' : 'tr' }
+        });
+        const list = (res.data?.content || []).filter(p => p.id !== product.id);
+        if (!cancelled) setSimilar(list);
+      } catch {
+        if (!cancelled) setSimilar([]);
+      } finally {
+        if (!cancelled) setLoadingSimilar(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [product?.category, product?.id, baseURL, pageLocale]);
+
+  const show = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+
+  const handleAddToCart = async () => {
+    if (!product?.id || quantity <= 0) return show(t('Invalid quantity'), 'warning');
+    try {
+      const cartItem = {
+        productId: product.id,
+        quantity,
+        price: (Number(product?.price) || 0) * quantity, // backend EUR varsayılanı
+        title: product.name || product.title,
+        image: product.imageUrl || product.photos?.[0]?.photo,
+        orderNote,
+        currency: isTR ? 'TRY' : 'EUR',
+        is_turkey_user: isTR
+      };
+
+      if (typeof window !== 'undefined') {
+        const tokenStr = localStorage.getItem('token');
+        const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
+        if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
+
+        if (tokenStr) {
+          const email = jwtDecode(tokenStr).sub;
+          await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
+            headers: { Authorization: `Bearer ${tokenStr}` }
+          });
+        } else {
+          // local cart sync
+          let localCart = [];
+          try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
+          const existing = localCart.find(i => i.productId === cartItem.productId);
+          if (existing) {
+            existing.quantity += cartItem.quantity;
+            existing.price = (Number(product?.price) || 0) * existing.quantity;
+            existing.orderNote = orderNote || existing.orderNote;
+          } else {
+            localCart.push(cartItem);
+          }
+          localStorage.setItem('cart', JSON.stringify(localCart));
+          await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { 'X-Guest-Token': guestToken } });
+        }
+
+        if (typeof window.gtag === 'function') {
+          const totalValueUI = displayOriginal * quantity; // UI fiyatı
+          const currencyCode = isTR ? 'TRY' : 'EUR';
+          try {
+            window.gtag('event', 'conversion', {
+              send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
+              value: totalValueUI,
+              currency: currencyCode
+            });
+          } catch {}
+          try {
+            window.gtag('event', 'add_to_cart', {
+              currency: currencyCode,
+              value: totalValueUI,
+              items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: displayOriginal }]
+            });
+          } catch {}
+          window.dispatchEvent(new Event('cartUpdated'));
+        }
+      }
+
+      show(t('Item added to cart'), 'success');
+    } catch (e) {
+      console.error('Add to cart error', e?.response?.data || e.message);
+      show(t('Error adding to cart'), 'error');
+    }
+  };
+
+  const isFav = useMemo(() => {
+    if (!product?.id) return false;
+    if (isLoggedIn) return favorites?.favoriteProducts?.some(f => f.id === product.id);
+    if (typeof window === 'undefined') return false;
+    try { return (JSON.parse(localStorage.getItem('favorites') || '[]') || []).some(f => f.id === product.id); } catch { return false; }
+  }, [favorites, isLoggedIn, product?.id]);
+
+  const handleFavorite = async () => {
+    if (!product?.id) return;
+    try {
+      if (isLoggedIn && token) {
+        await toggleFavorite(product.id, isFav, 'product');
+        show(isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️', 'success');
+      } else if (typeof window !== 'undefined') {
+        let localFavorites = [];
+        try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
+        const exists = localFavorites.some(f => f.id === product.id);
+        if (exists) {
+          localFavorites = localFavorites.filter(f => f.id !== product.id);
+          const guestToken = localStorage.getItem('guestToken');
+          if (guestToken) await axios.delete(`${baseURL}/users/guest/favorites/${product.id}`, { headers: { 'X-Guest-Token': guestToken } });
+          localStorage.setItem('favorites', JSON.stringify(localFavorites));
+          show(t('Removed from favorites') + ' ❌', 'success');
+        } else {
+          const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
+          if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
+          await axios.post(`${baseURL}/users/guest/favorites/${product.id}`, {}, { headers: { 'X-Guest-Token': guestToken } });
+          const favItem = { id: product.id, title: product.title || product.name || 'Unknown', price: product.price || 0, photos: product.photos || [] };
+          localFavorites.push(favItem);
+          localStorage.setItem('favorites', JSON.stringify(localFavorites));
+          show(t('Added to favorites') + ' ❤️', 'success');
+        }
+      }
+    } catch (e) {
+      console.error('Favorite error', e?.response?.data || e.message);
+      show(t('Error syncing favorites'), 'error');
+    }
+  };
+
+  const handleWhatsAppOrder = () => {
+    if (!product?.id || quantity <= 0) return show(t('Invalid product or quantity'), 'warning');
+    const totalDiscounted = displayDiscounted * quantity;
+    const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+    const msg = `🛍️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
+    const phoneNumber = '905348290866';
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
+    if (typeof window !== 'undefined') window.open(url, '_blank');
+    show(t('Redirecting to WhatsApp...'), 'info');
+  };
+
   if (!product) {
     return (
       <Container maxWidth="md">
         <CssBaseline />
-        <Typography variant="h5" sx={{ mt: 4 }}>Product not found</Typography>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h5">{t('Product not found', 'Ürün bulunamadı')}</Typography>
+        </Box>
       </Container>
     );
   }
 
-  const title = product.title || product.name || 'Product';
-  const image = product.photos?.[0]?.photo || 'https://via.placeholder.com/600x600?text=No+Image';
-
   const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
 
   return (
     <>
       <Head>
-        <title>{metaTitle || title}</title>
+        <title>{metaTitle || (product.title || 'Ürün')}</title>
         {metaDescription && <meta name="description" content={metaDescription} />}
         {canonical && <link rel="canonical" href={canonical} />}
         {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
         {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
         {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
-        {/* Open Graph / Twitter */}
-        <meta property="og:title" content={metaTitle || title} />
+        <meta property="og:title" content={metaTitle || (product.title || 'Ürün')} />
         {metaDescription && <meta property="og:description" content={metaDescription} />}
         <meta property="og:type" content="product" />
-        {ogImage && <meta property="og:image" content={ogImage} />}
+        {(ogImage || images[0]) && <meta property="og:image" content={ogImage || images[0]} />}
         {canonical && <meta property="og:url" content={canonical} />}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={metaTitle || title} />
+        <meta name="twitter:title" content={metaTitle || (product.title || 'Ürün')} />
         {metaDescription && <meta name="twitter:description" content={metaDescription} />}
-        {ogImage && <meta name="twitter:image" content={ogImage} />}
-        {/* JSON-LD */}
+        {(ogImage || images[0]) && <meta name="twitter:image" content={ogImage || images[0]} />}
         {product.structuredData?.product && (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.product) }} />
         )}
@@ -51,14 +234,103 @@ export default function ProductDetailPage({ product, seo }) {
         )}
       </Head>
       <CssBaseline />
-      <Container maxWidth="md">
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>{title}</Typography>
-          <Card sx={{ maxWidth: 600, position: 'relative', aspectRatio: '1 / 1' }}>
-            <Image src={image} alt={title} fill sizes="(max-width: 800px) 100vw, 800px" priority style={{ objectFit: 'cover' }} />
-          </Card>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            {/* Main media */}
+            <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2 }}>
+              {isVideoUrl(selectedUrl) ? (
+                <video controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} poster={images.find((u) => !isVideoUrl(u)) || undefined}>
+                  <source src={selectedUrl} />
+                </video>
+              ) : (
+                <Image src={selectedUrl || (images[0] || 'https://via.placeholder.com/800x800?text=No+Image')} alt={product.title || 'Product'} fill sizes="(max-width: 900px) 100vw, 900px" style={{ objectFit: 'cover' }} />
+              )}
+            </Card>
+            {/* Thumbnails */}
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {images.map((url) => (
+                <Box key={url} sx={{ width: 72, height: 72, position: 'relative', border: url === selectedUrl ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
+                  {isVideoUrl(url) ? (
+                    <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
+                      <source src={url} />
+                    </video>
+                  ) : (
+                    <Image src={url} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} />
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Typography variant="h4" sx={{ mb: 1 }}>{product.title || product.name}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{product.category}</Typography>
+
+            {/* Price */}
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>
+              <Typography sx={{ textDecoration: 'line-through', color: 'gray' }}>{displayOriginal.toFixed(2)} {currencySymbol}</Typography>
+              <Typography variant="h5" color="primary">{displayDiscounted.toFixed(2)} {currencySymbol}</Typography>
+              <Typography variant="body2" color="error">%{discountPercent} indirim</Typography>
+            </Box>
+
+            {/* Quantity */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Button variant="outlined" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</Button>
+              <Typography sx={{ minWidth: 32, textAlign: 'center' }}>{quantity}</Typography>
+              <Button variant="outlined" onClick={() => setQuantity(q => q + 1)}>+</Button>
+            </Box>
+
+            {/* Actions */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+              <Button variant="contained" startIcon={<ShoppingCartIcon />} onClick={handleAddToCart}>{t('Add to Cart', 'Sepete Ekle')}</Button>
+              <Button variant="outlined" startIcon={<WhatsAppIcon />} color="success" onClick={handleWhatsAppOrder}>WhatsApp</Button>
+              <IconButton onClick={handleFavorite} color={isFav ? 'error' : 'default'} aria-label="favorite">
+                {isFav ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+              </IconButton>
+              {/* basic share anchors */}
+              <IconButton component="a" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl || '')}`} target="_blank" rel="noopener noreferrer" aria-label="share"><ShareIcon /></IconButton>
+            </Box>
+
+            {/* Description */}
+            {product.description && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>{t('Description', 'Açıklama')}</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{product.description}</Typography>
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+
+        {/* Similar products */}
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>{t('Similar Products', 'Benzer Ürünler')}</Typography>
+          {loadingSimilar ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
+          ) : (
+            <Grid container spacing={2}>
+              {similar.map((p) => {
+                const img = p.photos?.[0]?.photo || 'https://via.placeholder.com/300x300?text=No+Image';
+                const href = `/products/detail/${p.id}/${encodeURIComponent(p.title || 'product')}`;
+                return (
+                  <Grid item key={p.id} xs={6} sm={4} md={3}>
+                    <Card sx={{ p: 1 }}>
+                      <Box component="a" href={href} sx={{ position: 'relative', display: 'block', aspectRatio: '1 / 1' }}>
+                        <Image src={img} alt={p.title || 'product'} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: 'cover' }} />
+                      </Box>
+                      <Typography variant="body2" noWrap sx={{ mt: 1 }}>{p.title}</Typography>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
         </Box>
       </Container>
+
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))} sx={{ width: '100%' }}>{snackbar.message}</Alert>
+      </Snackbar>
     </>
   );
 }
@@ -68,7 +340,8 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
     const res = await axios.get(`${baseURL}/products/detail/${id}/${encodeURIComponent(title || '')}`, {
-      headers: { 'Accept-Language': locale === 'en' ? 'en' : 'tr' }
+      headers: { 'Accept-Language': locale === 'en' ? 'en' : 'tr' },
+      timeout: 5000
     });
     const product = res.data || null;
 
@@ -77,7 +350,6 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     const host = headers['host'] || 'localhost:3000';
     const origin = `${proto}://${host}`;
 
-    // Helpers
     const rawDesc = product?.description || '';
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
@@ -105,7 +377,6 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       }
     };
 
-    // JSON-LD Product
     const productSchema = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -124,7 +395,6 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       }
     };
 
-    // JSON-LD Breadcrumbs
     const breadcrumbs = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
