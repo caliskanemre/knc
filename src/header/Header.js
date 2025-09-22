@@ -26,7 +26,7 @@ import {
 import Register from '../login/Register';
 import { useAuth } from '../auth/AuthProvider';
 import MenuIcon from '@mui/icons-material/Menu';
-import LoginIcon from '@mui/icons-material/Login';
+import PersonIcon from '@mui/icons-material/Person';
 import ProductsSubHeaderMobile from '../activity/ProductsSubHeaderMobile';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
@@ -470,7 +470,7 @@ export default function Header() {
                   {username ? (
                       username.charAt(0).toUpperCase()
                   ) : (
-                      <LoginIcon sx={{ color: 'black', fontSize: { xs: 18, sm: 24 } }} />
+                      <PersonIcon sx={{ color: 'black', fontSize: { xs: 18, sm: 24 } }} />
                   )}
                 </Avatar>
               </IconButton>
