@@ -45,9 +45,19 @@ export async function getServerSideProps(context) {
   try {
     const { locale, defaultLocale, resolvedUrl, req } = context;
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+
+    // İstemci IP zincirini al (proxy arkasında olabilir)
+    const fwdFor = req?.headers?.['x-forwarded-for'];
+    const clientIp = Array.isArray(fwdFor) ? fwdFor[0] : (typeof fwdFor === 'string' ? fwdFor.split(',')[0].trim() : (req?.socket?.remoteAddress || ''));
+
     const res = await axios.get(`${baseURL}/products/all`, {
-      params: { page: 0, size: 20 },
-      headers: { 'Accept-Language': locale },
+      params: { page: 0, size: 20, locale },
+      headers: {
+        'Accept-Language': locale,
+        // Backend'in konuma göre fiyatı belirleyebilmesi için gerçek istemci IP'sini ilet
+        'X-Forwarded-For': clientIp,
+        'X-Real-IP': clientIp,
+      },
       timeout: 5000
     });
     const { content = [] } = res.data || {};

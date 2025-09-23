@@ -25,7 +25,10 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
     return (
         <Grid container spacing={4}>
             {products.map((item, idx) => {
-                const isTR = !!item.is_turkey_user;
+                // is_turkey_user gelmezse locale'e göre fallback yap
+                const isTR = (item.is_turkey_user !== undefined && item.is_turkey_user !== null)
+                    ? !!item.is_turkey_user
+                    : (typeof pageLocale === 'string' && pageLocale.toLowerCase().startsWith('tr'));
                 const baseOriginal = isTR ? (item.tl_price ?? item.price) : (item.eur_price ?? item.price);
                 const originalPriceNum = Number(baseOriginal) || 0;
                 const discountPercent = 20;

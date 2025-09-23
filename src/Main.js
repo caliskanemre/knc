@@ -2,18 +2,10 @@ import React, {lazy, Suspense, useEffect, useState} from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Axios from 'axios';
 import axios from 'axios';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
 import HeroSection from './shared/HeroSection';
@@ -57,11 +49,6 @@ const generateUUID = () => {
     );
 };
 
-const getPrefixedImage = (url, prefix) => {
-    if (!url) return url;
-    return url.replace(/([^/]+)$/, `${prefix}_$1`);
-};
-
 export default function Main() {
     const [products, setProducts] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -75,13 +62,6 @@ export default function Main() {
     const { favorites, isLoggedIn, toggleFavorite, token } = useAuth();
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    // Fiyat formatlama (dönüşüm yok)
-    const formatPrice = (amount, isTR) => {
-        const symbol = isTR ? '₺' : '€';
-        const num = Number(amount) || 0;
-        return `${num.toFixed(2)} ${symbol}`;
-    };
-
     // Fetch products
     const fetchProducts = async (pageNum) => {
         try {
@@ -89,6 +69,7 @@ export default function Main() {
                 params: {
                     page: pageNum,
                     size: PAGE_SIZE,
+                    locale: i18n.language === 'en' ? 'en' : 'tr',
                 },
                 headers: {
                     'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
@@ -138,7 +119,6 @@ export default function Main() {
     }, [i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
 
     // Infinite scroll effect
-    // Infinite scroll effect
     useEffect(() => {
         // Bu efekti kurmayı küçük bir gecikmeyle başlatarak ana iş parçacığına nefes aldır
         const timerId = setTimeout(() => {
@@ -156,8 +136,6 @@ export default function Main() {
         // component unmount olduğunda hem timeout'u hem de event listener'ı temizle
         return () => {
             clearTimeout(timerId);
-            // handleScroll'ı dışarıda tanımlayıp burada remove etmeniz gerekir,
-            // ama bu basit haliyle bile erteleme işe yarayacaktır.
         };
     }, [loading, hasMore, page]);
 
@@ -282,6 +260,8 @@ export default function Main() {
                             favorites={favorites}
                             isLoggedIn={isLoggedIn}
                             handleFavoriteClick={handleFavoriteClick}
+                            pageLocale={i18n.language}
+                            defaultLocale="tr"
                         />
                     </Suspense>
                 </Container>
