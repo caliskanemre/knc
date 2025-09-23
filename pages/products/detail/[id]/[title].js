@@ -38,6 +38,22 @@ const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
      <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1.2s" repeatCount="indefinite"  />
    </svg>`)} }`;
 
+function generateUUID() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+      );
+    }
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch (_) { /* ignore */ }
+  const ts = Date.now().toString(16);
+  const rnd = Math.floor(Math.random() * 1e16).toString(16);
+  return `${ts}-${rnd}-${ts.slice(-4)}-${rnd.slice(-4)}-${ts}${rnd}`.slice(0, 36);
+}
+
 export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const { t } = useTranslation();
   const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
@@ -112,18 +128,24 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
 
       if (typeof window !== 'undefined') {
         const tokenStr = localStorage.getItem('token');
-        const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
-        if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
+        let guestToken = localStorage.getItem('guestToken');
+        if (!guestToken) {
+          guestToken = generateUUID();
+          localStorage.setItem('guestToken', guestToken);
+        }
+
+        const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
+        const lang = pageLocale === 'en' ? 'en' : 'tr';
 
         if (tokenStr) {
           const email = jwtDecode(tokenStr).sub;
           await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
-            headers: { Authorization: `Bearer ${tokenStr}` }
+            headers: { Authorization: `Bearer ${tokenStr}`, 'X-Request-ID': requestId, 'Accept-Language': lang }
           });
         } else {
-          // local cart sync
+          // local cart sync (array-first, then fallback single item)
           let localCart;
-           try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
+          try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
           const existing = localCart.find(i => i.productId === cartItem.productId);
           if (existing) {
             existing.quantity += cartItem.quantity;
@@ -133,25 +155,44 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
             localCart.push(cartItem);
           }
           localStorage.setItem('cart', JSON.stringify(localCart));
-          await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { 'X-Guest-Token': guestToken } });
+
+          const headers = { 'X-Guest-Token': guestToken, 'X-Request-ID': requestId, 'Accept-Language': lang };
+          try {
+            await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 8000 });
+          } catch (err) {
+            if (err?.response?.status === 401) {
+              // refresh token once and retry
+              const newToken = generateUUID();
+              localStorage.setItem('guestToken', newToken);
+              guestToken = newToken;
+              await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 8000 });
+            } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
+              // fallback to single item
+              try {
+                await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 8000 });
+              } catch (err2) {
+                if (err2?.response?.status === 401) {
+                  const newToken2 = generateUUID();
+                  localStorage.setItem('guestToken', newToken2);
+                  await axios.post(`${baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 8000 });
+                } else {
+                  throw err2;
+                }
+              }
+            } else {
+              throw err;
+            }
+          }
         }
 
         if (typeof window.gtag === 'function') {
           const totalValueUI = displayOriginal * quantity; // UI fiyatı
           const currencyCode = isTR ? 'TRY' : 'EUR';
           try {
-            window.gtag('event', 'conversion', {
-              send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
-              value: totalValueUI,
-              currency: currencyCode
-            });
+            window.gtag('event', 'conversion', { send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
           } catch {}
           try {
-            window.gtag('event', 'add_to_cart', {
-              currency: currencyCode,
-              value: totalValueUI,
-              items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: displayOriginal }]
-            });
+            window.gtag('event', 'add_to_cart', { currency: currencyCode, value: totalValueUI, items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: displayOriginal }] });
           } catch {}
           window.dispatchEvent(new Event('cartUpdated'));
         }
@@ -159,8 +200,12 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
 
       show(t('Item added to cart'), 'success');
     } catch (e) {
-      console.error('Add to cart error', e?.response?.data || e.message);
-      show(t('Error adding to cart'), 'error');
+      console.error('Add to cart error', e?.response?.status, e?.response?.data || e.message);
+      if (e?.response?.status === 401) {
+        show(t('Authorization error while adding to cart. Please try again.'), 'error');
+      } else {
+        show(t('Error adding to cart'), 'error');
+      }
     }
   };
 
