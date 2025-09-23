@@ -104,7 +104,8 @@ const ProductDetails = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [orderNote, setOrderNote] = useState("");
-    const [guestToken] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : ''));
+    // Persisted guest token: generate if absent, then store in localStorage and state
+    const [guestToken, setGuestToken] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : ''));
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const { t, i18n } = useTranslation();
@@ -251,7 +252,17 @@ const ProductDetails = () => {
 
     // Discount Logic (moved earlier so SEO can use values)
     const discountPercent = 20;
-    const isTR = !!product.is_turkey_user;
+    // Para birimi tespiti önceliği:
+    // 1) product.currency (TRY/TL/EUR)
+    // 2) i18n.language (tr => TRY, diğer => EUR)
+    // 3) product.is_turkey_user
+    const normCurr = (product?.currency || '').toUpperCase();
+    const langIsTR = (i18n.language || 'tr').toLowerCase().startsWith('tr');
+    const isTR = normCurr === 'TRY' || normCurr === 'TL'
+        ? true
+        : normCurr === 'EUR'
+            ? false
+            : (langIsTR ? true : (!!product.is_turkey_user));
     const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
     const displayOriginalPrice = Number(uiBaseOriginal) || 0;
     const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
@@ -341,8 +352,16 @@ const ProductDetails = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const guestToken = localStorage.getItem('guestToken');
-            const requestId = crypto.randomUUID();
+            // Use persisted guest token from state; create and persist if missing
+            let currentGuestToken = guestToken;
+            if (!currentGuestToken) {
+                currentGuestToken = (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : '');
+                if (currentGuestToken) {
+                    localStorage.setItem('guestToken', currentGuestToken);
+                    setGuestToken(currentGuestToken);
+                }
+            }
+            const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
 
             if (token) {
                 const email = jwtDecode(token).sub;
@@ -366,7 +385,7 @@ const ProductDetails = () => {
 
                 await axios.post(`${baseURL}/cart/guest`, localCart, {
                     headers: {
-                        'X-Guest-Token': guestToken,
+                        'X-Guest-Token': currentGuestToken,
                         'X-Request-ID': requestId
                     },
                 });
@@ -419,6 +438,8 @@ const ProductDetails = () => {
             console.error('Error adding to cart:', error);
             if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
                 showSnackbar(t('Price validation failed. Please refresh the page and try again.'), 'error');
+            } else if (error.response?.status === 400 || error.response?.status === 401) {
+                showSnackbar(t('Error adding to cart'), 'error');
             } else {
                 showSnackbar(t('Error adding to cart'), 'error');
             }
@@ -446,7 +467,7 @@ const ProductDetails = () => {
         }
 
         // WhatsApp mesajı oluştur
-        const isTR = !!product.is_turkey_user;
+        // isTR bilgisini yukarıdaki tespit ile kullan
         const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
         const displayOriginalPrice = Number(uiBaseOriginal) || 0;
         const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
@@ -987,7 +1008,10 @@ const ProductDetails = () => {
                         }}
                     >
                         {similarProducts.map((sp) => {
-                            const spIsTR = !!(sp.is_turkey_user ?? product?.is_turkey_user);
+                            const spCurr = (sp?.currency || '').toUpperCase();
+                            const spIsTR = spCurr === 'TRY' || spCurr === 'TL' ? true
+                                : spCurr === 'EUR' ? false
+                                : isTR; // sp bilgisinde yoksa sayfa para birimine düş
                             const spBaseOriginal = spIsTR ? (sp.tl_price ?? sp.price) : (sp.eur_price ?? sp.price);
                             const spOriginalNum = Number(spBaseOriginal) || 0;
                             const spOriginal = sp.photos?.[0]?.photo || "https://via.placeholder.com/300x200?text=No+Image";
