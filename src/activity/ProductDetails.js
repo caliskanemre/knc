@@ -73,9 +73,17 @@ const pickLocalizedDescription = (p, lang) => {
 };
 
 function generateUUID() {
-    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
-    );
+    try {
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+            );
+        }
+    } catch (_) { /* ignore */ }
+    // Fallback: timestamp + random
+    const ts = Date.now().toString(16);
+    const rnd = Math.floor(Math.random() * 1e16).toString(16);
+    return `${ts}-${rnd}-${ts.slice(-4)}-${rnd.slice(-4)}-${ts}${rnd}`.slice(0, 36);
 }
 
 const getPrefixedImage = (url, prefix) => {
@@ -106,6 +114,13 @@ const ProductDetails = () => {
     const [orderNote, setOrderNote] = useState("");
     // Persisted guest token: generate if absent, then store in localStorage and state
     const [guestToken, setGuestToken] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : ''));
+
+    // guestToken'ı mount anında localStorage'a garanti yaz
+    useEffect(() => {
+        if (typeof window !== 'undefined' && guestToken && localStorage.getItem('guestToken') !== guestToken) {
+            localStorage.setItem('guestToken', guestToken);
+        }
+    }, [guestToken]);
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const { t, i18n } = useTranslation();
@@ -352,7 +367,6 @@ const ProductDetails = () => {
 
         try {
             const token = localStorage.getItem('token');
-            // Use persisted guest token from state; create and persist if missing
             let currentGuestToken = guestToken;
             if (!currentGuestToken) {
                 currentGuestToken = (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : '');
@@ -372,6 +386,7 @@ const ProductDetails = () => {
                     },
                 });
             } else {
+                // Local sepeti güncelle
                 let localCart = JSON.parse(localStorage.getItem('cart')) || [];
                 const existingItem = localCart.find(item => item.productId === cartItem.productId);
                 if (existingItem) {
@@ -383,12 +398,46 @@ const ProductDetails = () => {
                 }
                 localStorage.setItem('cart', JSON.stringify(localCart));
 
-                await axios.post(`${baseURL}/cart/guest`, localCart, {
-                    headers: {
-                        'X-Guest-Token': currentGuestToken,
-                        'X-Request-ID': requestId
-                    },
-                });
+                const headers = {
+                    'X-Guest-Token': currentGuestToken,
+                    'X-Request-ID': requestId,
+                    'Accept-Language': i18n.language?.startsWith('en') ? 'en' : 'tr'
+                };
+
+                try {
+                    // Önce dizi (localCart) ile gönder (mevcut backend sözleşmesine uyum)
+                    await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 8000 });
+                } catch (err) {
+                    if (err?.response?.status === 401) {
+                        // Token geçersiz/expire olmuş olabilir: tek seferlik yeni token üretip yeniden dene
+                        const newToken = generateUUID();
+                        localStorage.setItem('guestToken', newToken);
+                        setGuestToken(newToken);
+                        await axios.post(`${baseURL}/cart/guest`, localCart, {
+                            headers: { ...headers, 'X-Guest-Token': newToken },
+                            timeout: 8000
+                        });
+                    } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
+                        // Sözleşme farklı olabilir: tek item ile deneyelim
+                        try {
+                            await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 8000 });
+                        } catch (err2) {
+                            if (err2?.response?.status === 401) {
+                                const newToken2 = generateUUID();
+                                localStorage.setItem('guestToken', newToken2);
+                                setGuestToken(newToken2);
+                                await axios.post(`${baseURL}/cart/guest`, cartItem, {
+                                    headers: { ...headers, 'X-Guest-Token': newToken2 },
+                                    timeout: 8000
+                                });
+                            } else {
+                                throw err2;
+                            }
+                        }
+                    } else {
+                        throw err;
+                    }
+                }
             }
 
             // Google Ads conversion + GA4 add_to_cart
@@ -435,11 +484,11 @@ const ProductDetails = () => {
 
             showSnackbar(t('Item added to cart'), 'success');
         } catch (error) {
-            console.error('Error adding to cart:', error);
+            console.error('Error adding to cart:', error?.response?.status, error?.response?.data || error?.message);
             if (error.response?.status === 500 && error.response?.data?.includes('Invalid price')) {
                 showSnackbar(t('Price validation failed. Please refresh the page and try again.'), 'error');
-            } else if (error.response?.status === 400 || error.response?.status === 401) {
-                showSnackbar(t('Error adding to cart'), 'error');
+            } else if (error.response?.status === 401) {
+                showSnackbar(t('Authorization error while adding to cart. Please try again.'), 'error');
             } else {
                 showSnackbar(t('Error adding to cart'), 'error');
             }

@@ -8,12 +8,36 @@ import { useRouter } from 'next/router';
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
+function generateUUID() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+      );
+    }
+  } catch (_) { /* ignore */ }
+  const ts = Date.now().toString(16);
+  const rnd = Math.floor(Math.random() * 1e16).toString(16);
+  return `${ts}-${rnd}-${ts.slice(-4)}-${rnd.slice(-4)}-${ts}${rnd}`.slice(0, 36);
+}
+
 export default function CartPage() {
   const { isLoggedIn, username } = useAuth();
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Ensure guest token exists for guest users
+  useEffect(() => {
+    if (!isLoggedIn) {
+      const existing = typeof window !== 'undefined' ? localStorage.getItem('guestToken') : '';
+      if (!existing) {
+        const g = generateUUID();
+        if (typeof window !== 'undefined') localStorage.setItem('guestToken', g);
+      }
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     let cancelled = false;
