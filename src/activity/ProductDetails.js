@@ -124,7 +124,7 @@ const ProductDetails = () => {
 
     const { token, isLoggedIn, favorites, toggleFavorite } = useAuth();
     const { t, i18n } = useTranslation();
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -347,6 +347,22 @@ const ProductDetails = () => {
         ]
     };
 
+    // Guest sepetini (gerekirse) backend tarafında initialize et
+    const ensureGuestCartInitialized = async (tokenToUse) => {
+        try {
+            await axios.get(`${baseURL}/cart/guest`, {
+                headers: {
+                    'X-Guest-Token': tokenToUse,
+                    'Accept-Language': i18n.language?.startsWith('en') ? 'en' : 'tr'
+                },
+                timeout: 8000
+            });
+        } catch (e) {
+            // 401 haricinde init hatalarını zorlamayalım, POST sırasında fallback çalışır
+            if (e?.response?.status === 401) throw e;
+        }
+    };
+
     const addToCart = debounce(async () => {
         if (!product || quantity <= 0) {
             showSnackbar(t('Invalid quantity'), 'warning');
@@ -375,6 +391,9 @@ const ProductDetails = () => {
                     setGuestToken(currentGuestToken);
                 }
             }
+            // Önce guest cart'ı initialize etmeyi dene (backend bazı ortamlarda add sırasında 401 dönebiliyor)
+            await ensureGuestCartInitialized(currentGuestToken);
+
             const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
 
             if (token) {
@@ -405,20 +424,20 @@ const ProductDetails = () => {
                 };
 
                 try {
-                    // Önce dizi (localCart) ile gönder (mevcut backend sözleşmesine uyum)
                     await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 8000 });
                 } catch (err) {
                     if (err?.response?.status === 401) {
-                        // Token geçersiz/expire olmuş olabilir: tek seferlik yeni token üretip yeniden dene
+                        // Token invalid olabilir: yeni token üret, init et ve tekrar dene
                         const newToken = generateUUID();
                         localStorage.setItem('guestToken', newToken);
                         setGuestToken(newToken);
+                        await ensureGuestCartInitialized(newToken);
                         await axios.post(`${baseURL}/cart/guest`, localCart, {
                             headers: { ...headers, 'X-Guest-Token': newToken },
                             timeout: 8000
                         });
                     } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
-                        // Sözleşme farklı olabilir: tek item ile deneyelim
+                        // Sözleşme uyuşmazlığında tek item fallback
                         try {
                             await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 8000 });
                         } catch (err2) {
@@ -426,6 +445,7 @@ const ProductDetails = () => {
                                 const newToken2 = generateUUID();
                                 localStorage.setItem('guestToken', newToken2);
                                 setGuestToken(newToken2);
+                                await ensureGuestCartInitialized(newToken2);
                                 await axios.post(`${baseURL}/cart/guest`, cartItem, {
                                     headers: { ...headers, 'X-Guest-Token': newToken2 },
                                     timeout: 8000
