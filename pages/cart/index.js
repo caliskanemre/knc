@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Container, CssBaseline, Typography, Card, CardContent, CardMedia, Box, CircularProgress, Button, Divider } from '@mui/material';
+import { Container, CssBaseline, Typography, Card, CardContent, CardMedia, Box, CircularProgress, Button, Divider, CardActions, Snackbar, Alert } from '@mui/material';
 import axios from 'axios';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,17 @@ export default function CartPage() {
   const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Toast state
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState('info');
+
+  const showToast = (message, severity = 'info') => {
+    setToastMessage(message);
+    setToastSeverity(severity);
+    setToastOpen(true);
+  };
 
   // Ensure guest token exists for guest users
   useEffect(() => {
@@ -57,7 +68,10 @@ export default function CartPage() {
         }
         if (!cancelled) setItems(data);
       } catch (e) {
-        if (!cancelled) setItems([]);
+        if (!cancelled) {
+          setItems([]);
+          showToast(t('Failed to load cart.', 'Sepet yüklenemedi.'), 'error');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -92,6 +106,105 @@ export default function CartPage() {
     router.push('/payment');
   };
 
+  // Guest cart sync helper (restore)
+  const syncGuestCart = async (newItems) => {
+    const guestToken = typeof window !== 'undefined' ? localStorage.getItem('guestToken') : '';
+    if (!guestToken) return;
+    const normalized = (newItems || []).map(item => ({
+      productId: item.productId || item.id,
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0,
+      title: item.title || item.name,
+      image: item.image || item.photos?.[0]?.photo,
+      orderNote: item.orderNote,
+      currency: item.currency || (item.is_turkey_user ? 'TRY' : 'EUR'),
+      is_turkey_user: item.is_turkey_user
+    }));
+    try {
+      const res = await axios.post(`${baseURL}/cart/guest`, normalized, { headers: { 'X-Guest-Token': guestToken } });
+      const serverCart = Array.isArray(res.data) ? res.data : [];
+      setItems(serverCart);
+      try { if (typeof window !== 'undefined') localStorage.setItem('cart', JSON.stringify(serverCart)); } catch(_) {}
+    } catch (err) {
+      showToast(err?.response?.data?.message || t('Error syncing guest cart', 'Misafir sepeti eşitlenemedi'), 'error');
+    }
+  };
+
+  // Remove item from cart (fix endpoints)
+  const handleRemoveItem = async (id) => {
+    const before = [...items];
+    const newItems = (items || []).filter(it => (it.productId || it.id) !== id);
+    setItems(newItems);
+    try {
+      if (isLoggedIn && username) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+        await axios.delete(`${baseURL}/cart/${encodeURIComponent(username)}/item/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        showToast(t('Item removed from cart', 'Ürün sepetten kaldırıldı'), 'success');
+      } else {
+        const guestToken = typeof window !== 'undefined' ? localStorage.getItem('guestToken') : '';
+        await axios.delete(`${baseURL}/cart/guest/item/${id}`, { headers: { 'X-Guest-Token': guestToken } });
+        try { if (typeof window !== 'undefined') localStorage.setItem('cart', JSON.stringify(newItems)); } catch(_) {}
+        showToast(t('Item removed from cart', 'Ürün sepetten kaldırıldı'), 'success');
+      }
+    } catch (err) {
+      setItems(before);
+      showToast(err?.response?.data?.message || t('Error removing item', 'Ürün kaldırılırken hata'), 'error');
+    }
+  };
+
+  // Update quantity +/- (restore correct logic)
+  const handleUpdateQuantity = async (id, action) => {
+    const idx = items.findIndex(it => (it.productId || it.id) === id);
+    if (idx === -1) return;
+    const current = items[idx];
+    const currQty = Math.max(1, Number(current.quantity) || 1);
+    const nextQty = action === 'increment' ? currQty + 1 : currQty - 1;
+    if (nextQty <= 0) return;
+
+    const unitPrice = (Number(current.price) || 0) / currQty || 0;
+    const updated = { ...current, quantity: nextQty, price: unitPrice * nextQty };
+    const newItems = [...items];
+    newItems[idx] = updated;
+    setItems(newItems);
+
+    try {
+      if (isLoggedIn && username) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+        const dto = {
+          productId: id,
+          quantity: nextQty,
+          price: unitPrice * nextQty,
+          title: current.title || current.name,
+          image: current.image || current.photos?.[0]?.photo,
+          orderNote: current.orderNote,
+          currency: current.currency || (current.is_turkey_user ? 'TRY' : 'EUR'),
+          is_turkey_user: current.is_turkey_user
+        };
+        await axios.put(`${baseURL}/cart/${encodeURIComponent(username)}/item/${id}`, dto, { headers: { Authorization: `Bearer ${token}` } });
+        showToast(t('Quantity updated', 'Adet güncellendi'), 'success');
+      } else {
+        await syncGuestCart(newItems);
+        showToast(t('Quantity updated', 'Adet güncellendi'), 'success');
+      }
+    } catch (err) {
+      // Try to refetch on failure
+      try {
+        if (isLoggedIn && username) {
+          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+          const res = await axios.get(`${baseURL}/cart/${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${token}`, 'Accept-Language': i18n.language?.startsWith('en') ? 'en' : 'tr' } });
+          setItems(Array.isArray(res.data) ? res.data : []);
+        } else {
+          const guestToken = typeof window !== 'undefined' ? localStorage.getItem('guestToken') : '';
+          const res = await axios.get(`${baseURL}/cart/guest`, { headers: { 'X-Guest-Token': guestToken, 'Accept-Language': i18n.language?.startsWith('en') ? 'en' : 'tr' } });
+          const data = Array.isArray(res.data) ? res.data : [];
+          setItems(data);
+          try { if (typeof window !== 'undefined') localStorage.setItem('cart', JSON.stringify(data)); } catch(_) {}
+        }
+      } catch(_) {}
+      showToast(err?.response?.data?.message || t('Error updating quantity', 'Adet güncellenemedi'), 'error');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -115,11 +228,16 @@ export default function CartPage() {
               return (
                 <Card key={id} sx={{ display: 'flex', mb: 2 }}>
                   <CardMedia component="img" sx={{ width: 120 }} image={img} alt={title} />
-                  <CardContent>
+                  <CardContent sx={{ flex: 1 }}>
                     <Typography variant="h6" noWrap>{title}</Typography>
                     <Typography color="text.secondary">{t('Quantity', 'Adet')}: {item.quantity || 0}</Typography>
                     <Typography color="text.secondary">{t('Price', 'Fiyat')}: {formatPrice(item.price, currency)}</Typography>
                   </CardContent>
+                  <CardActions sx={{ alignItems: 'center' }}>
+                    <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')} disabled={(Number(item.quantity) || 0) <= 1}>-</Button>
+                    <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
+                    <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t('Remove', 'Kaldır')}</Button>
+                  </CardActions>
                 </Card>
               );
             })}
@@ -141,6 +259,17 @@ export default function CartPage() {
           </>
         )}
       </Container>
+
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={3000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setToastOpen(false)} severity={toastSeverity} sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 }
