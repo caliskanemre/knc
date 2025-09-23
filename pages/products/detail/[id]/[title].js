@@ -22,6 +22,22 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 
+// Lightweight shimmer placeholder for fast first paint while images load
+const toBase64 = (str) => (typeof window === 'undefined' ? Buffer.from(str).toString('base64') : window.btoa(str));
+const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
+  `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+     <defs>
+       <linearGradient id="g">
+         <stop stop-color="#f6f7f8" offset="20%"/>
+         <stop stop-color="#edeef1" offset="50%"/>
+         <stop stop-color="#f6f7f8" offset="70%"/>
+       </linearGradient>
+     </defs>
+     <rect width="${w}" height="${h}" fill="#f6f7f8"/>
+     <rect id="r" width="${w}" height="${h}" fill="url(#g)"/>
+     <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1.2s" repeatCount="indefinite"  />
+   </svg>`)} }`;
+
 export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const { t } = useTranslation();
   const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
@@ -284,6 +300,8 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
         {product.structuredData?.breadcrumbs && (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.breadcrumbs) }} />
         )}
+        {/* Preconnect to image CDN to reduce DNS/TLS latency */}
+        <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
       </Head>
       <CssBaseline />
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -296,7 +314,17 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
                   <source src={selectedUrl} />
                 </video>
               ) : (
-                <Image src={selectedUrl || (images[0] || 'https://via.placeholder.com/800x800?text=No+Image')} alt={product.title || 'Product'} fill sizes="(max-width: 900px) 100vw, 900px" style={{ objectFit: 'cover' }} />
+                <Image
+                  src={selectedUrl || (images[0] || 'https://via.placeholder.com/800x800?text=No+Image')}
+                  alt={product.title || 'Product'}
+                  fill
+                  sizes="(max-width: 900px) 100vw, 900px"
+                  style={{ objectFit: 'cover' }}
+                  priority
+                  quality={60}
+                  placeholder="blur"
+                  blurDataURL={shimmer(16, 16)}
+                />
               )}
             </Card>
             {/* Thumbnails */}
@@ -308,7 +336,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
                       <source src={url} />
                     </video>
                   ) : (
-                    <Image src={url} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} />
+                    <Image src={url} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} quality={60} />
                   )}
                 </Box>
               ))}
