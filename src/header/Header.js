@@ -52,6 +52,7 @@ export default function Header() {
 
   // Mevcut dil parametresini al
   const currentLang = location.pathname.split('/')[1] || 'tr';
+  const localePath = (p) => (currentLang === 'en' ? `/en${p}` : p);
 
   // Fetch cart item count
   useEffect(() => {
@@ -85,7 +86,8 @@ export default function Header() {
   const changeLanguage = (language) => {
     i18n.changeLanguage(language);
     setSelectedLanguage(language);
-    const newPath = location.pathname.replace(/^\/(en|tr)/, `/${language}`) || `/${language}`;
+    const base = location.pathname.replace(/^\/(en|tr)/, '');
+    const newPath = language === 'tr' ? (base || '/') : `/en${base || ''}`;
     navigate(newPath);
     setLanguageAnchorEl(null);
     if (isMobile || isTablet) setMobileMenuOpen(false);
@@ -102,7 +104,8 @@ export default function Header() {
   }, []);
 
   const handleNavigation = (path) => {
-    navigate(`/${currentLang}${path}`);
+    const nextPath = currentLang === 'en' ? `/en${path}` : path;
+    navigate(nextPath);
     setMobileMenuOpen(false);
     setAnchorEl(null);
     setPoliciesAnchorEl(null);
@@ -111,14 +114,14 @@ export default function Header() {
   // Sepet tıklama işlemi için özel fonksiyon
   const handleCartClick = () => {
     try {
-      console.log('Cart clicked, navigating to:', `/${currentLang}/cart`);
-      navigate(`/${currentLang}/cart`);
+      const target = localePath('/cart');
+      console.log('Cart clicked, navigating to:', target);
+      navigate(target);
       setMobileMenuOpen(false);
       setAnchorEl(null);
       setPoliciesAnchorEl(null);
     } catch (error) {
       console.error('Error navigating to cart:', error);
-      // Fallback olarak direkt /cart'a yönlendir
       navigate('/cart');
     }
   };
@@ -196,25 +199,20 @@ export default function Header() {
           <title>{t('site_title')}</title>
           <meta name="description" content={t('site_description')} />
           <meta name="keywords" content={t('site_keywords')} />
-          <link
-              rel="canonical"
-              href={`${window.location.origin}/${currentLang}${location.pathname.replace(/^\/(en|tr)/, '')}`}
-          />
-          <link
-              rel="alternate"
-              hreflang="tr"
-              href={`${window.location.origin}/tr${location.pathname.replace(/^\/(en|tr)/, '')}`}
-          />
-          <link
-              rel="alternate"
-              hreflang="en"
-              href={`${window.location.origin}/en${location.pathname.replace(/^\/(en|tr)/, '')}`}
-          />
-          <link
-              rel="alternate"
-              hreflang="x-default"
-              href={`${window.location.origin}/tr${location.pathname.replace(/^\/(en|tr)/, '')}`}
-          />
+          {(() => {
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            const basePath = location.pathname.replace(/^\/(en|tr)/, '') || '/';
+            const canonical = `${origin}${basePath}`;
+            const enAlt = `${origin}/en${basePath === '/' ? '' : basePath}`;
+            return (
+              <>
+                <link rel="canonical" href={canonical} />
+                <link rel="alternate" hreflang="tr" href={canonical} />
+                <link rel="alternate" hreflang="en" href={enAlt} />
+                <link rel="alternate" hreflang="x-default" href={canonical} />
+              </>
+            );
+          })()}
         </Helmet>
 
         <AppBar position="relative" style={{ backgroundColor: 'white' }}>
@@ -313,14 +311,14 @@ export default function Header() {
                       <circle fill="url(#instaGradient)" cx="18.406" cy="5.594" r="1.44" />
                     </svg>
                   </IconButton>
-                  <NavLink to={`/${currentLang}/search`} className="nav-link">
+                  <NavLink to={localePath('/search')} className="nav-link">
                     <img src={SearchImage} alt="Search events" style={{ cursor: 'pointer' }} />
                   </NavLink>
                   <ProductsSubHeader />
-                  <NavLink to={`/${currentLang}/articles`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
+                  <NavLink to={localePath('/articles')} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
                     {t('Articles')}
                   </NavLink>
-                  <NavLink to={`/${currentLang}/about-us`} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
+                  <NavLink to={localePath('/about-us')} className="nav-link" style={{ fontFamily: "'Lora', serif" }}>
                     {t('About Us')}
                   </NavLink>
                   <NavLink
@@ -346,44 +344,35 @@ export default function Header() {
                             color: 'black',
                             fontFamily: "'Lora', serif !important",
                             padding: '8px 16px',
-                            '&:hover': {
-                              bgcolor: '#f5f5f5',
-                              color: '#8B0000',
-                            },
+                            '&:hover': { bgcolor: '#f5f5f5', color: '#8B0000' },
                           },
                         },
                       }}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'left',
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'left',
-                      }}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                   >
                     <MenuItem onClick={() => handleNavigation('/privacy-policy')}>
-                      <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link">
+                      <NavLink to={localePath('/privacy-policy')} className="nav-link">
                         {t('Privacy Policy')}
                       </NavLink>
                     </MenuItem>
                     <MenuItem onClick={() => handleNavigation('/shipping-policy')}>
-                      <NavLink to={`/${currentLang}/shipping-policy`} className="nav-link">
+                      <NavLink to={localePath('/shipping-policy')} className="nav-link">
                         {t('shipping_policy.title')}
                       </NavLink>
                     </MenuItem>
                     <MenuItem onClick={() => handleNavigation('/return-policy')}>
-                      <NavLink to={`/${currentLang}/return-policy`} className="nav-link">
+                      <NavLink to={localePath('/return-policy')} className="nav-link">
                         {t('return_policy.title')}
                       </NavLink>
                     </MenuItem>
                     <MenuItem onClick={() => handleNavigation('/sales-agreement')}>
-                      <NavLink to={`/${currentLang}/sales-agreement`} className="nav-link">
+                      <NavLink to={localePath('/sales-agreement')} className="nav-link">
                         {t('sales_agreement.title')}
                       </NavLink>
                     </MenuItem>
                   </Menu>
-                  <NavLink to={`/${currentLang}/contact-us`} className="nav-link">
+                  <NavLink to={localePath('/contact-us')} className="nav-link">
                     {t('Contact Us')}
                   </NavLink>
                 </>
@@ -664,22 +653,22 @@ export default function Header() {
                     }}
                 >
                   <MenuItem onClick={() => handleNavigation('/privacy-policy')}>
-                    <NavLink to={`/${currentLang}/privacy-policy`} className="nav-link">
+                    <NavLink to={localePath('/privacy-policy')} className="nav-link">
                       {t('Privacy Policy')}
                     </NavLink>
                   </MenuItem>
                   <MenuItem onClick={() => handleNavigation('/shipping-policy')}>
-                    <NavLink to={`/${currentLang}/shipping-policy`} className="nav-link">
+                    <NavLink to={localePath('/shipping-policy')} className="nav-link">
                       {t('shipping_policy.title')}
                     </NavLink>
                   </MenuItem>
                   <MenuItem onClick={() => handleNavigation('/return-policy')}>
-                    <NavLink to={`/${currentLang}/return-policy`} className="nav-link">
+                    <NavLink to={localePath('/return-policy')} className="nav-link">
                       {t('return_policy.title')}
                     </NavLink>
                   </MenuItem>
                   <MenuItem onClick={() => handleNavigation('/sales-agreement')}>
-                    <NavLink to={`/${currentLang}/sales-agreement`} className="nav-link">
+                    <NavLink to={localePath('/sales-agreement')} className="nav-link">
                       {t('sales_agreement.title')}
                     </NavLink>
                   </MenuItem>

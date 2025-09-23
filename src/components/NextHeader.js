@@ -243,14 +243,14 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
           {/* Desktop nav */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2, ml: 2, flexWrap: 'wrap', justifyContent: 'space-evenly', flexGrow: 1, minWidth: 0 }}>
             {/* Instagram */}
-            <IconButton
+         {/*   <IconButton
               aria-label="Instagram"
               href="https://www.instagram.com/knc_kina_organizasyon"
               target="_blank"
               rel="noopener noreferrer"
               sx={{ color: 'black', '&:hover': { color: '#8B0000' } }}
             >
-              {/* svg ... */}
+               svg ...
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" style={{ marginRight: '2px' }}>
                 <defs>
                   <linearGradient id="instaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -265,7 +265,7 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
                 <path fill="url(#instaGradient)" d="M12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z" />
                 <circle fill="url(#instaGradient)" cx="18.406" cy="5.594" r="1.44" />
               </svg>
-            </IconButton>
+            </IconButton>*/}
 
             {/* Search */}
             <Link href="/search" locale={locale} style={{ textDecoration: 'none' }}>

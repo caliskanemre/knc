@@ -37,9 +37,33 @@ const baseResources = {
   }
 };
 
+// Başlangıç dilini tespit et
+const detectInitialLang = () => {
+  if (isServer) return 'tr';
+  try {
+    // 1) <html lang="..."> önceliklidir (SSR tarafından ayarlanır)
+    const htmlLang = document?.documentElement?.lang;
+    if (htmlLang === 'tr' || htmlLang === 'en') return htmlLang;
+
+    // 2) URL segmenti /tr veya /en ise
+    const seg = window.location.pathname.split('/')[1];
+    if (seg === 'tr' || seg === 'en') return seg;
+
+    // 3) NEXT_LOCALE çerezi varsa
+    const m = document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]+)/);
+    if (m) {
+      const v = decodeURIComponent(m[1]);
+      if (v === 'tr' || v === 'en') return v;
+    }
+  } catch {}
+  return 'tr';
+};
+
+const initialLang = detectInitialLang();
+
 // Tek seferlik init
 i18n.use(initReactI18next).init({
-  lng: 'tr',
+  lng: initialLang,
   fallbackLng: 'en',
   supportedLngs: ['en', 'tr'],
   load: 'languageOnly',
