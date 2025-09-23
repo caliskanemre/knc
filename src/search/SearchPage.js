@@ -16,7 +16,8 @@ import {
     DialogTitle,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogActions,
+    MenuItem
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -49,6 +50,9 @@ const SearchPage = () => {
     const { toggleFavorite, favorites, isLoggedIn } = useAuth();
     const [openDialog, setOpenDialog] = useState(false);
 
+    // Emniyetli favorites (null/undefined durumlarında boş dizilere düş)
+    const safeFavorites = favorites || { favoriteEvents: [], favoriteActivities: [] };
+
     // Get current locale from i18next
     const getCurrentLocale = () => {
         const currentLang = i18n.language || 'tr';
@@ -70,9 +74,8 @@ const SearchPage = () => {
     // Favorite action for events: if not favorited, open menu; otherwise, toggle favorite
     const handleClick = (eventId) => {
         if (isLoggedIn) {
-            const isAlreadyFavoritedEvent = favorites.favoriteEvents
-                .map(event => event.id)
-                .includes(eventId);
+            const isAlreadyFavoritedEvent = safeFavorites.favoriteEvents
+                .some(event => event.id === eventId);
             if (!isAlreadyFavoritedEvent) {
                 setOpenMenuEventId(eventId);
             } else {
@@ -92,17 +95,18 @@ const SearchPage = () => {
     };
 
     const handleFavoriteClick = (eventId, notificationType) => {
-        const isFavorite = favorites.favoriteEvents
-            .map(event => event.id)
-            .includes(eventId);
+        const isFavorite = safeFavorites.favoriteEvents
+            .some(event => event.id === eventId);
         toggleFavorite(eventId, isFavorite, "event", notificationType);
     };
 
     // For activity favorites, use a simpler toggle
     const handleFavoriteActivityClick = (activityId) => {
+        const isFavorite = safeFavorites.favoriteActivities
+            .some(activity => activity.id === activityId);
         toggleFavorite(
             activityId,
-            favorites.favoriteActivities.map(activity => activity.id).includes(activityId),
+            isFavorite,
             "activity"
         );
     };
@@ -168,11 +172,6 @@ const SearchPage = () => {
         return { eventSize };
     }
 
-    const totalResults = eventResult.length + activityResult.length;
-    const handleSearch = async (options = {}) => {
-        await extractedEvent(options);
-    };
-
     // Combine event and activity results into one array and add a type property
     const combinedResults = [
         ...(Array.isArray(allResult.event)
@@ -182,6 +181,13 @@ const SearchPage = () => {
             ? allResult.activity.map(item => ({ ...item, type: 'activities' }))
             : []),
     ];
+
+    // Total results should reflect what we actually render (combinedResults)
+    const totalResults = combinedResults.length;
+
+    const handleSearch = async (options = {}) => {
+        await extractedEvent(options);
+    };
 
     // Helper function to get localized product name
     const getLocalizedName = (item) => {
@@ -218,10 +224,7 @@ const SearchPage = () => {
         <div>
             <Helmet>
                 <title>{searchQuery ? `${searchQuery} - Search Results | Kına Sepeti` : 'Search | Kına Sepeti'}</title>
-                <meta
-                    name="description"
-                    content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`}
-                />
+                <meta name="description" content={`Ürün ara ${searchQuery ? searchQuery : 'your interests'} on Kına Sepeti.`} />
                 <meta name="robots" content="noindex, follow" />
                 <link rel="canonical" href={`${window.location.origin}${window.location.pathname}`} />
             </Helmet>
@@ -283,69 +286,43 @@ const SearchPage = () => {
             <Container sx={{ py: 9 }} maxWidth="xl">
                 <Grid container spacing={4}>
                     {combinedResults.map((item) => {
-                        // Determine if item is already favorited based on its type
                         const isAlreadyFavorited =
                             item.type === 'events'
-                                ? favorites.favoriteEvents?.some(event => event.id === item.id)
-                                : favorites.favoriteActivities?.some(activity => activity.id === item.id);
+                                ? safeFavorites.favoriteEvents?.some(event => event.id === item.id)
+                                : safeFavorites.favoriteActivities?.some(activity => activity.id === item.id);
 
-                        // Use different handlers for events vs. activities
                         const handleFavClick =
                             item.type === 'events'
                                 ? () => handleClick(item.id)
                                 : () => handleFavoriteActivityClick(item.id);
 
-                        // Determine link and image source based on type
                         const detailLink = `/products/detail/${item.id}/${getLocalizedName(item)}`;
 
-                        // Backend'ten gelen product_photos array'ini kullan
                         const originalImage = (item.product_photos && item.product_photos[0]
                             ? item.product_photos[0].photoUrl
                             : (item.photos && item.photos[0] ? item.photos[0].photo : ''));
 
-                        // Generate prefixed image URLs
                         const smallImageUrl = getPrefixedImage(originalImage, 'small');
                         const mediumImageUrl = getPrefixedImage(originalImage, 'medium');
                         const largeImageUrl = getPrefixedImage(originalImage, 'large');
 
                         return (
                             <Grid item key={item.id} xs={12} sm={6} md={4} lg={3}>
-                                <Card
-                                    sx={{
-                                        height: { xs: 'auto', md: '350px' },
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative'
-                                    }}
-                                >
+                                <Card sx={{ height: { xs: 'auto', md: '350px' }, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                                     <a href={detailLink} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
                                             image={smallImageUrl}
-                                            srcSet={`
-                                                ${smallImageUrl} 400w,
-                                                ${mediumImageUrl} 800w,
-                                                ${largeImageUrl} 1200w
-                                            `}
+                                            srcSet={`${smallImageUrl} 400w, ${mediumImageUrl} 800w, ${largeImageUrl} 1200w`}
                                             sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
                                             alt={getLocalizedName(item)}
-                                            sx={{
-                                                width: '100%',
-                                                height: { xs: 140, md: 200 },
-                                                objectFit: 'cover'
-                                            }}
+                                            sx={{ width: '100%', height: { xs: 140, md: 200 }, objectFit: 'cover' }}
                                         />
                                     </a>
                                     <Box sx={{ p: 2, flex: 1 }}>
                                         <Typography
                                             variant="h6"
-                                            sx={{
-                                                fontSize: getDynamicFontSize(getLocalizedName(item)),
-                                                fontWeight: 500,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}
+                                            sx={{ fontSize: getDynamicFontSize(getLocalizedName(item)), fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                                         >
                                             {getLocalizedName(item)}
                                         </Typography>
@@ -357,40 +334,15 @@ const SearchPage = () => {
                                                 {item.type === 'activities' ? item.activity_location : item.place}
                                             </Typography>
                                         </Box>
-                                        {/* Fiyat bilgisini göster */}
                                         {(item.tl_price != null || item.eur_price != null || item.price != null) && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                                                <Typography
-                                                    sx={{
-                                                        textDecoration: 'line-through',
-                                                        color: 'gray',
-                                                        mr: 1,
-                                                        fontSize: '0.9rem'
-                                                    }}
-                                                >
+                                                <Typography sx={{ textDecoration: 'line-through', color: 'gray', mr: 1, fontSize: '0.9rem' }}>
                                                     {formatPrice(item)}
                                                 </Typography>
-                                                <Typography
-                                                    sx={{
-                                                        color: '#1976d2',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '0.9rem'
-                                                    }}
-                                                >
+                                                <Typography sx={{ color: '#1976d2', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                     {formatDiscountedPrice(item)}
                                                 </Typography>
-                                                <Box
-                                                    sx={{
-                                                        backgroundColor: 'red',
-                                                        color: 'white',
-                                                        px: 1,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        ml: 1,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                >
+                                                <Box sx={{ backgroundColor: 'red', color: 'white', px: 1, py: 0.5, borderRadius: 1, ml: 1, fontSize: '0.75rem', fontWeight: 'bold' }}>
                                                     20%
                                                 </Box>
                                             </Box>
@@ -400,19 +352,10 @@ const SearchPage = () => {
                                         id={item.type === 'events' ? `favorite-icon-${item.id}` : undefined}
                                         aria-label="add to favorites"
                                         onClick={handleFavClick}
-                                        sx={{
-                                            position: 'absolute',
-                                            top: '8px',
-                                            right: '8px',
-                                            backgroundColor: 'rgba(255,255,255,0.7)',
-                                            borderRadius: '50%',
-                                            padding: '6px',
-                                            zIndex: 3,
-                                        }}
+                                        sx={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '50%', padding: '6px', zIndex: 3 }}
                                     >
                                         {isAlreadyFavorited ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
                                     </IconButton>
-                                    {/* For events, show the menu if open */}
                                     {item.type === 'events' && openMenuEventId === item.id && (
                                         <Menu
                                             id="simple-menu"
@@ -421,7 +364,9 @@ const SearchPage = () => {
                                             open={true}
                                             onClose={() => setOpenMenuEventId(null)}
                                         >
-                                            {/* Add menu items here if needed */}
+                                            <MenuItem onClick={() => { handleFavoriteClick(item.id, 'NONE'); setOpenMenuEventId(null); }}>
+                                                {t('addToFavorites') || 'Favorilere ekle'}
+                                            </MenuItem>
                                         </Menu>
                                     )}
                                 </Card>
@@ -431,12 +376,7 @@ const SearchPage = () => {
                 </Grid>
                 {(hasMoreEvents || hasMoreActivity) && (eventPage > 0 || activityPage > 0) && (
                     <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-                        <Button
-                            onClick={handleSearch}
-                            variant="contained"
-                            color="primary"
-                            style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}
-                        >
+                        <Button onClick={handleSearch} variant="contained" color="primary" style={{ textTransform: 'none', fontSize: '16px', padding: '10px 20px' }}>
                             {t('Load More')}
                         </Button>
                     </div>

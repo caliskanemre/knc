@@ -10,10 +10,11 @@ import i18n from '../src/i18n';
 import createEmotionCache from '../src/mui/createEmotionCache';
 import theme from '../src/mui/theme';
 import '../src/index.css';
+import '../src/chatbot/Chatbot.css';
 import NextHeader from '../src/components/NextHeader';
 import Footer from '../src/Footer';
-import { AuthProvider } from '../src/auth/AuthProvider';
 import Chatbot from '../src/chatbot/Chatbot';
+import {AuthProvider} from "../src/auth/AuthProvider";
 
 // Client-side cache shared for the whole session
 const clientSideEmotionCache = createEmotionCache();

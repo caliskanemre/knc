@@ -108,6 +108,21 @@ export default function Header() {
     setPoliciesAnchorEl(null);
   };
 
+  // Sepet tıklama işlemi için özel fonksiyon
+  const handleCartClick = () => {
+    try {
+      console.log('Cart clicked, navigating to:', `/${currentLang}/cart`);
+      navigate(`/${currentLang}/cart`);
+      setMobileMenuOpen(false);
+      setAnchorEl(null);
+      setPoliciesAnchorEl(null);
+    } catch (error) {
+      console.error('Error navigating to cart:', error);
+      // Fallback olarak direkt /cart'a yönlendir
+      navigate('/cart');
+    }
+  };
+
   const handleFetchFavorites = () => {
     handleNavigation('/users/favorites');
     setAnchorEl(null);
@@ -444,7 +459,7 @@ export default function Header() {
                   marginLeft: { xs: '5px', sm: '10px' },
                   '&:hover': { color: '#8B0000' },
                 }}
-                onClick={() => handleNavigation('/cart')}
+                onClick={handleCartClick}
             >
               <Badge badgeContent={cartItemCount} color="error">
                 <ShoppingBagOutlinedIcon sx={{ fontSize: { xs: 24, sm: 30 } }} />

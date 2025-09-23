@@ -163,41 +163,45 @@ const Cart = () => {
             skipDiffOnceRef.current = true; // başlangıç verisi, conversion tetikleme
             setCartItems(normalizedAuthCart);
             calculateTotalPrice(normalizedAuthCart);
+            setIsLoading(false); // Loading'i burada sonlandır
             return; // AuthProvider'da veri varsa kendi fetch'i yapma
         }
 
-        // Ensure guest token is stored
-        if (!localStorage.getItem('guestToken')) {
-            localStorage.setItem('guestToken', guestToken);
-        }
-        // Para birimini sakla
-        try { localStorage.setItem('currency', currency); } catch (_) {}
-
-        const initializeCart = async () => {
-            setIsLoading(true);
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const decodedToken = jwtDecode(token);
-                    if (decodedToken?.sub && decodedToken.sub.includes('@')) {
-                        setEmail(decodedToken.sub);
-                        await syncLocalCartToServer(decodedToken.sub);
-                        // Email state'i güncellenmeden önce fetch erken dönmesin diye email'i parametre olarak geçir
-                        await fetchCartItems(decodedToken.sub);
-                    }
-                } catch (error) {
-                    console.error("Error decoding JWT token:", error);
-                    showToast(t("Error initializing cart"), "error");
-                    await fetchGuestCart(); // Fallback to guest cart
-                }
-            } else {
-                await fetchGuestCart();
+        // Eğer logged in değilse veya AuthProvider'da cart yoksa kendi fetch'ini yap
+        if (!isLoggedIn || !authCart || authCart.length === 0) {
+            // Ensure guest token is stored
+            if (!localStorage.getItem('guestToken')) {
+                localStorage.setItem('guestToken', guestToken);
             }
-            setIsLoading(false);
-        };
+            // Para birimini sakla
+            try { localStorage.setItem('currency', currency); } catch (_) {}
 
-        initializeCart();
-    }, [authCart, isLoggedIn]); // AuthProvider cart'ını dinle
+            const initializeCart = async () => {
+                setIsLoading(true);
+                const token = localStorage.getItem('token');
+                if (token && isLoggedIn) {
+                    try {
+                        const decodedToken = jwtDecode(token);
+                        if (decodedToken?.sub && decodedToken.sub.includes('@')) {
+                            setEmail(decodedToken.sub);
+                            await syncLocalCartToServer(decodedToken.sub);
+                            // Email state'i güncellenmeden önce fetch erken dönmesin diye email'i parametre olarak geçir
+                            await fetchCartItems(decodedToken.sub);
+                        }
+                    } catch (error) {
+                        console.error("Error decoding JWT token:", error);
+                        showToast(t("Error initializing cart"), "error");
+                        await fetchGuestCart(); // Fallback to guest cart
+                    }
+                } else {
+                    await fetchGuestCart();
+                }
+                setIsLoading(false);
+            };
+
+            initializeCart();
+        }
+    }, [authCart, isLoggedIn, i18n.language]); // AuthProvider cart'ını dinle
 
     useEffect(() => {
         // Dil değişince sepet öğelerini yeniden yükle (başlıklar vb. lokalizasyon için)

@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''));
   const [username, setUsername] = useState(''); // Renamed from email to username
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState({ favoriteEvents: [], favoriteActivities: [] });
   const [cart, setCart] = useState([]);
 
   // On component mount, check localStorage for a token
@@ -58,7 +58,21 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(`${baseURL}/users/${encodeURIComponent(email)}/favorites`, {
         headers: { Authorization: `Bearer ${authToken || token}` },
       });
-      setFavorites(response.data || []);
+      // Normalize favorites shape to { favoriteEvents: [], favoriteActivities: [] }
+      const data = response.data;
+      let normalized;
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        normalized = {
+          favoriteEvents: Array.isArray(data) ? data : [],
+          favoriteActivities: [],
+        };
+      } else {
+        normalized = {
+          favoriteEvents: Array.isArray(data.favoriteEvents) ? data.favoriteEvents : [],
+          favoriteActivities: Array.isArray(data.favoriteActivities) ? data.favoriteActivities : [],
+        };
+      }
+      setFavorites(normalized);
     } catch (error) {
       console.error('Error fetching favorites:', error.response?.data || error.message);
     }
@@ -95,7 +109,8 @@ export const AuthProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        const url = `${baseURL}/users/favorites/${itemType}/${itemId}/${notificationType}`;
+        const nt = notificationType || 'NONE';
+        const url = `${baseURL}/users/favorites/${itemType}/${itemId}/${nt}`;
         await axios.post(url, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
