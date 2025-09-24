@@ -18,7 +18,6 @@ import {
     DialogContentText,
     DialogActions,
     MenuItem
-} from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAuth } from "../auth/AuthProvider";
@@ -364,12 +363,10 @@ const SearchPage = () => {
                                             open={true}
                                             onClose={() => setOpenMenuEventId(null)}
                                         >
+                                            {/* Menu items placeholder */}
                                             <MenuItem onClick={() => { handleFavoriteClick(item.id, 'NONE'); setOpenMenuEventId(null); }}>
                                                 {t('addToFavorites') || 'Favorilere ekle'}
                                             </MenuItem>
-                                        </Menu>
-                                    )}
-                                </Card>
                             </Grid>
                         );
                     })}

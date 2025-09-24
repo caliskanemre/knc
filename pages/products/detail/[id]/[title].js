@@ -54,7 +54,7 @@ function generateUUID() {
   return `${ts}-${rnd}-${ts.slice(-4)}-${rnd.slice(-4)}-${ts}${rnd}`.slice(0, 36);
 }
 
-export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
+export default function ProductDetailPage({ product, seo, pageLocale = 'tr', initialIsTR = null }) {
   const { t } = useTranslation();
   const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
   const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
@@ -63,6 +63,33 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [similar, setSimilar] = useState([]);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
+
+  const [displayIsTR, setDisplayIsTR] = useState(() => {
+    if (typeof initialIsTR === 'boolean') return initialIsTR;
+    if (typeof product?.is_turkey_user === 'boolean') return !!product.is_turkey_user;
+    return null;
+  });
+
+  // Client: localStorage/cookie üzerinden son kararı ver
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('is_turkey_user');
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed === 'boolean') setDisplayIsTR(parsed);
+      } else {
+        // cookie fallback
+        const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
+        if (m) setDisplayIsTR(m[1] === '1');
+      }
+    } catch(_) {}
+    // Son çare dil tahmini
+    if (displayIsTR === null && typeof navigator !== 'undefined') {
+      const guess = navigator.language?.toLowerCase().startsWith('tr');
+      setDisplayIsTR(!!guess);
+    }
+  }, []);
 
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
   const placeholderImg = '/ksLogo.jpeg';
@@ -73,16 +100,16 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const isVideoUrl = (url) => {
     if (!url) return false;
     const clean = url.toLowerCase().split('#')[0].split('?')[0];
-    return /\.(mp4|webm|ogg|mov|m4v)$/.test(clean);
+    return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
   };
 
-  // Price and currency display
-  const isTR = !!product?.is_turkey_user;
-  const baseUIPrice = isTR ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
+  // Price and currency display (displayIsTR öncelikli)
+  const isTRDisplay = typeof displayIsTR === 'boolean' ? displayIsTR : !!product?.is_turkey_user;
+  const baseUIPrice = isTRDisplay ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
   const displayOriginal = Number(baseUIPrice) || 0;
   const discountPercent = 20;
   const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
-  const currencySymbol = isTR ? '₺' : '€';
+  const currencySymbol = isTRDisplay ? '₺' : '€';
 
   // Similar products (client-side)
   useEffect(() => {
@@ -112,7 +139,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const handleAddToCart = async () => {
     if (!product?.id || quantity <= 0) return show(t('Invalid quantity'), 'warning');
     try {
-      const unitPrice = isTR
+      const unitPrice = isTRDisplay
         ? (Number(product?.tl_price ?? product?.price) || 0)
         : (Number(product?.eur_price ?? product?.price) || 0);
 
@@ -123,8 +150,8 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
         title: product.name || product.title,
         image: product.imageUrl || product.photos?.[0]?.photo,
         orderNote,
-        currency: isTR ? 'TRY' : 'EUR',
-        is_turkey_user: isTR
+        currency: isTRDisplay ? 'TRY' : 'EUR',
+        is_turkey_user: isTRDisplay
       };
 
       if (typeof window !== 'undefined') {
@@ -188,7 +215,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
 
         if (typeof window.gtag === 'function') {
           const totalValueUI = displayOriginal * quantity; // UI fiyatı
-          const currencyCode = isTR ? 'TRY' : 'EUR';
+          const currencyCode = isTRDisplay ? 'TRY' : 'EUR';
           try {
             window.gtag('event', 'conversion', { send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
           } catch {}
@@ -539,7 +566,7 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     }
 
     if (!product || !product.id) {
-      return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
+      return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
     }
 
     const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
@@ -637,7 +664,7 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     const structuredData = { product: productSchema, breadcrumbs };
 
-    return { props: { product: { ...product, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
+    return { props: { product: { ...product, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
   } catch (e) {
     console.error('SSR product fetch failed (outer):', e?.response?.data || e.message);
     return { props: { product: null, seo: null, structuredData: null, pageLocale: 'tr', defaultLocale: 'tr', asPath: '/' } };

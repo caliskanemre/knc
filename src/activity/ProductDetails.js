@@ -99,6 +99,41 @@ const isVideoUrl = (url) => {
     return /\.(mp4|webm|ogg|mov|m4v)$/.test(clean);
 };
 
+// Kalıcı TR bayrağını oku (localStorage/cookie)
+const readIsTRFromStorage = () => {
+    try {
+        if (typeof window === 'undefined') return null;
+        const ls = window.localStorage?.getItem('is_turkey_user');
+        if (ls !== null && ls !== undefined) {
+            if (ls === '1' || ls === 'true') return true;
+            if (ls === '0' || ls === 'false') return false;
+            try { return JSON.parse(ls); } catch (_) { /* ignore */ }
+        }
+        const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
+        if (m) {
+            const v = decodeURIComponent(m[1]);
+            if (v === '1' || v === 'true') return true;
+            if (v === '0' || v === 'false') return false;
+        }
+    } catch (_) { /* ignore */ }
+    return null;
+};
+
+const writeIsTRToStorage = (isTR) => {
+    try {
+        if (typeof window === 'undefined') return;
+        window.localStorage?.setItem('is_turkey_user', JSON.stringify(!!isTR));
+        document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`;
+    } catch (_) { /* ignore */ }
+};
+
+const guessTRFromNavigator = () => {
+    try {
+        if (typeof navigator === 'undefined') return null;
+        return navigator.language?.toLowerCase().startsWith('tr') ? true : false;
+    } catch (_) { return null; }
+};
+
 const ProductDetails = () => {
     const { id, title } = useParams();
     const initialData = useInitialData();
@@ -134,6 +169,21 @@ const ProductDetails = () => {
         const num = Number(amount) || 0;
         return `${num.toFixed(2)} ${symbol}`;
     };
+
+    // Ürün yüklendiğinde varsa is_turkey_user bilgisini kalıcılaştır; yoksa navigator’dan tahminle (backend düzeltebilir)
+    useEffect(() => {
+        if (!product) return;
+        const hasFlag = product.is_turkey_user !== undefined && product.is_turkey_user !== null;
+        if (hasFlag) {
+            writeIsTRToStorage(!!product.is_turkey_user);
+        } else {
+            const persisted = readIsTRFromStorage();
+            if (persisted === null) {
+                const guess = guessTRFromNavigator();
+                if (guess !== null) writeIsTRToStorage(guess);
+            }
+        }
+    }, [product]);
 
     useEffect(() => {
         if (product && product.id) return; // already have
@@ -267,18 +317,23 @@ const ProductDetails = () => {
 
     // Discount Logic (moved earlier so SEO can use values)
     const discountPercent = 20;
+
     // Para birimi tespiti önceliği:
-    // 1) product.currency (TRY/TL/EUR)
-    // 2) i18n.language (tr => TRY, diğer => EUR)
-    // 3) product.is_turkey_user
+    // 1) Kalıcı bayrak (localStorage/cookie: is_turkey_user)
+    // 2) product.is_turkey_user
+    // 3) product.currency (TRY/TL/EUR)
+    // 4) i18n.language (tr => TRY, diğer => EUR)
+    const persistedIsTR = readIsTRFromStorage();
     const normCurr = (product?.currency || '').toUpperCase();
     const langIsTR = (i18n.language || 'tr').toLowerCase().startsWith('tr');
-    const isTR = normCurr === 'TRY' || normCurr === 'TL'
-        ? true
-        : normCurr === 'EUR'
-            ? false
-            : (langIsTR ? true : (!!product.is_turkey_user));
-    const uiBaseOriginal = isTR ? (product.tl_price ?? product.price) : (product.eur_price ?? product.price);
+
+    const isTR = (persistedIsTR !== null) ? persistedIsTR
+        : (product?.is_turkey_user !== undefined && product?.is_turkey_user !== null) ? !!product.is_turkey_user
+        : (normCurr === 'TRY' || normCurr === 'TL') ? true
+        : (normCurr === 'EUR') ? false
+        : langIsTR;
+
+    const uiBaseOriginal = isTR ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
     const displayOriginalPrice = Number(uiBaseOriginal) || 0;
     const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
     const currency = isTR ? 'TRY' : 'EUR';
@@ -542,7 +597,7 @@ const ProductDetails = () => {
         const displayDiscountedPrice = displayOriginalPrice * (1 - discountPercent / 100);
         const totalDiscountedPrice = displayDiscountedPrice * quantity;
 
-        const orderSummary = `\u2022 ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+        const orderSummary = `• ${product.title} - ${quantity} adet - ${formatPrice(totalDiscountedPrice, isTR)}${orderNote ? ` (Not: ${orderNote})` : ''}`;
 
         // Emojileri String.fromCodePoint ile kullan
         const message = `${EMOJI.bag} Yeni Siparis:\n\n` +

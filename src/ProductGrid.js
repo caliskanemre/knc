@@ -1,6 +1,6 @@
 // src/ProductGrid.js
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Grid, Card, Box, IconButton, Typography } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -26,6 +26,23 @@ const formatPrice = (amount, isTR) => {
 
 export default function ProductGrid({ products, favorites, isLoggedIn, handleFavoriteClick, pageLocale = 'tr', defaultLocale = 'tr' }) {
     const isClient = typeof window !== 'undefined';
+
+    // Açılışta ürünlerden is_turkey_user bilgisi varsa kalıcılaştır (cookie + localStorage)
+    useEffect(() => {
+        if (!isClient) return;
+        if (!Array.isArray(products) || products.length === 0) return;
+        const probe = products.find(p => p && p.is_turkey_user !== undefined && p.is_turkey_user !== null);
+        if (probe) {
+            const isTR = !!probe.is_turkey_user;
+            try { localStorage.setItem('is_turkey_user', JSON.stringify(isTR)); } catch(_) {}
+            try { document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`; } catch(_) {}
+        } else {
+            // ürün bilgisinde yoksa, dil üzerinden tahmin edip yazalım (yanlışsa backend düzeltir)
+            const guessTR = typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('tr');
+            try { localStorage.setItem('is_turkey_user', JSON.stringify(guessTR)); } catch(_) {}
+            try { document.cookie = `is_turkey_user=${guessTR ? '1' : '0'}; path=/; max-age=15552000`; } catch(_) {}
+        }
+    }, [isClient, products]);
 
     return (
         <Grid container spacing={4}>
