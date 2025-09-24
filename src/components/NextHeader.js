@@ -391,9 +391,11 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
               }
             }}
           >
+            {/* Favoriler: her durumda göster */}
+            <MenuItem onClick={() => { go('/users/favorites'); setAnchorElUser(null); }}>{t('Favorites', 'Favorilerim')}</MenuItem>
+            {/* Siparişler ve Çıkış: sadece giriş yapmış kullanıcılar için */}
             {isLoggedIn ? (
               <>
-                <MenuItem onClick={() => { go('/users/favorites'); setAnchorElUser(null); }}>{t('Favorites', 'Favorilerim')}</MenuItem>
                 <MenuItem onClick={() => { go('/my-orders'); setAnchorElUser(null); }}>{t('My Orders', 'Siparişlerim')}</MenuItem>
                 <MenuItem onClick={handleLogout}>{t('Logout', 'Çıkış Yap')}</MenuItem>
               </>
