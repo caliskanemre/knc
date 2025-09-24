@@ -464,11 +464,46 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
   try {
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
-    const res = await axios.get(`${baseURL}/products/detail/${id}/${encodeURIComponent(title || '')}`, {
-      headers: { 'Accept-Language': locale === 'en' ? 'en' : 'tr' },
-      timeout: 5000
-    });
-    const product = res.data || null;
+    const langHeader = { 'Accept-Language': locale === 'en' ? 'en' : 'tr' };
+    const encodedTitle = encodeURIComponent(title || '');
+
+    let product = null;
+    let primaryError = null;
+
+    // 1) Try title-based endpoint
+    try {
+      const res = await axios.get(`${baseURL}/products/detail/${id}/${encodedTitle}`, {
+        headers: langHeader,
+        timeout: 5000,
+      });
+      product = res.data || null;
+    } catch (e) {
+      primaryError = e;
+    }
+
+    // 2) Fallback: try id-only endpoint if first failed or product is null
+    if (!product) {
+      try {
+        const resId = await axios.get(`${baseURL}/products/${id}`, { headers: langHeader, timeout: 5000 });
+        product = resId.data || null;
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    // If still not found, render not found state (no crash)
+    if (!product) {
+      console.error('SSR product fetch failed:', primaryError?.response?.data || primaryError?.message);
+      return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
+    }
+
+    // If title in URL does not match actual product title, redirect to canonical URL with correct title
+    const actualTitle = product.title || product.name || '';
+    const decodedParamTitle = decodeURIComponent(title || '');
+    if (actualTitle && decodedParamTitle && actualTitle !== decodedParamTitle) {
+      const destination = `/products/detail/${id}/${encodeURIComponent(actualTitle)}`;
+      return { redirect: { destination, permanent: true } };
+    }
 
     // Helper: locale-aware description (SSR)
     const pickLocalizedDescription = (p, loc) => {
@@ -502,9 +537,9 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       : (plainDesc || `${product?.title || 'Ürün'} uygun fiyatlı kına gecesi ürünleri.`);
 
     const currentLang = locale === 'en' ? 'en' : 'tr';
-    const titleSlug = encodeURIComponent((title || '').toString().toLowerCase());
-    const pathTR = `/products/detail/${id}/${titleSlug}`;
-    const pathEN = `/en/products/detail/${id}/${titleSlug}`;
+    const safeTitle = encodeURIComponent(actualTitle || title || 'product');
+    const pathTR = `/products/detail/${id}/${safeTitle}`;
+    const pathEN = `/en/products/detail/${id}/${safeTitle}`;
     const canonical = `${origin}${currentLang === 'tr' ? pathTR : pathEN}`;
 
     const images = (product?.photos || []).map(p => p.photo).filter(Boolean);
@@ -559,7 +594,7 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     return { props: { product: { ...product, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
   } catch (e) {
-    console.error('SSR product fetch failed:', e?.response?.data || e.message);
+    console.error('SSR product fetch failed (outer):', e?.response?.data || e.message);
     return { props: { product: null, seo: null, structuredData: null, pageLocale: 'tr', defaultLocale: 'tr', asPath: '/' } };
   }
 }
