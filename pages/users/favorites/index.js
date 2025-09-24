@@ -70,7 +70,7 @@ export default function FavoritesPage() {
             {items.map((item) => {
               const id = item.id || item.productId || item.activityId;
               const title = item.title || item.name || 'Ürün';
-              const img = (item.photos && item.photos[0] && item.photos[0].photo) || item.image || 'https://via.placeholder.com/300x200?text=No+Image';
+              const img = (item.photos && item.photos[0] && item.photos[0].photo) || item.image || '/ksLogo.jpeg';
               return (
                 <Grid item key={`${id}-${title}`} xs={12} sm={6} md={4} lg={3}>
                   <Card>
@@ -88,4 +88,3 @@ export default function FavoritesPage() {
     </>
   );
 }
-

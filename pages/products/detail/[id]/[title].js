@@ -65,6 +65,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
   const [loadingSimilar, setLoadingSimilar] = useState(false);
 
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+  const placeholderImg = '/ksLogo.jpeg';
 
   const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
   useEffect(() => { if (!selectedUrl && images[0]) setSelectedUrl(images[0]); }, [images, selectedUrl]);
@@ -360,7 +361,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
                 </video>
               ) : (
                 <Image
-                  src={selectedUrl || (images[0] || 'https://via.placeholder.com/800x800?text=No+Image')}
+                  src={selectedUrl || (images[0] || placeholderImg)}
                   alt={product.title || 'Product'}
                   fill
                   sizes="(max-width: 900px) 100vw, 900px"
@@ -381,7 +382,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
                       <source src={url} />
                     </video>
                   ) : (
-                    <Image src={url} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} quality={60} />
+                    <Image src={url || placeholderImg} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} quality={60} />
                   )}
                 </Box>
               ))}
@@ -435,8 +436,9 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr' }) {
           ) : (
             <Grid container spacing={2}>
               {similar.map((p) => {
-                const img = p.photos?.[0]?.photo || 'https://via.placeholder.com/300x300?text=No+Image';
-                const href = `/products/detail/${p.id}/${encodeURIComponent(p.title || 'product')}`;
+                const img = p.photos?.[0]?.photo || placeholderImg;
+                const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
+                const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
                 return (
                   <Grid item key={p.id} xs={6} sm={4} md={3}>
                     <Card sx={{ p: 1 }}>
@@ -465,43 +467,27 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
     const langHeader = { 'Accept-Language': locale === 'en' ? 'en' : 'tr' };
-    const encodedTitle = encodeURIComponent(title || '');
 
+    // Always fetch by id only
     let product = null;
-    let primaryError = null;
-
-    // 1) Try title-based endpoint
     try {
-      const res = await axios.get(`${baseURL}/products/detail/${id}/${encodedTitle}`, {
-        headers: langHeader,
-        timeout: 5000,
-      });
-      product = res.data || null;
+      const resId = await axios.get(`${baseURL}/products/${id}`, { headers: langHeader, timeout: 7000 });
+      product = resId.data || null;
     } catch (e) {
-      primaryError = e;
+      console.error('Fetch by id failed:', e?.response?.status, e?.response?.data || e.message);
     }
 
-    // 2) Fallback: try id-only endpoint if first failed or product is null
-    if (!product) {
-      try {
-        const resId = await axios.get(`${baseURL}/products/${id}`, { headers: langHeader, timeout: 5000 });
-        product = resId.data || null;
-      } catch (_) {
-        // ignore
-      }
-    }
-
-    // If still not found, render not found state (no crash)
-    if (!product) {
-      console.error('SSR product fetch failed:', primaryError?.response?.data || primaryError?.message);
+    if (!product || !product.id) {
       return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
     }
 
-    // If title in URL does not match actual product title, redirect to canonical URL with correct title
+    // Sanitize title and redirect if mismatch
+    const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
     const actualTitle = product.title || product.name || '';
-    const decodedParamTitle = decodeURIComponent(title || '');
-    if (actualTitle && decodedParamTitle && actualTitle !== decodedParamTitle) {
-      const destination = `/products/detail/${id}/${encodeURIComponent(actualTitle)}`;
+    const sanitizedActual = sanitizeTitle(actualTitle);
+    const decodedParamTitle = sanitizeTitle(decodeURIComponent(title || ''));
+    if (sanitizedActual && decodedParamTitle && sanitizedActual !== decodedParamTitle) {
+      const destination = `/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
       return { redirect: { destination, permanent: true } };
     }
 
@@ -529,7 +515,6 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     const host = headers['host'] || 'localhost:3000';
     const origin = `${proto}://${host}`;
 
-    // Use localized description for meta
     const rawDesc = pickLocalizedDescription(product, locale);
     const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const metaDescription = (plainDesc && plainDesc.length > 160)
@@ -537,13 +522,13 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       : (plainDesc || `${product?.title || 'Ürün'} uygun fiyatlı kına gecesi ürünleri.`);
 
     const currentLang = locale === 'en' ? 'en' : 'tr';
-    const safeTitle = encodeURIComponent(actualTitle || title || 'product');
+    const safeTitle = encodeURIComponent(sanitizedActual || 'product');
     const pathTR = `/products/detail/${id}/${safeTitle}`;
     const pathEN = `/en/products/detail/${id}/${safeTitle}`;
     const canonical = `${origin}${currentLang === 'tr' ? pathTR : pathEN}`;
 
     const images = (product?.photos || []).map(p => p.photo).filter(Boolean);
-    const ogImage = images[0] || 'https://www.kinasepeti.com/ksLogo.jpeg';
+    const ogImage = images[0] || `${origin}/ksLogo.jpeg`;
 
     const seo = {
       metaTitle: `${product?.title || 'Ürün'} | Kına Sepeti`,

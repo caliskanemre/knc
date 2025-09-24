@@ -13,6 +13,11 @@ const getPrefixedImage = (url, prefix) => {
     return url.replace(/([^/]+)$/, `${prefix}_$1`);
 };
 
+const sanitizeTitle = (str) => (str || 'product')
+    .replace(/[\/]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const formatPrice = (amount, isTR) => {
     const symbol = isTR ? '₺' : '€';
     const num = Number(amount) || 0;
@@ -34,7 +39,7 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                 const discountPercent = 20;
                 const discountedPriceNum = originalPriceNum * (1 - discountPercent / 100);
 
-                const originalPhoto = item.photos?.[0]?.photo || 'https://via.placeholder.com/400x400?text=No+Image';
+                const originalPhoto = item.photos?.[0]?.photo || '/ksLogo.jpeg';
                 const smallImageUrl = getPrefixedImage(originalPhoto, 'small') || originalPhoto;
 
                 let isAlreadyFavorited = false;
@@ -48,7 +53,7 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                     } catch (_) { /* ignore */ }
                 }
 
-                const productTitle = item.productName || item.title || item.name || 'Unknown';
+                const productTitle = sanitizeTitle(item.productName || item.title || item.name || 'Unknown');
                 const prefix = pageLocale && defaultLocale && pageLocale !== defaultLocale ? `/${pageLocale}` : '';
                 const href = `${prefix}/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`;
 
@@ -69,7 +74,7 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                             </Link>
                             <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '150px' }}>
                                 <Typography sx={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 'bold', fontSize: { xs: '1rem', sm: '1.1rem' }, minHeight: '2.8rem', WebkitLineClamp: 2 }}>
-                                    {productTitle}
+                                    {item.productName || item.title || item.name || 'Unknown'}
                                 </Typography>
                                 {item.shortDescription && (
                                     <Typography sx={{ fontFamily: 'Montserrat, sans-serif', fontSize: { xs: '0.85rem', sm: '0.95rem' }, WebkitLineClamp: 2 }}>

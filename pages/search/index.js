@@ -138,6 +138,8 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
     return item?.name || item?.title || '';
   };
 
+  const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
+
   const formatPrice = (item) => {
     const isTR = !!item?.is_turkey_user;
     const base = isTR ? (item?.tl_price ?? item?.price) : (item?.eur_price ?? item?.price);
@@ -268,7 +270,7 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
                   ? () => handleClick(item.id)
                   : () => handleFavoriteActivityClick(item.id);
 
-              const detailLink = `/products/detail/${item.id}/${encodeURIComponent(getLocalizedName(item))}`;
+              const detailLink = `/products/detail/${item.id}/${encodeURIComponent(sanitizeTitle(getLocalizedName(item)))}`;
 
               const originalImage = (item.product_photos && item.product_photos[0]
                 ? item.product_photos[0].photoUrl
