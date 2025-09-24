@@ -466,22 +466,82 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
   try {
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
-    const langHeader = { 'Accept-Language': locale === 'en' ? 'en' : 'tr' };
+    const lang = (locale === 'en' ? 'en' : 'tr');
+    // Daha uyumlu Accept-Language başlığı
+    const acceptLang = lang === 'en' ? 'en-US,en;q=0.9' : 'tr-TR,tr;q=0.9,en;q=0.5';
+    const headers = { 'Accept-Language': acceptLang, 'Accept': 'application/json' };
 
-    // Always fetch by id only
     let product = null;
-    try {
-      const resId = await axios.get(`${baseURL}/products/${id}`, { headers: langHeader, timeout: 7000 });
-      product = resId.data || null;
-    } catch (e) {
-      console.error('Fetch by id failed:', e?.response?.status, e?.response?.data || e.message);
+
+    const extractProduct = (data, wantedId) => {
+      if (!data) return null;
+      if (data.id) return data;
+      // Ortak sarmalayıcılar
+      if (data.product && typeof data.product === 'object') return extractProduct(data.product, wantedId);
+      if (data.result && typeof data.result === 'object') return extractProduct(data.result, wantedId);
+      if (data.data && typeof data.data === 'object') return extractProduct(data.data, wantedId);
+      // Dizi/icerik
+      if (Array.isArray(data)) {
+        if (wantedId != null) {
+          const found = data.find((d) => d && String(d.id) === String(wantedId));
+          return found || data[0] || null;
+        }
+        return data[0] || null;
+      }
+      if (data.content && Array.isArray(data.content)) {
+        if (wantedId != null) {
+          const found = data.content.find((d) => d && String(d.id) === String(wantedId));
+          return found || data.content[0] || null;
+        }
+        return data.content[0] || null;
+      }
+      return null;
+    };
+
+    const tryFetch = async (label, url, opts = {}) => {
+      try {
+        const res = await axios.get(url, { headers: opts.headers ?? headers, params: opts.params, timeout: opts.timeout || 7000 });
+        const data = res.data;
+        const extracted = extractProduct(data, id);
+        if (extracted && extracted.id) {
+          console.info(`[SSR product] OK ${label} ${url}`);
+          return extracted;
+        }
+        console.warn(`[SSR product] Unexpected shape/no match from ${label}:`, typeof data, Array.isArray(data) ? 'array' : Object.keys(data || {}));
+        return null;
+      } catch (e) {
+        const status = e?.response?.status;
+        const msg = e?.response?.data || e.message;
+        console.error(`[SSR product] FAIL ${label} ${url} ->`, status, msg);
+        return null;
+      }
+    };
+
+    // Deneme sırası
+    product = await tryFetch('id-headers-only', `${baseURL}/products/${id}`, { headers });
+
+    if (!product) {
+      product = await tryFetch('id-with-locale-param', `${baseURL}/products/${id}`, { headers, params: { locale: lang } });
+    }
+
+    if (!product) {
+      const encTitle = encodeURIComponent(title || '');
+      product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`, { headers, params: { locale: lang } });
+    }
+
+    if (!product) {
+      product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`, { headers, params: { locale: lang } });
+    }
+
+    if (!product) {
+      const decodedTitle = decodeURIComponent(title || '');
+      product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50, locale: lang } });
     }
 
     if (!product || !product.id) {
       return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/' } };
     }
 
-    // Sanitize title and redirect if mismatch
     const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
     const actualTitle = product.title || product.name || '';
     const sanitizedActual = sanitizeTitle(actualTitle);
@@ -510,9 +570,9 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       return (typeof p.description === 'string' && p.description.trim()) ? p.description.trim() : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
     };
 
-    const headers = req?.headers || {};
-    const proto = headers['x-forwarded-proto'] || 'http';
-    const host = headers['host'] || 'localhost:3000';
+    const reqHeaders = req?.headers || {};
+    const proto = reqHeaders['x-forwarded-proto'] || 'http';
+    const host = reqHeaders['host'] || 'localhost:3000';
     const origin = `${proto}://${host}`;
 
     const rawDesc = pickLocalizedDescription(product, locale);
