@@ -119,7 +119,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
       try {
         setLoadingSimilar(true);
         const res = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
-          params: { page: 0, size: 6 },
+          params: { page: 0, size: 6, locale: pageLocale === 'en' ? 'en' : 'tr' },
           headers: { 'Accept-Language': pageLocale === 'en' ? 'en' : 'tr' }
         });
         const list = (res.data?.content || []).filter(p => p.id !== product.id);
@@ -192,7 +192,6 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
               // refresh token once and retry
               const newToken = generateUUID();
               localStorage.setItem('guestToken', newToken);
-              guestToken = newToken;
               await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 8000 });
             } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
               // fallback to single item
@@ -496,7 +495,26 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     const lang = (locale === 'en' ? 'en' : 'tr');
     // Daha uyumlu Accept-Language başlığı
     const acceptLang = lang === 'en' ? 'en-US,en;q=0.9' : 'tr-TR,tr;q=0.9,en;q=0.5';
-    const headers = { 'Accept-Language': acceptLang, 'Accept': 'application/json' };
+
+    // Kullanıcının TR olup olmadığını SSR'da tahmin et (URL/locale/cookie/Accept-Language)
+    const inHeaders = req?.headers || {};
+    const cookie = inHeaders.cookie || '';
+    const rawAcceptLang = inHeaders['accept-language'] || '';
+    const urlPath = resolvedUrl || '';
+    const urlIsTR = !!(urlPath && /(^|\/)tr(\/|$)/i.test(urlPath));
+    const cookieIsTR = /(?:^|;)\s*is_turkey_user=1\b/.test(cookie || '');
+    const langIsTR = ((locale || '').toLowerCase().startsWith('tr')) || (/\btr\b/i.test(rawAcceptLang || ''));
+    const initialIsTR = !!(urlIsTR || cookieIsTR || langIsTR);
+
+    // Backend'e iletilecek ortak header'lar (IP forward ederek backend'in GeoIP tespiti yapabilmesi için)
+    const fwdFor = inHeaders['x-forwarded-for'] || inHeaders['x-real-ip'] || '';
+    const socketIp = req?.socket?.remoteAddress || '';
+    const clientIp = (typeof fwdFor === 'string' && fwdFor) ? fwdFor.split(',')[0].trim() : (socketIp || '');
+    const headers = {
+      'Accept-Language': acceptLang,
+      'Accept': 'application/json',
+      ...(clientIp ? { 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp } : {})
+    };
 
     let product = null;
 
@@ -527,7 +545,11 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     const tryFetch = async (label, url, opts = {}) => {
       try {
-        const res = await axios.get(url, { headers: opts.headers ?? headers, params: opts.params, timeout: opts.timeout || 7000 });
+        const res = await axios.get(url, {
+          headers: opts.headers ?? headers,
+          params: { ...(opts.params || {}), locale: lang },
+          timeout: opts.timeout || 7000
+        });
         const data = res.data;
         const extracted = extractProduct(data, id);
         if (extracted && extracted.id) {
@@ -544,25 +566,21 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       }
     };
 
-    // Deneme sırası
+    // Deneme sırası (currency parametresi gönderilmiyor, backend IP'ye göre tespit etsin)
     product = await tryFetch('id-headers-only', `${baseURL}/products/${id}`, { headers });
 
     if (!product) {
-      product = await tryFetch('id-with-locale-param', `${baseURL}/products/${id}`, { headers, params: { locale: lang } });
-    }
-
-    if (!product) {
       const encTitle = encodeURIComponent(title || '');
-      product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`, { headers, params: { locale: lang } });
+      product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`, { headers });
     }
 
     if (!product) {
-      product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`, { headers, params: { locale: lang } });
+      product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`, { headers });
     }
 
     if (!product) {
       const decodedTitle = decodeURIComponent(title || '');
-      product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50, locale: lang } });
+      product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50 }, headers });
     }
 
     if (!product || !product.id) {
@@ -629,8 +647,8 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
       }
     };
 
-    const schemaCurrency = product?.is_turkey_user ? 'TRY' : 'EUR';
-    const schemaUnitPrice = product?.is_turkey_user
+    const schemaCurrency = (typeof product.is_turkey_user === 'boolean' ? product.is_turkey_user : initialIsTR) ? 'TRY' : 'EUR';
+    const schemaUnitPrice = schemaCurrency === 'TRY'
       ? (Number(product?.tl_price ?? product?.price) || 0)
       : (Number(product?.eur_price ?? product?.price) || 0);
 
@@ -664,7 +682,10 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     const structuredData = { product: productSchema, breadcrumbs };
 
-    return { props: { product: { ...product, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
+    // Ürüne SSR kararı da not düş (UI için ipucu)
+    const productWithFlag = { ...product, is_turkey_user: typeof product.is_turkey_user === 'boolean' ? product.is_turkey_user : initialIsTR };
+
+    return { props: { product: { ...productWithFlag, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
   } catch (e) {
     console.error('SSR product fetch failed (outer):', e?.response?.data || e.message);
     return { props: { product: null, seo: null, structuredData: null, pageLocale: 'tr', defaultLocale: 'tr', asPath: '/' } };
