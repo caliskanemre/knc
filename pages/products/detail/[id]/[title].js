@@ -126,15 +126,48 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 
   const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
 
-  // Ana fotoğraf için optimize edilmiş URL'ler
+  // Ana fotoğraf için optimize edilmiş URL'ler ve preloading
   const optimizedImages = useMemo(() => {
     if (!images.length) return [];
     return images.map(url => {
       if (!url) return url;
-      // Medium prefix kullan (hızlı yüklenme + yeterli kalite)
-      return url.replace(/([^/]+)$/, `medium_$1`) || url;
+      // Small prefix kullan (daha hızlı yüklenme)
+      return url.replace(/([^/]+)$/, `small_$1`) || url;
     });
   }, [images]);
+
+  // Ana görsel için immediate preloading
+  useEffect(() => {
+    if (optimizedImages[0]) {
+      // Ana görseli hemen preload et
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = optimizedImages[0];
+      link.fetchPriority = 'high';
+      document.head.appendChild(link);
+
+      // İlk 3 görseli de preload et (thumbnail'lar için)
+      optimizedImages.slice(1, 3).forEach(url => {
+        const thumbLink = document.createElement('link');
+        thumbLink.rel = 'preload';
+        thumbLink.as = 'image';
+        thumbLink.href = url;
+        thumbLink.fetchPriority = 'low';
+        document.head.appendChild(thumbLink);
+      });
+
+      return () => {
+        // Cleanup
+        const links = document.head.querySelectorAll('link[rel="preload"][as="image"]');
+        links.forEach(link => {
+          if (optimizedImages.includes(link.href)) {
+            document.head.removeChild(link);
+          }
+        });
+      };
+    }
+  }, [optimizedImages]);
 
   useEffect(() => {
     if (!selectedUrl && optimizedImages[0]) setSelectedUrl(optimizedImages[0]);

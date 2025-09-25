@@ -12,6 +12,10 @@ export default class MyDocument extends Document {
           <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade.webp" fetchPriority="high" />
           <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade-mobile.webp" fetchPriority="high" media="(max-width: 599px)" />
 
+          {/* Mobil için additional preloads */}
+          <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/small_sade.webp" fetchPriority="high" media="(min-width: 600px)" />
+          <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/small_sade-mobile.webp" fetchPriority="high" media="(max-width: 599px)" />
+
           {/* CDN preconnect for faster image loading */}
           <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" />
 
