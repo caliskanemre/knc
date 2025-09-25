@@ -24,7 +24,7 @@ const nextConfig = {
   },
   // LCP OPTİMİZASYONU: Kritik kaynakları optimize et
   experimental: {
-    optimizeCss: true,
+    optimizeCss: true, // CSS optimizasyonunu tekrar etkinleştir
     optimizePackageImports: ['@mui/material', '@mui/icons-material'],
   },
   // Webpack optimizasyonları
