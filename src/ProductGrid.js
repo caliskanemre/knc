@@ -84,8 +84,11 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                                         alt={productTitle || 'Product'}
                                         fill
                                         sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
-                                        priority={idx < 2}
+                                        priority={idx < 8}
+                                        loading={idx < 8 ? "eager" : "lazy"}
                                         style={{ objectFit: 'cover' }}
+                                        placeholder="blur"
+                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                                     />
                                 </Box>
                             </Link>

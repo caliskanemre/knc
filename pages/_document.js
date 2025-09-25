@@ -8,6 +8,13 @@ export default class MyDocument extends Document {
     return (
       <Html lang={lang}>
         <Head>
+          {/* LCP OPTİMİZASYONU: Kritik görsellerin preload edilmesi */}
+          <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade.webp" fetchPriority="high" />
+          <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade-mobile.webp" fetchPriority="high" media="(max-width: 599px)" />
+
+          {/* CDN preconnect for faster image loading */}
+          <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" />
+
           {/* Preconnects for faster font fetching */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

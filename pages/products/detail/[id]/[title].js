@@ -474,15 +474,15 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
                 />
               )}
               {/* Zoom indicator */}
-              <Box sx={{
-                position: 'absolute',
-                top: 8,
-                left: 8,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                color: 'white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
+              <Box sx={{ 
+                position: 'absolute', 
+                top: 8, 
+                left: 8, 
+                backgroundColor: 'rgba(0,0,0,0.6)', 
+                color: 'white', 
+                px: 1, 
+                py: 0.5, 
+                borderRadius: 1, 
                 fontSize: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',

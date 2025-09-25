@@ -118,11 +118,13 @@ export default function Main() {
         }
     }, [i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
 
-    // Infinite scroll effect
+    // Infinite scroll effect - Optimized version
     useEffect(() => {
+        let scrollHandler;
+
         // Bu efekti kurmayı küçük bir gecikmeyle başlatarak ana iş parçacığına nefes aldır
         const timerId = setTimeout(() => {
-            const handleScroll = () => {
+            scrollHandler = () => {
                 if (window.innerHeight + document.documentElement.scrollTop
                     >= document.documentElement.offsetHeight - 1000 && !loading && hasMore) {
                     setLoading(true);
@@ -130,12 +132,28 @@ export default function Main() {
                     setPage((prev) => prev + 1);
                 }
             };
-            window.addEventListener('scroll', handleScroll);
+
+            // Throttle scroll events for better performance
+            let ticking = false;
+            const throttledScrollHandler = () => {
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        scrollHandler();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            };
+
+            window.addEventListener('scroll', throttledScrollHandler, { passive: true });
         }, 100); // 100 milisaniye gibi küçük bir gecikme yeterli
 
         // component unmount olduğunda hem timeout'u hem de event listener'ı temizle
         return () => {
             clearTimeout(timerId);
+            if (scrollHandler) {
+                window.removeEventListener('scroll', scrollHandler);
+            }
         };
     }, [loading, hasMore, page]);
 

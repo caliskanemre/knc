@@ -9,6 +9,10 @@ const nextConfig = {
   images: {
     // Next/Image optimizasyonunu etkin kullan
     formats: ['image/avif', 'image/webp'],
+    // LCP OPTİMİZASYONU: Daha agresif image loading
+    minimumCacheTTL: 86400,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,6 +21,34 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // LCP OPTİMİZASYONU: Kritik kaynakları optimize et
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
+  },
+  // Webpack optimizasyonları
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    if (!dev && !isServer) {
+      // Bundle splitting için daha iyi optimizasyon
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          mui: {
+            test: /[\\/]node_modules[\\/]@mui[\\/]/,
+            name: 'mui',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      };
+    }
+    return config;
   },
   async headers() {
     return [
