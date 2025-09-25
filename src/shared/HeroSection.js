@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
@@ -6,6 +6,7 @@ export default function HeroSection() {
     const { t } = useTranslation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [imageLoaded, setImageLoaded] = useState(false);
 
     const tTitle = t('heroTitle');
     const tSubtitle = t('heroSubtitle');
@@ -16,13 +17,19 @@ export default function HeroSection() {
     const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
 
     // Critical resources preload için React.useEffect kullan
-    React.useEffect(() => {
+    useEffect(() => {
         const link = document.createElement('link');
         link.rel = 'preload';
         link.as = 'image';
         link.href = isMobile ? mobileImageUrl : desktopImageUrl;
         link.fetchPriority = 'high';
         document.head.appendChild(link);
+
+        // Görselin zaten yüklenmiş olup olmadığını kontrol et
+        const img = new Image();
+        img.onload = () => setImageLoaded(true);
+        img.onerror = () => setImageLoaded(true); // Hata durumunda da göster
+        img.src = isMobile ? mobileImageUrl : desktopImageUrl;
 
         return () => {
             // Cleanup - sadece hala document.head'de varsa kaldır
@@ -31,6 +38,17 @@ export default function HeroSection() {
             }
         };
     }, [isMobile, mobileImageUrl, desktopImageUrl]);
+
+    // Timeout ile fallback - eğer 2 saniye içinde yüklenmezse göster
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!imageLoaded) {
+                setImageLoaded(true);
+            }
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [imageLoaded]);
 
     return (
         <Box
@@ -87,14 +105,36 @@ export default function HeroSection() {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        opacity: 0,
+                        opacity: imageLoaded ? 1 : 0,
                         transition: 'opacity 0.3s ease-in-out',
                     }}
-                    onLoad={(e) => {
-                        e.target.style.opacity = '1';
+                    onLoad={() => {
+                        setImageLoaded(true);
+                    }}
+                    onError={() => {
+                        setImageLoaded(true); // Hata durumunda da göster
                     }}
                 />
             </Box>
+
+            {/* Loading placeholder */}
+            {!imageLoaded && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#C84B31',
+                        backgroundImage: 'linear-gradient(45deg, #C84B31 25%, transparent 25%), linear-gradient(-45deg, #C84B31 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #C84B31 75%), linear-gradient(-45deg, transparent 75%, #C84B31 75%)',
+                        backgroundSize: '20px 20px',
+                        backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                        opacity: 0.1,
+                        zIndex: 1,
+                    }}
+                />
+            )}
 
             {/* Content overlay */}
             <Box sx={{ position: 'relative', zIndex: 2 }}>
