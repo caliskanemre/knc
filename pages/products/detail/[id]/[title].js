@@ -13,11 +13,16 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Card from '@mui/material/Card';
 import Image from 'next/image';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import ShareIcon from '@mui/icons-material/Share';
+import CloseIcon from '@mui/icons-material/Close';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
@@ -64,6 +69,10 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
   const [similar, setSimilar] = useState([]);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
 
+  // Amazon tarzı fotoğraf modal için state'ler
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   const [displayIsTR, setDisplayIsTR] = useState(() => {
     if (typeof initialIsTR === 'boolean') return initialIsTR;
     if (typeof product?.is_turkey_user === 'boolean') return !!product.is_turkey_user;
@@ -73,29 +82,63 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
   // Client: localStorage/cookie üzerinden son kararı ver
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Önce backend'den gelen is_turkey_user bilgisini kontrol et
+    if (typeof product?.is_turkey_user === 'boolean') {
+      const isTR = !!product.is_turkey_user;
+      setDisplayIsTR(isTR);
+      // Backend kararını localStorage'a da kaydet
+      try {
+        localStorage.setItem('is_turkey_user', JSON.stringify(isTR));
+        document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`;
+      } catch(_) {}
+      return;
+    }
+
+    // Backend bilgisi yoksa localStorage/cookie kontrol et
     try {
       const raw = localStorage.getItem('is_turkey_user');
       if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (typeof parsed === 'boolean') setDisplayIsTR(parsed);
-      } else {
-        // cookie fallback
-        const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
-        if (m) setDisplayIsTR(m[1] === '1');
+        if (typeof parsed === 'boolean') {
+          setDisplayIsTR(parsed);
+          return;
+        }
+      }
+
+      // localStorage yoksa cookie kontrol et
+      const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
+      if (m) {
+        setDisplayIsTR(m[1] === '1');
+        return;
       }
     } catch(_) {}
+
     // Son çare dil tahmini
     if (displayIsTR === null && typeof navigator !== 'undefined') {
       const guess = navigator.language?.toLowerCase().startsWith('tr');
       setDisplayIsTR(!!guess);
     }
-  }, []);
+  }, [product?.is_turkey_user]);
 
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
   const placeholderImg = '/ksLogo.jpeg';
 
   const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
-  useEffect(() => { if (!selectedUrl && images[0]) setSelectedUrl(images[0]); }, [images, selectedUrl]);
+
+  // Ana fotoğraf için optimize edilmiş URL'ler
+  const optimizedImages = useMemo(() => {
+    if (!images.length) return [];
+    return images.map(url => {
+      if (!url) return url;
+      // Medium prefix kullan (hızlı yüklenme + yeterli kalite)
+      return url.replace(/([^/]+)$/, `medium_$1`) || url;
+    });
+  }, [images]);
+
+  useEffect(() => {
+    if (!selectedUrl && optimizedImages[0]) setSelectedUrl(optimizedImages[0]);
+  }, [optimizedImages, selectedUrl]);
 
   const isVideoUrl = (url) => {
     if (!url) return false;
@@ -334,6 +377,38 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 
   const localizedDescription = useMemo(() => getLocalizedDescription(product, pageLocale), [product, pageLocale]);
 
+  // Amazon tarzı fotoğraf modal fonksiyonları
+  const handleImageClick = () => {
+    const currentIndex = optimizedImages.findIndex(img => img === selectedUrl);
+    setCurrentImageIndex(currentIndex >= 0 ? currentIndex : 0);
+    setImageModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setImageModalOpen(false);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : optimizedImages.length - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex(prev => (prev < optimizedImages.length - 1 ? prev + 1 : 0));
+  };
+
+  // Klavye navigasyonu
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!imageModalOpen) return;
+      if (e.key === 'ArrowLeft') handlePrevImage();
+      if (e.key === 'ArrowRight') handleNextImage();
+      if (e.key === 'Escape') handleModalClose();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [imageModalOpen, optimizedImages.length]);
+
   if (!product) {
     return (
       <Container maxWidth="md">
@@ -380,35 +455,60 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             {/* Main media */}
-            <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2 }}>
+            <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
               {isVideoUrl(selectedUrl) ? (
                 <video controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} poster={images.find((u) => !isVideoUrl(u)) || undefined}>
                   <source src={selectedUrl} />
                 </video>
               ) : (
                 <Image
-                  src={selectedUrl || (images[0] || placeholderImg)}
+                  src={selectedUrl || (optimizedImages[0] || placeholderImg)}
                   alt={product.title || 'Product'}
                   fill
-                  sizes="(max-width: 900px) 100vw, 900px"
+                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
                   style={{ objectFit: 'cover' }}
                   priority
-                  quality={60}
-                  placeholder="blur"
-                  blurDataURL={shimmer(16, 16)}
+                  quality={85}
+                  placeholder="empty"
+                  loading="eager"
                 />
               )}
+              {/* Zoom indicator */}
+              <Box sx={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                color: 'white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5
+              }}>
+                🔍 {t('Click to zoom', 'Yakınlaştırmak için tıklayın')}
+              </Box>
             </Card>
             {/* Thumbnails */}
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {images.map((url) => (
-                <Box key={url} sx={{ width: 72, height: 72, position: 'relative', border: url === selectedUrl ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
+              {optimizedImages.map((url, index) => (
+                <Box key={url} sx={{ width: 72, height: 72, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
                   {isVideoUrl(url) ? (
                     <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
                       <source src={url} />
                     </video>
                   ) : (
-                    <Image src={url || placeholderImg} alt={product.title || 'thumb'} fill sizes="72px" style={{ objectFit: 'cover' }} quality={60} />
+                    <Image
+                      src={url || placeholderImg}
+                      alt={product.title || 'thumb'}
+                      fill
+                      sizes="72px"
+                      style={{ objectFit: 'cover' }}
+                      quality={75}
+                      loading={index < 4 ? "eager" : "lazy"}
+                    />
                   )}
                 </Box>
               ))}
@@ -484,6 +584,40 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
       <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))} sx={{ width: '100%' }}>{snackbar.message}</Alert>
       </Snackbar>
+
+      {/* Amazon tarzı fotoğraf modalı */}
+      <Dialog open={imageModalOpen} onClose={handleModalClose} maxWidth="md" fullWidth>
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{ position: 'relative', width: '100%', pb: '100%', overflow: 'hidden' }}>
+            {optimizedImages.length > 0 && (
+              <Image
+                src={optimizedImages[currentImageIndex]}
+                alt={product.title || 'Product'}
+                fill
+                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
+                style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
+                priority
+                quality={85}
+                placeholder="empty"
+                loading="eager"
+              />
+            )}
+          </Box>
+          <IconButton onClick={handleModalClose} sx={{ position: 'absolute', top: 16, right: 16, color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+          {optimizedImages.length > 1 && (
+            <>
+              <IconButton onClick={handlePrevImage} sx={{ position: 'absolute', top: '50%', left: 8, color: 'white', transform: 'translateY(-50%)' }}>
+                <ChevronLeftIcon />
+              </IconButton>
+              <IconButton onClick={handleNextImage} sx={{ position: 'absolute', top: '50%', right: 8, color: 'white', transform: 'translateY(-50%)' }}>
+                <ChevronRightIcon />
+              </IconButton>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -226,18 +226,120 @@ export default function CartPage() {
               const title = item.title || item.name || 'Ürün';
               const currency = item.currency || (item.is_turkey_user ? 'TRY' : 'EUR');
               return (
-                <Card key={id} sx={{ display: 'flex', mb: 2 }}>
-                  <CardMedia component="img" sx={{ width: 120 }} image={img} alt={title} />
-                  <CardContent sx={{ flex: 1 }}>
-                    <Typography variant="h6" noWrap>{title}</Typography>
-                    <Typography color="text.secondary">{t('Quantity', 'Adet')}: {item.quantity || 0}</Typography>
-                    <Typography color="text.secondary">{t('Price', 'Fiyat')}: {formatPrice(item.price, currency)}</Typography>
-                  </CardContent>
-                  <CardActions sx={{ alignItems: 'center' }}>
-                    <Button size="small" onClick={() => handleUpdateQuantity(id, 'decrement')} disabled={(Number(item.quantity) || 0) <= 1}>-</Button>
-                    <Button size="small" onClick={() => handleUpdateQuantity(id, 'increment')}>+</Button>
-                    <Button size="small" color="error" onClick={() => handleRemoveItem(id)}>{t('Remove', 'Kaldır')}</Button>
-                  </CardActions>
+                <Card key={id} sx={{ mb: 2 }}>
+                  {/* Mobil ve desktop için farklı layout */}
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    p: 2
+                  }}>
+                    {/* Resim */}
+                    <CardMedia
+                      component="img"
+                      sx={{
+                        width: { xs: '100%', sm: 120 },
+                        height: { xs: 200, sm: 120 },
+                        objectFit: 'cover',
+                        borderRadius: 1
+                      }}
+                      image={img}
+                      alt={title}
+                    />
+
+                    {/* İçerik ve butonlar */}
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      flex: 1,
+                      gap: 2
+                    }}>
+                      {/* Ürün bilgileri */}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" sx={{
+                          fontSize: { xs: '1rem', sm: '1.25rem' },
+                          lineHeight: 1.3,
+                          mb: 1
+                        }}>
+                          {title}
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ mb: 0.5 }}>
+                          {t('Quantity', 'Adet')}: {item.quantity || 0}
+                        </Typography>
+                        <Typography color="text.secondary">
+                          {t('Price', 'Fiyat')}: {formatPrice(item.price, currency)}
+                        </Typography>
+                      </Box>
+
+                      {/* Mobilde butonlar alt satırda, desktop'ta sağ tarafta */}
+                      <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'row', sm: 'column' },
+                        alignItems: { xs: 'center', sm: 'flex-end' },
+                        justifyContent: { xs: 'space-between', sm: 'center' },
+                        gap: 1,
+                        minWidth: { xs: 'auto', sm: '120px' }
+                      }}>
+                        {/* Adet butonları */}
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          p: 0.5
+                        }}>
+                          <Button
+                            size="small"
+                            onClick={() => handleUpdateQuantity(id, 'decrement')}
+                            disabled={(Number(item.quantity) || 0) <= 1}
+                            sx={{
+                              minWidth: 32,
+                              height: 32,
+                              fontSize: '1.2rem',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            -
+                          </Button>
+                          <Typography sx={{
+                            minWidth: 32,
+                            textAlign: 'center',
+                            fontWeight: 'bold'
+                          }}>
+                            {item.quantity || 0}
+                          </Typography>
+                          <Button
+                            size="small"
+                            onClick={() => handleUpdateQuantity(id, 'increment')}
+                            sx={{
+                              minWidth: 32,
+                              height: 32,
+                              fontSize: '1.2rem',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            +
+                          </Button>
+                        </Box>
+
+                        {/* Kaldır butonu */}
+                        <Button
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                          onClick={() => handleRemoveItem(id)}
+                          sx={{
+                            minWidth: { xs: 80, sm: 'auto' },
+                            fontSize: { xs: '0.875rem', sm: '0.75rem' }
+                          }}
+                        >
+                          {t('Remove', 'KALDIR')}
+                        </Button>
+                      </Box>
+                    </Box>
+                  </Box>
                 </Card>
               );
             })}
