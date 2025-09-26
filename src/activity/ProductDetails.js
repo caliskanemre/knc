@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useLocation } from "react-router-dom"; // useLocation eklendi
 import Axios from "axios";
 import Header from "../header/Header";
@@ -130,7 +130,7 @@ const writeIsTRToStorage = (isTR) => {
 const guessTRFromNavigator = () => {
     try {
         if (typeof navigator === 'undefined') return null;
-        return navigator.language?.toLowerCase().startsWith('tr') ? true : false;
+        return !!navigator.language?.toLowerCase().startsWith('tr');
     } catch (_) { return null; }
 };
 
@@ -147,7 +147,6 @@ const ProductDetails = () => {
     // Hero görsel optimizasyonu için ek state'ler
     const [heroDisplaySrc, setHeroDisplaySrc] = useState(null); // Şu an img tag'inde gösterilen kaynak
     const [heroHighResLoaded, setHeroHighResLoaded] = useState(false); // Medium/large yüklendi mi
-    const [heroLoading, setHeroLoading] = useState(false); // Preload süreci
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -227,19 +226,16 @@ const ProductDetails = () => {
         if (isMobile) {
             setHeroDisplaySrc(small);
             setHeroHighResLoaded(true); // blur hemen kalksın
-            setHeroLoading(false);
             return;
         }
         // Masaüstü progressive
         setHeroHighResLoaded(false);
         setHeroDisplaySrc(small);
-        setHeroLoading(true);
         const img = new Image();
         img.src = medium;
         img.onload = () => {
             setHeroDisplaySrc(medium);
             setHeroHighResLoaded(true);
-            setHeroLoading(false);
             const large = getPrefixedImage(selectedImage, 'large');
             if (large && large !== medium) {
                 const largeImg = new Image();
@@ -248,7 +244,6 @@ const ProductDetails = () => {
         };
         img.onerror = () => {
             setHeroHighResLoaded(true);
-            setHeroLoading(false);
         };
     }, [selectedImage, isMobile]);
 
@@ -271,29 +266,27 @@ const ProductDetails = () => {
     }, [product]);
 
     // Fetch similar products
-    useEffect(() => {
-        if (product && product.category) {
-            fetchSimilarProducts(product.category);
-        }
-    }, [product]);
-
-    const fetchSimilarProducts = async (typeValue) => {
+    const fetchSimilarProducts = useCallback(async (typeValue) => {
         if (!typeValue) return;
         try {
-
-
             const response = await Axios.get(`${baseURL}/products/${typeValue}?page=0&size=5`, {
                 headers: {
                     'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
                 }
             });
             const fetched = response.data.content || [];
-            const filtered = fetched.filter((p) => p.id !== product.id);
-            setSimilarProducts(filtered);
+            setSimilarProducts(prev => fetched.filter(p => p.id !== product?.id));
         } catch (error) {
             console.error('Error fetching similar products:', error);
         }
-    };
+    }, [baseURL, i18n.language, product?.id]);
+
+    // Similar products effect (bağımlılık güncellendi)
+    useEffect(() => {
+        if (product?.category) {
+            fetchSimilarProducts(product.category);
+        }
+    }, [product?.category, fetchSimilarProducts]);
 
     const handleFavoriteClick = async () => {
         if (!product || !product.id) {
