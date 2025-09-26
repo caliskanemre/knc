@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import "./css/ActivitySubHeader.css";
 import { ListItemIcon, Menu, MenuItem } from "@mui/material";
 import { NavLink } from "react-router-dom";
-import flower from "../images/flower.jpg";
 import tamborine from "../images/tamborine.jpg";
 import ornament from "../images/ornament.jpg";
 import gift from "../images/gift.jpg";
@@ -13,7 +12,7 @@ import handkerchief from "../images/mendil.jpg";
 import { useTranslation } from "react-i18next";
 
 function ProductsSubHeader() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = useState(null);
 
     const handleMouseEnter = (event) => {

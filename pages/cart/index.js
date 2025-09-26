@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Container, CssBaseline, Typography, Card, CardContent, CardMedia, Box, CircularProgress, Button, Divider, CardActions, Snackbar, Alert } from '@mui/material';
+import { Container, CssBaseline, Typography, Card, CardMedia, Box, CircularProgress, Button, Divider, Snackbar, Alert } from '@mui/material';
 import axios from 'axios';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';

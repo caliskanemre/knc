@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { Container, Typography, Box, CircularProgress, Button } from '@mui/material';
+import { Container, Typography, CircularProgress, Button } from '@mui/material';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import axios from 'axios';
@@ -109,4 +109,3 @@ export default function PaymentSuccessPage() {
     </>
   );
 }
-

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Container, Grid, Typography, Card, CardMedia, CardContent, Chip, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -7,58 +7,22 @@ import {t} from "i18next";
 import SEO from '../shared/SEO';
 
 
-const articlesData = [
-    {
-        id: 1,
-        title: "The Ultimate Guide to Henna Night Parties",
-        excerpt: "Planning a magical Henna Night? Explore traditions, outfit ideas, and more.",
-        image: "https://images.unsplash.com/photo-1574762514559-33b55b68af04?w=800", // Example image
-        date: "Jan 10, 2025",
-        topic: "Henna Traditions"
-    },
-    {
-        id: 2,
-        title: "5 Global Henna Customs You Must See",
-        excerpt: "From Morocco to India, discover how different cultures celebrate Henna ceremonies.",
-        image: "https://images.unsplash.com/photo-1601805681622-72b0fe62b03b?w=800",
-        date: "Jan 12, 2025",
-        topic: "Cultural Spotlights"
-    },
-    {
-        id: 3,
-        title: "Henna-Inspired Wedding Favors",
-        excerpt: "Unique gift ideas to wow your guests, complete with henna-themed packaging.",
-        image: "https://images.unsplash.com/photo-1574867549278-16d99a3f2c9c?w=800",
-        date: "Jan 15, 2025",
-        topic: "Wedding Tips"
-    },
-    {
-        id: 4,
-        title: "Modern Henna Trends for 2025",
-        excerpt: "What’s new in Henna styles this year? Minimalist motifs, glitter add-ons, and more!",
-        image: "https://images.unsplash.com/photo-1535218509729-5f7ee064f36b?w=800",
-        date: "Jan 18, 2025",
-        topic: "Fashion & Trends"
-    },
-    // Add as many articles as you like...
-];
-
 export default function ArticlesPage() {
     const [articles, setArticles] = useState([]);
     const [topicFilter, setTopicFilter] = useState('All');
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    useEffect(() => {
-        fetchArticles();
-    }, []);
-
-    const fetchArticles = async () => {
+    const fetchArticles = useCallback(async () => {
         try {
             const response = await axios.get(`${baseURL}/articles`); // Fetch articles from backend
             setArticles(response.data);
         } catch (error) {
             console.error("Error fetching articles:", error);
         }
-    };
+    }, [baseURL]);
+
+    useEffect(() => {
+        fetchArticles();
+    }, [fetchArticles]);
 
     // Extract unique topics
     const topics = Array.from(new Set(articles.map((a) => a.topic)));

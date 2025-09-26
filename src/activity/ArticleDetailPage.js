@@ -1,29 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Typography, Box, Card, CardMedia, CardContent, Button, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import Header from '../header/Header';
-
-// ReactMarkdown dinamik import için state
-const DynamicMarkdown = ({ children }) => {
-  const [ReactMarkdown, setReactMarkdown] = useState(null);
-
-  useEffect(() => {
-    // Browser tarafında dinamik import
-    if (typeof window !== 'undefined') {
-      import('react-markdown').then((module) => {
-        setReactMarkdown(() => module.default);
-      });
-    }
-  }, []);
-
-  // Server tarafında veya henüz yüklenmemişse basit div döndür
-  if (!ReactMarkdown) {
-    return <div>{children}</div>;
-  }
-
-  return <ReactMarkdown>{children}</ReactMarkdown>;
-};
 
 export default function ArticleDetailPage() {
     const { id } = useParams();
@@ -32,20 +11,23 @@ export default function ArticleDetailPage() {
     const [error, setError] = useState(false);
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-    useEffect(() => {
-        fetchArticle();
-    }, [id]);
-
-    const fetchArticle = async () => {
+    // fetchArticle fonksiyonunu useCallback ile sarmalayarak bağımlılık sorununu çöz
+    const fetchArticle = useCallback(async () => {
+        if (!id) return;
         try {
+            setLoading(true);
             const response = await axios.get(`${baseURL}/articles/${id}`);
             setArticle(response.data);
-        } catch (error) {
+        } catch (err) {
             setError(true);
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, baseURL]);
+
+    useEffect(() => {
+        fetchArticle();
+    }, [fetchArticle]);
 
     if (loading) {
         return (

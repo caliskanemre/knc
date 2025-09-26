@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
@@ -26,22 +26,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
-
-// Lightweight shimmer placeholder for fast first paint while images load
-const toBase64 = (str) => (typeof window === 'undefined' ? Buffer.from(str).toString('base64') : window.btoa(str));
-const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
-  `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-     <defs>
-       <linearGradient id="g">
-         <stop stop-color="#f6f7f8" offset="20%"/>
-         <stop stop-color="#edeef1" offset="50%"/>
-         <stop stop-color="#f6f7f8" offset="70%"/>
-       </linearGradient>
-     </defs>
-     <rect width="${w}" height="${h}" fill="#f6f7f8"/>
-     <rect id="r" width="${w}" height="${h}" fill="url(#g)"/>
-     <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1.2s" repeatCount="indefinite"  />
-   </svg>`)} }`;
 
 function generateUUID() {
   try {
@@ -119,7 +103,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
       const guess = navigator.language?.toLowerCase().startsWith('tr');
       setDisplayIsTR(!!guess);
     }
-  }, [product?.is_turkey_user]);
+  }, [product?.is_turkey_user, displayIsTR]);
 
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
   const placeholderImg = '/ksLogo.jpeg';
@@ -421,13 +405,13 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
     setImageModalOpen(false);
   };
 
-  const handlePrevImage = () => {
+  const handlePrevImage = useCallback(() => {
     setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : optimizedImages.length - 1));
-  };
+  }, [optimizedImages.length]);
 
-  const handleNextImage = () => {
+  const handleNextImage = useCallback(() => {
     setCurrentImageIndex(prev => (prev < optimizedImages.length - 1 ? prev + 1 : 0));
-  };
+  }, [optimizedImages.length]);
 
   // Klavye navigasyonu
   useEffect(() => {
@@ -440,7 +424,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [imageModalOpen, optimizedImages.length]);
+  }, [imageModalOpen, handlePrevImage, handleNextImage]);
 
   if (!product) {
     return (

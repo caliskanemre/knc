@@ -1,4 +1,4 @@
-import React, {lazy, Suspense, useEffect, useState} from 'react';
+import React, {lazy, Suspense, useEffect, useState, useCallback} from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
@@ -63,35 +63,31 @@ export default function Main() {
     const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
     // Fetch products
-    const fetchProducts = async (pageNum) => {
+    const fetchProducts = useCallback(async (categoryType = '', isInitialLoad = false) => {
         try {
-            const response = await Axios.get(`${baseURL}/products/all`, {
-                params: {
-                    page: pageNum,
-                    size: PAGE_SIZE,
-                    locale: i18n.language === 'en' ? 'en' : 'tr',
-                },
-                headers: {
-                    'Accept-Language': i18n.language === 'en' ? 'en' : 'tr'
-                }
-            });
-
-            const { content, totalPages } = response.data || {};
-            if (content) {
-                if (pageNum === 0) {
-                    setProducts(content);
-                } else {
-                    setProducts((prev) => [...prev, ...content]);
-                }
-                setHasMore(pageNum + 1 < totalPages);
+            if (!isInitialLoad) {
+                setLoading(true);
             }
+            let url = categoryType ? `${baseURL}/products/${categoryType}` : `${baseURL}/products/all`;
+            const response = await axios.get(url, {
+                params: { page: 0, size: 20 },
+                headers: { 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' }
+            });
+            const fetchedProducts = response.data.content || [];
+            setProducts(fetchedProducts);
+            setHasMore(response.data.totalPages > 1);
+            setPage(0);
         } catch (error) {
             console.error('Error fetching products:', error);
             setSnackbarMessage(t('Error fetching products'));
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
+        } finally {
+            if (!isInitialLoad) {
+                setLoading(false);
+            }
         }
-    };
+    }, [baseURL, i18n.language]);
 
     useEffect(() => {
         // 1. ADIM: Sunucudan gelen veri var mı diye kontrol et
@@ -114,9 +110,9 @@ export default function Main() {
             setProducts([]);
             setPage(0);
             setHasMore(true);
-            fetchProducts(0);
+            fetchProducts('', true);
         }
-    }, [i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
+    }, [fetchProducts, i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
 
     // Infinite scroll effect - Optimized version
     useEffect(() => {

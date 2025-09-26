@@ -151,6 +151,8 @@ const ProductDetails = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [orderNote, setOrderNote] = useState("");
+    const [similarProducts, setSimilarProducts] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     // Persisted guest token: generate if absent, then store in localStorage and state
     const [guestToken, setGuestToken] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('guestToken') || generateUUID()) : ''));
 
@@ -204,7 +206,7 @@ const ProductDetails = () => {
                 console.error('Error fetching product:', error);
                 showSnackbar(t("Failed to load product") + " ❌", "error");
             });
-    }, [id, title, baseURL, i18n.language]);
+    }, [id, title, baseURL, i18n.language, product, t]);
 
     // Set default selected image
     useEffect(() => {
@@ -263,7 +265,7 @@ const ProductDetails = () => {
                 ]
             });
         }
-    }, [product]);
+    }, [product, currency]);
 
     // Fetch similar products
     const fetchSimilarProducts = useCallback(async (typeValue) => {
