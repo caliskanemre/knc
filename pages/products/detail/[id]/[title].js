@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
@@ -65,77 +65,43 @@ function generateUUID() {
 
 const stripHtmlTags = (str) => (str || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
-function sanitizeTitle(str) {
-    return (str || 'product')
-        .replace(/[\\/]+/g, '-')   // \ ve / yerine -
-        .replace(/\s+/g, ' ')      // fazla boşlukları tek boşluk yap
-        .trim();                   // baştaki/sondaki boşlukları sil
-}
+const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
 
+export default function ProductDetail({ product, seo, initialIsTR = null }) {
+    const { t } = useTranslation();
+    const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
+    const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
+    const [quantity, setQuantity] = useState(1);
+    const [orderNote] = useState('');
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [imageModalOpen, setImageModalOpen] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [displayIsTR, setDisplayIsTR] = useState(() => {
+        if (typeof initialIsTR === 'boolean') return initialIsTR;
+        if (typeof product?.is_turkey_user === 'boolean') return !!product.is_turkey_user;
+        return null;
+    });
 
-class ProductDetailPage extends Component {
-    static defaultProps = {
-        product: null,
-        seo: {},
-        pageLocale: 'tr',
-        initialIsTR: null,
-    };
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const placeholderImg = '/ksLogo.jpeg';
 
-    state = {
-        selectedUrl: this.props.product?.photos?.[0]?.photo || '',
-        quantity: 1,
-        orderNote: '',
-        snackbar: { open: false, message: '', severity: 'success' },
-        imageModalOpen: false,
-        currentImageIndex: 0,
-        displayIsTR: typeof this.props.initialIsTR === 'boolean'
-            ? this.props.initialIsTR
-            : typeof this.props.product?.is_turkey_user === 'boolean'
-                ? !!this.props.product.is_turkey_user
-                : null,
-    };
+    const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
 
-    componentDidMount() {
-        this.handleLocaleDetection();
-        if (!this.state.selectedUrl && this.optimizedImages[0]) {
-            this.setState({ selectedUrl: this.optimizedImages[0] });
-        }
-        this.setupKeyNavigation();
-    }
+    const optimizedImages = useMemo(() => {
+        if (!images.length) return [];
+        return images.map(url => url ? url.replace(/([^/]+)$/, `medium_$1`) : url);
+    }, [images]);
 
-    componentDidUpdate(prevProps, prevState) {
-        if (prevProps.product?.is_turkey_user !== this.props.product?.is_turkey_user) {
-            this.handleLocaleDetection();
-        }
-        if (this.optimizedImages !== prevState.optimizedImages && !this.state.selectedUrl && this.optimizedImages[0]) {
-            this.setState({ selectedUrl: this.optimizedImages[0] });
-        }
-        if (prevState.imageModalOpen !== this.state.imageModalOpen) {
-            this.setupKeyNavigation();
-        }
-    }
+    useEffect(() => {
+        if (!selectedUrl && optimizedImages[0]) setSelectedUrl(optimizedImages[0]);
+    }, [optimizedImages, selectedUrl]);
 
-    componentWillUnmount() {
-        window.removeEventListener('keydown', this.handleKeyDown);
-    }
-
-    baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    placeholderImg = '/ksLogo.jpeg';
-
-    images = React.memo(() => (this.props.product?.photos || []).map(p => p.photo).filter(Boolean), [this.props.product]);
-
-    optimizedImages = React.memo(() => {
-        if (!this.images.length) return [];
-        return this.images.map(url => url ? url.replace(/([^/]+)$/, `medium_$1`) : url);
-    }, [this.images]);
-
-    handleLocaleDetection = () => {
+    useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const { product } = this.props;
         if (typeof product?.is_turkey_user === 'boolean') {
             const isTR = !!product.is_turkey_user;
-            this.setState({ displayIsTR: isTR });
+            setDisplayIsTR(isTR);
             try {
                 localStorage.setItem('is_turkey_user', JSON.stringify(isTR));
                 document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`;
@@ -148,31 +114,186 @@ class ProductDetailPage extends Component {
             if (raw !== null) {
                 const parsed = JSON.parse(raw);
                 if (typeof parsed === 'boolean') {
-                    this.setState({ displayIsTR: parsed });
+                    setDisplayIsTR(parsed);
                     return;
                 }
             }
 
             const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
             if (m) {
-                this.setState({ displayIsTR: m[1] === '1' });
+                setDisplayIsTR(m[1] === '1');
                 return;
             }
         } catch (_) {}
 
-        if (this.state.displayIsTR === null && typeof navigator !== 'undefined') {
+        if (displayIsTR === null && typeof navigator !== 'undefined') {
             const guess = navigator.language?.toLowerCase().startsWith('tr');
-            this.setState({ displayIsTR: !!guess });
+            setDisplayIsTR(!!guess);
         }
-    };
+    }, [product?.is_turkey_user, displayIsTR]);
 
-    isVideoUrl = (url) => {
+    const isVideoUrl = (url) => {
         if (!url) return false;
         const clean = url.toLowerCase().split('#')[0].split('?')[0];
         return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
     };
 
-    getLocalizedDescription = (p, lang) => {
+    const isTRDisplay = typeof displayIsTR === 'boolean' ? displayIsTR : !!product?.is_turkey_user;
+    const baseUIPrice = isTRDisplay ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
+    const displayOriginal = Number(baseUIPrice) || 0;
+    const discountPercent = 20;
+    const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
+    const currencySymbol = isTRDisplay ? '₺' : '€';
+
+    const fetcher = url => axios.get(url, { headers: { 'Accept-Language': t('i18n.language') === 'en' ? 'en' : 'tr' } }).then(res => res.data);
+    const { data: similar, isLoading: loadingSimilar } = useSWR(
+        product?.category ? `${baseURL}/products/${encodeURIComponent(product.category)}?page=0&size=6&locale=${t('i18n.language') === 'en' ? 'en' : 'tr'}` : null,
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+
+    const handleAddToCart = async () => {
+        if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid quantity'), severity: 'warning' });
+        try {
+            const unitPrice = isTRDisplay
+                ? (Number(product?.tl_price ?? product?.price) || 0)
+                : (Number(product?.eur_price ?? product?.price) || 0);
+
+            const cartItem = {
+                productId: product.id,
+                quantity,
+                price: unitPrice * quantity,
+                title: product.name || product.title,
+                image: product.imageUrl || product.photos?.[0]?.photo,
+                orderNote,
+                currency: isTRDisplay ? 'TRY' : 'EUR',
+                is_turkey_user: isTRDisplay,
+            };
+
+            if (typeof window !== 'undefined') {
+                const tokenStr = localStorage.getItem('token');
+                let guestToken = localStorage.getItem('guestToken');
+                if (!guestToken) {
+                    guestToken = generateUUID();
+                    localStorage.setItem('guestToken', guestToken);
+                }
+
+                const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
+                const lang = t('i18n.language') === 'en' ? 'en' : 'tr';
+
+                if (tokenStr) {
+                    const email = jwtDecode(tokenStr).sub;
+                    await axios.post(`${baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
+                        headers: { Authorization: `Bearer ${tokenStr}`, 'X-Request-ID': requestId, 'Accept-Language': lang },
+                    });
+                } else {
+                    let localCart;
+                    try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
+                    const existing = localCart.find(i => i.productId === cartItem.productId);
+                    if (existing) {
+                        existing.quantity += cartItem.quantity;
+                        existing.price = unitPrice * existing.quantity;
+                        existing.orderNote = orderNote || existing.orderNote;
+                    } else {
+                        localCart.push(cartItem);
+                    }
+                    localStorage.setItem('cart', JSON.stringify(localCart));
+
+                    const headers = { 'X-Guest-Token': guestToken, 'X-Request-ID': requestId, 'Accept-Language': lang };
+                    try {
+                        await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 5000 });
+                    } catch (err) {
+                        if (err?.response?.status === 401) {
+                            const newToken = generateUUID();
+                            localStorage.setItem('guestToken', newToken);
+                            await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 5000 });
+                        } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
+                            try {
+                                await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 5000 });
+                            } catch (err2) {
+                                if (err2?.response?.status === 401) {
+                                    const newToken2 = generateUUID();
+                                    localStorage.setItem('guestToken', newToken2);
+                                    await axios.post(`${baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 5000 });
+                                } else {
+                                    throw err2;
+                                }
+                            }
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
+
+                if (typeof window.gtag === 'function') {
+                    const totalValueUI = displayOriginal * quantity;
+                    const currencyCode = isTRDisplay ? 'TRY' : 'EUR';
+                    try {
+                        window.gtag('event', 'conversion', { send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
+                        window.gtag('event', 'add_to_cart', { currency: currencyCode, value: totalValueUI, items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: displayOriginal }] });
+                    } catch {}
+                    window.dispatchEvent(new Event('cartUpdated'));
+                }
+            }
+
+            setSnackbar({ open: true, message: t('Item added to cart'), severity: 'success' });
+        } catch (e) {
+            console.error('Add to cart error', e?.response?.status, e?.response?.data || e.message);
+            setSnackbar({ open: true, message: e?.response?.status === 401 ? t('Authorization error while adding to cart. Please try again.') : t('Error adding to cart'), severity: 'error' });
+        }
+    };
+
+    const isFav = useMemo(() => {
+        if (!product?.id) return false;
+        if (isLoggedIn) return favorites?.favoriteProducts?.some(f => f.id === product.id);
+        if (typeof window === 'undefined') return false;
+        try { return (JSON.parse(localStorage.getItem('favorites') || '[]') || []).some(f => f.id === product.id); } catch { return false; }
+    }, [favorites, isLoggedIn, product?.id]);
+
+    const handleFavorite = async () => {
+        if (!product?.id) return;
+        try {
+            if (isLoggedIn && token) {
+                await toggleFavorite(product.id, isFav, 'product');
+                setSnackbar({ open: true, message: isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️', severity: 'success' });
+            } else if (typeof window !== 'undefined') {
+                let localFavorites;
+                try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
+                const exists = localFavorites.some(f => f.id === product.id);
+                if (exists) {
+                    localFavorites = localFavorites.filter(f => f.id !== product.id);
+                    const guestToken = localStorage.getItem('guestToken');
+                    if (guestToken) await axios.delete(`${baseURL}/users/guest/favorites/${product.id}`, { headers: { 'X-Guest-Token': guestToken } });
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbar({ open: true, message: t('Removed from favorites') + ' ❌', severity: 'success' });
+                } else {
+                    const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
+                    if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
+                    await axios.post(`${baseURL}/users/guest/favorites/${product.id}`, {}, { headers: { 'X-Guest-Token': guestToken } });
+                    const favItem = { id: product.id, title: product.title || product.name || 'Unknown', price: product.price || 0, photos: product.photos || [] };
+                    localFavorites.push(favItem);
+                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
+                    setSnackbar({ open: true, message: t('Added to favorites') + ' ❤️', severity: 'success' });
+                }
+            }
+        } catch (e) {
+            console.error('Favorite error', e?.response?.data || e.message);
+            setSnackbar({ open: true, message: t('Error syncing favorites'), severity: 'error' });
+        }
+    };
+
+    const handleWhatsAppOrder = () => {
+        if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid product or quantity'), severity: 'warning' });
+        const totalDiscounted = displayDiscounted * quantity;
+        const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${orderNote ? ` (Not: ${orderNote})` : ''}`;
+        const msg = `🛍️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
+        const phoneNumber = '905348290866';
+        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
+        if (typeof window !== 'undefined') window.open(url, '_blank');
+        setSnackbar({ open: true, message: t('Redirecting to WhatsApp...'), severity: 'info' });
+    };
+
+    const getLocalizedDescription = (p, lang) => {
         if (!p) return '';
         const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
         const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
@@ -198,416 +319,227 @@ class ProductDetailPage extends Component {
             : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
     };
 
-    show = (message, severity = 'success') => {
-        this.setState({ snackbar: { open: true, message, severity } });
+    const localizedDescription = useMemo(() => getLocalizedDescription(product, t('i18n.language')), [product, t]);
+
+    const handleImageClick = () => {
+        const currentIndex = optimizedImages.findIndex(img => img === selectedUrl);
+        setCurrentImageIndex(currentIndex >= 0 ? currentIndex : 0);
+        setImageModalOpen(true);
     };
 
-    handleAddToCart = async () => {
-        const { product, pageLocale } = this.props;
-        const { quantity, displayIsTR } = this.state;
-        const { t } = this.context;
-
-        if (!product?.id || quantity <= 0) return this.show(t('Invalid quantity'), 'warning');
-
-        try {
-            const unitPrice = displayIsTR
-                ? (Number(product?.tl_price ?? product?.price) || 0)
-                : (Number(product?.eur_price ?? product?.price) || 0);
-
-            const cartItem = {
-                productId: product.id,
-                quantity,
-                price: unitPrice * quantity,
-                title: product.name || product.title,
-                image: product.imageUrl || product.photos?.[0]?.photo,
-                orderNote: this.state.orderNote,
-                currency: displayIsTR ? 'TRY' : 'EUR',
-                is_turkey_user: displayIsTR,
-            };
-
-            if (typeof window !== 'undefined') {
-                const tokenStr = localStorage.getItem('token');
-                let guestToken = localStorage.getItem('guestToken');
-                if (!guestToken) {
-                    guestToken = generateUUID();
-                    localStorage.setItem('guestToken', guestToken);
-                }
-
-                const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
-                const lang = pageLocale === 'en' ? 'en' : 'tr';
-
-                if (tokenStr) {
-                    const email = jwtDecode(tokenStr).sub;
-                    await axios.post(`${this.baseURL}/cart/${encodeURIComponent(email)}`, cartItem, {
-                        headers: { Authorization: `Bearer ${tokenStr}`, 'X-Request-ID': requestId, 'Accept-Language': lang },
-                    });
-                } else {
-                    let localCart;
-                    try { localCart = JSON.parse(localStorage.getItem('cart') || '[]'); } catch { localCart = []; }
-                    const existing = localCart.find(i => i.productId === cartItem.productId);
-                    if (existing) {
-                        existing.quantity += cartItem.quantity;
-                        existing.price = unitPrice * existing.quantity;
-                        existing.orderNote = this.state.orderNote || existing.orderNote;
-                    } else {
-                        localCart.push(cartItem);
-                    }
-                    localStorage.setItem('cart', JSON.stringify(localCart));
-
-                    const headers = { 'X-Guest-Token': guestToken, 'X-Request-ID': requestId, 'Accept-Language': lang };
-                    try {
-                        await axios.post(`${this.baseURL}/cart/guest`, localCart, { headers, timeout: 5000 });
-                    } catch (err) {
-                        if (err?.response?.status === 401) {
-                            const newToken = generateUUID();
-                            localStorage.setItem('guestToken', newToken);
-                            await axios.post(`${this.baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 5000 });
-                        } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
-                            try {
-                                await axios.post(`${this.baseURL}/cart/guest`, cartItem, { headers, timeout: 5000 });
-                            } catch (err2) {
-                                if (err2?.response?.status === 401) {
-                                    const newToken2 = generateUUID();
-                                    localStorage.setItem('guestToken', newToken2);
-                                    await axios.post(`${this.baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 5000 });
-                                } else {
-                                    throw err2;
-                                }
-                            }
-                        } else {
-                            throw err;
-                        }
-                    }
-                }
-
-                if (typeof window.gtag === 'function') {
-                    const totalValueUI = (displayIsTR ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price)) * quantity;
-                    const currencyCode = displayIsTR ? 'TRY' : 'EUR';
-                    try {
-                        window.gtag('event', 'conversion', { send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
-                        window.gtag('event', 'add_to_cart', { currency: currencyCode, value: totalValueUI, items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: totalValueUI / quantity }] });
-                    } catch {}
-                    window.dispatchEvent(new Event('cartUpdated'));
-                }
-            }
-
-            this.show(t('Item added to cart'), 'success');
-        } catch (e) {
-            console.error('Add to cart error', e?.response?.status, e?.response?.data || e.message);
-            this.show(e?.response?.status === 401 ? t('Authorization error while adding to cart. Please try again.') : t('Error adding to cart'), 'error');
-        }
+    const handleModalClose = () => {
+        setImageModalOpen(false);
     };
 
-    isFav = React.memo(() => {
-        const { product } = this.props;
-        const { isLoggedIn, favorites = {} } = this.context;
-        if (!product?.id) return false;
-        if (isLoggedIn) return favorites?.favoriteProducts?.some(f => f.id === product.id);
-        if (typeof window === 'undefined') return false;
-        try { return (JSON.parse(localStorage.getItem('favorites') || '[]') || []).some(f => f.id === product.id); } catch { return false; }
-    }, [this.props.product?.id, this.context.isLoggedIn, this.context.favorites]);
-
-    handleFavorite = async () => {
-        const { product, pageLocale } = this.props;
-        const { t, toggleFavorite, token } = this.context;
-        if (!product?.id) return;
-
-        try {
-            if (this.context.isLoggedIn && token) {
-                await toggleFavorite(product.id, this.isFav, 'product');
-                this.show(this.isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️', 'success');
-            } else if (typeof window !== 'undefined') {
-                let localFavorites;
-                try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
-                const exists = localFavorites.some(f => f.id === product.id);
-                if (exists) {
-                    localFavorites = localFavorites.filter(f => f.id !== product.id);
-                    const guestToken = localStorage.getItem('guestToken');
-                    if (guestToken) await axios.delete(`${this.baseURL}/users/guest/favorites/${product.id}`, { headers: { 'X-Guest-Token': guestToken } });
-                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
-                    this.show(t('Removed from favorites') + ' ❌', 'success');
-                } else {
-                    const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
-                    if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
-                    await axios.post(`${this.baseURL}/users/guest/favorites/${product.id}`, {}, { headers: { 'X-Guest-Token': guestToken } });
-                    const favItem = { id: product.id, title: product.title || product.name || 'Unknown', price: product.price || 0, photos: product.photos || [] };
-                    localFavorites.push(favItem);
-                    localStorage.setItem('favorites', JSON.stringify(localFavorites));
-                    this.show(t('Added to favorites') + ' ❤️', 'success');
-                }
-            }
-        } catch (e) {
-            console.error('Favorite error', e?.response?.data || e.message);
-            this.show(t('Error syncing favorites'), 'error');
-        }
+    const handlePrevImage = () => {
+        setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : optimizedImages.length - 1));
     };
 
-    handleWhatsAppOrder = () => {
-        const { product, pageLocale } = this.props;
-        const { quantity, displayIsTR } = this.state;
-        const { t } = this.context;
-        const currencySymbol = displayIsTR ? '₺' : '€';
-        const baseUIPrice = displayIsTR ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
-        const displayOriginal = Number(baseUIPrice) || 0;
-        const discountPercent = 20;
-        const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
-
-        if (!product?.id || quantity <= 0) return this.show(t('Invalid product or quantity'), 'warning');
-        const totalDiscounted = displayDiscounted * quantity;
-        const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${this.state.orderNote ? ` (Not: ${this.state.orderNote})` : ''}`;
-        const msg = `🛍️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
-        const phoneNumber = '905348290866';
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
-        if (typeof window !== 'undefined') window.open(url, '_blank');
-        this.show(t('Redirecting to WhatsApp...'), 'info');
+    const handleNextImage = () => {
+        setCurrentImageIndex(prev => (prev < optimizedImages.length - 1 ? prev + 1 : 0));
     };
 
-    handleImageClick = () => {
-        const { selectedUrl } = this.state;
-        const currentIndex = this.optimizedImages.findIndex(img => img === selectedUrl);
-        this.setState({ currentImageIndex: currentIndex >= 0 ? currentIndex : 0, imageModalOpen: true });
-    };
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!imageModalOpen) return;
+            if (e.key === 'ArrowLeft') handlePrevImage();
+            if (e.key === 'ArrowRight') handleNextImage();
+            if (e.key === 'Escape') handleModalClose();
+        };
 
-    handleModalClose = () => {
-        this.setState({ imageModalOpen: false });
-    };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [imageModalOpen, optimizedImages.length]);
 
-    handlePrevImage = () => {
-        this.setState(prevState => ({
-            currentImageIndex: prevState.currentImageIndex > 0 ? prevState.currentImageIndex - 1 : this.optimizedImages.length - 1,
-        }));
-    };
-
-    handleNextImage = () => {
-        this.setState(prevState => ({
-            currentImageIndex: prevState.currentImageIndex < this.optimizedImages.length - 1 ? prevState.currentImageIndex + 1 : 0,
-        }));
-    };
-
-    handleKeyDown = (e) => {
-        if (!this.state.imageModalOpen) return;
-        if (e.key === 'ArrowLeft') this.handlePrevImage();
-        if (e.key === 'ArrowRight') this.handleNextImage();
-        if (e.key === 'Escape') this.handleModalClose();
-    };
-
-    setupKeyNavigation = () => {
-        window.removeEventListener('keydown', this.handleKeyDown);
-        window.addEventListener('keydown', this.handleKeyDown);
-    };
-
-    render() {
-        const { product, seo, pageLocale } = this.props;
-        const { selectedUrl, quantity, snackbar, imageModalOpen, currentImageIndex, displayIsTR } = this.state;
-        const { t } = this.context;
-
-        if (!product) {
-            return (
-                <Container maxWidth="md">
-                    <CssBaseline />
-                    <Box sx={{ textAlign: 'center', py: 8 }}>
-                        <Typography variant="h5">{t('Product not found', 'Ürün bulunamadı')}</Typography>
-                    </Box>
-                </Container>
-            );
-        }
-
-        const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
-        const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
-        const shimmerPlaceholder = shimmer(400, 400);
-        const isTRDisplay = typeof displayIsTR === 'boolean' ? displayIsTR : !!product?.is_turkey_user;
-        const baseUIPrice = isTRDisplay ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
-        const displayOriginal = Number(baseUIPrice) || 0;
-        const discountPercent = 20;
-        const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
-        const currencySymbol = isTRDisplay ? '₺' : '€';
-        const localizedDescription = this.getLocalizedDescription(product, pageLocale);
-
-        // SWR ile benzer ürünler
-        const fetcher = url => axios.get(url, { headers: { 'Accept-Language': pageLocale === 'en' ? 'en' : 'tr' } }).then(res => res.data);
-        const { data: similar, isLoading: loadingSimilar } = useSWR(
-            product?.category ? `${this.baseURL}/products/${encodeURIComponent(product.category)}?page=0&size=6&locale=${pageLocale === 'en' ? 'en' : 'tr'}` : null,
-            fetcher,
-            { revalidateOnFocus: false }
-        );
-
+    if (!product) {
         return (
-            <>
-                <Head>
-                    <title>{metaTitle || (product.title || 'Ürün')}</title>
-                    {metaDescription && <meta name="description" content={metaDescription} />}
-                    {canonical && <link rel="canonical" href={canonical} />}
-                    {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
-                    {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
-                    {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
-                    <meta property="og:title" content={metaTitle || (product.title || 'Ürün')} />
-                    {metaDescription && <meta property="og:description" content={metaDescription} />}
-                    <meta property="og:type" content="product" />
-                    {(ogImage || this.images[0]) && <meta property="og:image" content={ogImage || this.images[0]} />}
-                    {canonical && <meta property="og:url" content={canonical} />}
-                    <meta name="twitter:card" content="summary_large_image" />
-                    <meta name="twitter:title" content={metaTitle || (product.title || 'Ürün')} />
-                    {metaDescription && <meta name="twitter:description" content={metaDescription} />}
-                    {(ogImage || this.images[0]) && <meta name="twitter:image" content={ogImage || this.images[0]} />}
-                    {product.structuredData?.product && (
-                        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.product) }} />
-                    )}
-                    {product.structuredData?.breadcrumbs && (
-                        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.breadcrumbs) }} />
-                    )}
-                    <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
-                </Head>
+            <Container maxWidth="md">
                 <CssBaseline />
-                <Container maxWidth="lg" sx={{ py: 4 }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
-                            <Card className="aspect-ratio-box" sx={{ mb: 2, cursor: 'pointer' }} onClick={this.handleImageClick}>
-                                <Image
-                                    src={selectedUrl || (this.optimizedImages[0] || this.placeholderImg)}
-                                    alt={product.title || 'Product'}
-                                    fill
-                                    sizes="(max-width: 600px) 100vw, 400px"
-                                    style={{ objectFit: 'cover' }}
-                                    priority
-                                    quality={75}
-                                    placeholder="blur"
-                                    blurDataURL={shimmerPlaceholder}
-                                />
-                                <Box sx={{
-                                    position: 'absolute',
-                                    top: 8,
-                                    left: 8,
-                                    backgroundColor: 'rgba(0,0,0,0.6)',
-                                    color: 'white',
-                                    px: 1,
-                                    py: 0.5,
-                                    borderRadius: 1,
-                                    fontSize: '0.75rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 0.5
-                                }}>
-                                    🔍 {t('Click to zoom', 'Yakınlaştırmak için tıklayın')}
-                                </Box>
-                            </Card>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {this.optimizedImages.map((url, index) => (
-                                    <Box key={url} sx={{ width: 80, height: 80, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => this.setState({ selectedUrl: url })}>
-                                        {this.isVideoUrl(url) ? (
-                                            <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
-                                                <source src={url} />
-                                            </video>
-                                        ) : (
-                                            <Image
-                                                src={url || this.placeholderImg}
-                                                alt={product.title || 'thumb'}
-                                                fill
-                                                sizes="80px"
-                                                style={{ objectFit: 'cover' }}
-                                                quality={50}
-                                                loading="lazy"
-                                            />
-                                        )}
-                                    </Box>
-                                ))}
-                            </Box>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h4" sx={{ mb: 1 }}>{product.title || product.name}</Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{product.category}</Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>
-                                <Typography sx={{ textDecoration: 'line-through', color: 'gray' }}>{displayOriginal.toFixed(2)} {currencySymbol}</Typography>
-                                <Typography variant="h5" color="primary">{displayDiscounted.toFixed(2)} {currencySymbol}</Typography>
-                                <Typography variant="body2" color="error">%{discountPercent} indirim</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                <Button variant="outlined" onClick={() => this.setState(prev => ({ quantity: Math.max(1, prev.quantity - 1) }))}>-</Button>
-                                <Typography sx={{ minWidth: 32, textAlign: 'center' }}>{quantity}</Typography>
-                                <Button variant="outlined" onClick={() => this.setState(prev => ({ quantity: prev.quantity + 1 }))}>-</Button>
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                                <Button variant="contained" startIcon={<ShoppingCartIcon />} onClick={this.handleAddToCart}>{t('Add to Cart', 'Sepete Ekle')}</Button>
-                                <Button variant="outlined" startIcon={<WhatsAppIcon />} color="success" onClick={this.handleWhatsAppOrder}>WhatsApp</Button>
-                                <IconButton onClick={this.handleFavorite} color={this.isFav ? 'error' : 'default'} aria-label="favorite">
-                                    {this.isFav ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                                </IconButton>
-                                <IconButton component="a" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl || '')}`} target="_blank" rel="noopener noreferrer" aria-label="share"><ShareIcon /></IconButton>
-                            </Box>
-                            {localizedDescription && (
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="h6" sx={{ mb: 1 }}>{t('Description', 'Açıklama')}</Typography>
-                                    <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{localizedDescription}</Typography>
-                                </Box>
-                            )}
-                        </Grid>
-                    </Grid>
-                    <Box sx={{ mt: 6 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>{t('Similar Products', 'Benzer Ürünler')}</Typography>
-                        {loadingSimilar ? (
-                            <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
-                        ) : (
-                            <Grid container spacing={2}>
-                                {(similar?.content || []).filter(p => p.id !== product.id).map(p => {
-                                    const img = p.photos?.[0]?.photo || this.placeholderImg;
-                                    const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
-                                    return (
-                                        <Grid item key={p.id} xs={6} sm={4} md={3}>
-                                            <Card sx={{ p: 1 }} className="aspect-ratio-box">
-                                                <Box component="a" href={href} sx={{ position: 'relative', display: 'block' }}>
-                                                    <Image src={img} alt={p.title || 'product'} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: 'cover' }} quality={50} loading="lazy" />
-                                                </Box>
-                                                <Typography variant="body2" noWrap sx={{ mt: 1 }}>{p.title}</Typography>
-                                            </Card>
-                                        </Grid>
-                                    );
-                                })}
-                            </Grid>
-                        )}
-                    </Box>
-                </Container>
-                <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => this.setState(prev => ({ snackbar: { ...prev.snackbar, open: false } }))} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-                    <Alert severity={snackbar.severity} onClose={() => this.setState(prev => ({ snackbar: { ...prev.snackbar, open: false } }))} sx={{ width: '100%' }}>{snackbar.message}</Alert>
-                </Snackbar>
-                <Dialog open={imageModalOpen} onClose={this.handleModalClose} maxWidth="md" fullWidth>
-                    <DialogContent sx={{ p: 0 }}>
-                        <Box sx={{ position: 'relative', width: '100%', pb: '100%', overflow: 'hidden' }}>
-                            {this.optimizedImages.length > 0 && (
-                                <Image
-                                    src={this.optimizedImages[currentImageIndex]}
-                                    alt={product.title || 'Product'}
-                                    fill
-                                    sizes="(max-width: 600px) 100vw, 400px"
-                                    style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
-                                    quality={75}
-                                    placeholder="empty"
-                                    loading="eager"
-                                />
-                            )}
-                        </Box>
-                        <IconButton onClick={this.handleModalClose} sx={{ position: 'absolute', top: 16, right: 16, color: 'white' }}>
-                            <CloseIcon />
-                        </IconButton>
-                        {this.optimizedImages.length > 1 && (
-                            <>
-                                <IconButton onClick={this.handlePrevImage} sx={{ position: 'absolute', top: '50%', left: 8, color: 'white', transform: 'translateY(-50%)' }}>
-                                    <ChevronLeftIcon />
-                                </IconButton>
-                                <IconButton onClick={this.handleNextImage} sx={{ position: 'absolute', top: '50%', right: 8, color: 'white', transform: 'translateY(-50%)' }}>
-                                    <ChevronRightIcon />
-                                </IconButton>
-                            </>
-                        )}
-                    </DialogContent>
-                </Dialog>
-            </>
+                <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <Typography variant="h5">{t('Product not found', 'Ürün bulunamadı')}</Typography>
+                </Box>
+            </Container>
         );
     }
 
-    static contextType = useTranslation().contextType || useAuth().contextType; // i18next ve auth context
+    const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
+    const shimmerPlaceholder = shimmer(400, 400);
+
+    return (
+        <>
+            <Head>
+                <title>{metaTitle || (product.title || 'Ürün')}</title>
+                {metaDescription && <meta name="description" content={metaDescription} />}
+                {canonical && <link rel="canonical" href={canonical} />}
+                {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
+                {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
+                {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
+                <meta property="og:title" content={metaTitle || (product.title || 'Ürün')} />
+                {metaDescription && <meta property="og:description" content={metaDescription} />}
+                <meta property="og:type" content="product" />
+                {(ogImage || images[0]) && <meta property="og:image" content={ogImage || images[0]} />}
+                {canonical && <meta property="og:url" content={canonical} />}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={metaTitle || (product.title || 'Ürün')} />
+                {metaDescription && <meta name="twitter:description" content={metaDescription} />}
+                {(ogImage || images[0]) && <meta name="twitter:image" content={ogImage || images[0]} />}
+                {product.structuredData?.product && (
+                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.product) }} />
+                )}
+                {product.structuredData?.breadcrumbs && (
+                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.breadcrumbs) }} />
+                )}
+                <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
+            </Head>
+            <CssBaseline />
+            <Container maxWidth="lg" sx={{ py: 4 }}>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                        <Card className="aspect-ratio-box" sx={{ mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
+                            <Image
+                                src={selectedUrl || (optimizedImages[0] || placeholderImg)}
+                                alt={product.title || 'Product'}
+                                fill
+                                sizes="(max-width: 600px) 100vw, 400px"
+                                style={{ objectFit: 'cover' }}
+                                priority
+                                quality={75}
+                                placeholder="blur"
+                                blurDataURL={shimmerPlaceholder}
+                            />
+                            <Box sx={{
+                                position: 'absolute',
+                                top: 8,
+                                left: 8,
+                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                color: 'white',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5
+                            }}>
+                                🔍 {t('Click to zoom', 'Yakınlaştırmak için tıklayın')}
+                            </Box>
+                        </Card>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {optimizedImages.map((url, index) => (
+                                <Box key={url} sx={{ width: 80, height: 80, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
+                                    {isVideoUrl(url) ? (
+                                        <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
+                                            <source src={url} />
+                                        </video>
+                                    ) : (
+                                        <Image
+                                            src={url || placeholderImg}
+                                            alt={product.title || 'thumb'}
+                                            fill
+                                            sizes="80px"
+                                            style={{ objectFit: 'cover' }}
+                                            quality={50}
+                                            loading="lazy"
+                                        />
+                                    )}
+                                </Box>
+                            ))}
+                        </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h4" sx={{ mb: 1 }}>{product.title || product.name}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{product.category}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>
+                            <Typography sx={{ textDecoration: 'line-through', color: 'gray' }}>{displayOriginal.toFixed(2)} {currencySymbol}</Typography>
+                            <Typography variant="h5" color="primary">{displayDiscounted.toFixed(2)} {currencySymbol}</Typography>
+                            <Typography variant="body2" color="error">%{discountPercent} indirim</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <Button variant="outlined" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</Button>
+                            <Typography sx={{ minWidth: 32, textAlign: 'center' }}>{quantity}</Typography>
+                            <Button variant="outlined" onClick={() => setQuantity(q => q + 1)}>+</Button>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                            <Button variant="contained" startIcon={<ShoppingCartIcon />} onClick={handleAddToCart}>{t('Add to Cart', 'Sepete Ekle')}</Button>
+                            <Button variant="outlined" startIcon={<WhatsAppIcon />} color="success" onClick={handleWhatsAppOrder}>WhatsApp</Button>
+                            <IconButton onClick={handleFavorite} color={isFav ? 'error' : 'default'} aria-label="favorite">
+                                {isFav ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                            </IconButton>
+                            <IconButton component="a" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl || '')}`} target="_blank" rel="noopener noreferrer" aria-label="share"><ShareIcon /></IconButton>
+                        </Box>
+                        {localizedDescription && (
+                            <Box sx={{ mt: 2 }}>
+                                <Typography variant="h6" sx={{ mb: 1 }}>{t('Description', 'Açıklama')}</Typography>
+                                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{localizedDescription}</Typography>
+                            </Box>
+                        )}
+                    </Grid>
+                </Grid>
+                <Box sx={{ mt: 6 }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>{t('Similar Products', 'Benzer Ürünler')}</Typography>
+                    {loadingSimilar ? (
+                        <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
+                    ) : (
+                        <Grid container spacing={2}>
+                            {(similar?.content || []).filter(p => p.id !== product.id).map(p => {
+                                const img = p.photos?.[0]?.photo || placeholderImg;
+                                const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
+                                return (
+                                    <Grid item key={p.id} xs={6} sm={4} md={3}>
+                                        <Card sx={{ p: 1 }} className="aspect-ratio-box">
+                                            <Box component="a" href={href} sx={{ position: 'relative', display: 'block' }}>
+                                                <Image src={img} alt={p.title || 'product'} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: 'cover' }} quality={50} loading="lazy" />
+                                            </Box>
+                                            <Typography variant="body2" noWrap sx={{ mt: 1 }}>{p.title}</Typography>
+                                        </Card>
+                                    </Grid>
+                                );
+                            })}
+                        </Grid>
+                    )}
+                </Box>
+            </Container>
+            <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))} sx={{ width: '100%' }}>{snackbar.message}</Alert>
+            </Snackbar>
+            <Dialog open={imageModalOpen} onClose={handleModalClose} maxWidth="md" fullWidth>
+                <DialogContent sx={{ p: 0 }}>
+                    <Box sx={{ position: 'relative', width: '100%', pb: '100%', overflow: 'hidden' }}>
+                        {optimizedImages.length > 0 && (
+                            <Image
+                                src={optimizedImages[currentImageIndex]}
+                                alt={product.title || 'Product'}
+                                fill
+                                sizes="(max-width: 600px) 100vw, 400px"
+                                style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
+                                quality={75}
+                                placeholder="empty"
+                                loading="eager"
+                            />
+                        )}
+                    </Box>
+                    <IconButton onClick={handleModalClose} sx={{ position: 'absolute', top: 16, right: 16, color: 'white' }}>
+                        <CloseIcon />
+                    </IconButton>
+                    {optimizedImages.length > 1 && (
+                        <>
+                            <IconButton onClick={handlePrevImage} sx={{ position: 'absolute', top: '50%', left: 8, color: 'white', transform: 'translateY(-50%)' }}>
+                                <ChevronLeftIcon />
+                            </IconButton>
+                            <IconButton onClick={handleNextImage} sx={{ position: 'absolute', top: '50%', right: 8, color: 'white', transform: 'translateY(-50%)' }}>
+                                <ChevronRightIcon />
+                            </IconButton>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
+    );
 }
 
 export async function getStaticProps(context) {
-    const { params, locale, defaultLocale } = context;
+    const { params, locale } = context;
     const { id } = params;
     const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -693,8 +625,6 @@ export async function getStaticProps(context) {
         props: {
             product: { ...product, structuredData: { product: productSchema, breadcrumbs } },
             seo,
-            pageLocale: locale || 'tr',
-            defaultLocale: defaultLocale || 'tr',
             initialIsTR,
         },
         revalidate: 60,
