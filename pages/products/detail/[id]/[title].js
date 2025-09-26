@@ -618,7 +618,6 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 }
 
 export async function getServerSideProps({ params, locale, defaultLocale, resolvedUrl, req }) {
-  try {
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
     const lang = (locale === 'en' ? 'en' : 'tr');
@@ -646,6 +645,28 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
     };
 
     let product = null;
+    let similarProducts = [];
+
+      try {
+          // Önce ana ürünü alalım
+          product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encodeURIComponent(title || '')}`, { headers });
+
+          // Ana ürün bulunduysa ve kategorisi varsa, benzer ürünleri de sunucuda çekelim
+          if (product && product.category) {
+              try {
+                  const similarRes = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
+                      params: { page: 0, size: 6, locale: lang },
+                      headers,
+                  });
+                  similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
+              } catch (e) {
+                  console.error('SSR: Benzer ürünler çekilemedi:', e.message);
+                  // Bu hata kritik değil, sayfa benzer ürünler olmadan da yüklenebilir.
+              }
+          }
+      } catch(e) {
+          console.error('SSR: Ana ürün çekilemedi:', e.message);
+      }
 
     const extractProduct = (data, wantedId) => {
       if (!data) return null;
@@ -813,10 +834,14 @@ export async function getServerSideProps({ params, locale, defaultLocale, resolv
 
     // Ürüne SSR kararı da not düş (UI için ipucu)
     const productWithFlag = { ...product, is_turkey_user: typeof product.is_turkey_user === 'boolean' ? product.is_turkey_user : initialIsTR };
-
-    return { props: { product: { ...productWithFlag, structuredData }, seo, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
-  } catch (e) {
-    console.error('SSR product fetch failed (outer):', e?.response?.data || e.message);
-    return { props: { product: null, seo: null, structuredData: null, pageLocale: 'tr', defaultLocale: 'tr', asPath: '/' } };
-  }
+    return {
+        props: {
+            product: { ...productWithFlag, structuredData: { /* ... */ } },
+            // Benzer ürünleri de prop olarak gönderiyoruz
+            similarProducts,
+            seo,
+            pageLocale: lang,
+            initialIsTR
+        }
+    };
 }
