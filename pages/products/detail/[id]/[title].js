@@ -657,10 +657,26 @@ export async function getServerSideProps(context) {
         return { notFound: true };
     }
 
+    function stripHtmlTags(str) {
+        if (!str) return '';
+        return str.replace(/<[^>]*>/g, ''); // tüm HTML taglerini kaldırır
+    }
+
     // 3) Açıklamayı plain text’e çevir
     const plainDesc = product.description
         ? stripHtmlTags(product.description).replace(/\s+/g, ' ').trim()
         : '';
+
+    function sanitizeTitle(str) {
+        if (!str) return '';
+        return str
+            .toString()
+            .normalize("NFD")                  // Türkçe/Avrupa karakterlerini ayır
+            .replace(/[\u0300-\u036f]/g, "")   // aksan işaretlerini kaldır
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')       // harf ve sayı dışındaki her şeyi tire yap
+            .replace(/^-+|-+$/g, '');          // baştaki/sondaki fazla tireleri sil
+    }
 
     // 4) Meta description hazırla
     const metaDescription = plainDesc && plainDesc.length > 0
