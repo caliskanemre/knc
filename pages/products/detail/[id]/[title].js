@@ -617,231 +617,80 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
   );
 }
 
-export async function getServerSideProps({ params, locale, defaultLocale, resolvedUrl, req }) {
-    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
-    const { id, title } = params;
-    const lang = (locale === 'en' ? 'en' : 'tr');
-    // Daha uyumlu Accept-Language başlığı
-    const acceptLang = lang === 'en' ? 'en-US,en;q=0.9' : 'tr-TR,tr;q=0.9,en;q=0.5';
+export async function getServerSideProps(context) {
+    const { params, locale, defaultLocale, req, resolvedUrl } = context;
+    const { id } = params;
 
-    // Kullanıcının TR olup olmadığını SSR'da tahmin et (URL/locale/cookie/Accept-Language)
-    const inHeaders = req?.headers || {};
-    const cookie = inHeaders.cookie || '';
-    const rawAcceptLang = inHeaders['accept-language'] || '';
-    const urlPath = resolvedUrl || '';
-    const urlIsTR = !!(urlPath && /(^|\/)tr(\/|$)/i.test(urlPath));
-    const cookieIsTR = /(?:^|;)\s*is_turkey_user=1\b/.test(cookie || '');
-    const langIsTR = ((locale || '').toLowerCase().startsWith('tr')) || (/\btr\b/i.test(rawAcceptLang || ''));
-    const initialIsTR = !!(urlIsTR || cookieIsTR || langIsTR);
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`;
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-    // Backend'e iletilecek ortak header'lar (IP forward ederek backend'in GeoIP tespiti yapabilmesi için)
-    const fwdFor = inHeaders['x-forwarded-for'] || inHeaders['x-real-ip'] || '';
-    const socketIp = req?.socket?.remoteAddress || '';
-    const clientIp = (typeof fwdFor === 'string' && fwdFor) ? fwdFor.split(',')[0].trim() : (socketIp || '');
-    const headers = {
-      'Accept-Language': acceptLang,
-      'Accept': 'application/json',
-      ...(clientIp ? { 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp } : {})
-    };
+    const initialIsTR = locale === 'tr';
 
+    // Helper: fallback ile fetch
+    async function tryFetch(url, options) {
+        try {
+            const res = await fetch(url, options);
+            if (!res.ok) throw new Error('Failed to fetch');
+            return await res.json();
+        } catch (err) {
+            console.error(`Error fetching ${url}`, err);
+            return null;
+        }
+    }
+
+    // 1) Ürün detayını TR veya EN’den çek
     let product = null;
-    let similarProducts = [];
-
-      try {
-          // Önce ana ürünü alalım
-          product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encodeURIComponent(title || '')}`, { headers });
-
-          // Ana ürün bulunduysa ve kategorisi varsa, benzer ürünleri de sunucuda çekelim
-          if (product && product.category) {
-              try {
-                  const similarRes = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
-                      params: { page: 0, size: 6, locale: lang },
-                      headers,
-                  });
-                  similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
-              } catch (e) {
-                  console.error('SSR: Benzer ürünler çekilemedi:', e.message);
-                  // Bu hata kritik değil, sayfa benzer ürünler olmadan da yüklenebilir.
-              }
-          }
-      } catch(e) {
-          console.error('SSR: Ana ürün çekilemedi:', e.message);
-      }
-
-    const extractProduct = (data, wantedId) => {
-      if (!data) return null;
-      if (data.id) return data;
-      // Ortak sarmalayıcılar
-      if (data.product && typeof data.product === 'object') return extractProduct(data.product, wantedId);
-      if (data.result && typeof data.result === 'object') return extractProduct(data.result, wantedId);
-      if (data.data && typeof data.data === 'object') return extractProduct(data.data, wantedId);
-      // Dizi/icerik
-      if (Array.isArray(data)) {
-        if (wantedId != null) {
-          const found = data.find((d) => d && String(d.id) === String(wantedId));
-          return found || data[0] || null;
+    if (initialIsTR) {
+        product = await tryFetch(`${API_BASE}/products/tr/${id}`);
+        if (!product) {
+            product = await tryFetch(`${API_BASE}/products/en/${id}`);
         }
-        return data[0] || null;
-      }
-      if (data.content && Array.isArray(data.content)) {
-        if (wantedId != null) {
-          const found = data.content.find((d) => d && String(d.id) === String(wantedId));
-          return found || data.content[0] || null;
+    } else {
+        product = await tryFetch(`${API_BASE}/products/en/${id}`);
+        if (!product) {
+            product = await tryFetch(`${API_BASE}/products/tr/${id}`);
         }
-        return data.content[0] || null;
-      }
-      return null;
-    };
+    }
 
-    const tryFetch = async (label, url, opts = {}) => {
-      try {
-        const res = await axios.get(url, {
-          headers: opts.headers ?? headers,
-          params: { ...(opts.params || {}), locale: lang },
-          timeout: opts.timeout || 7000
-        });
-        const data = res.data;
-        const extracted = extractProduct(data, id);
-        if (extracted && extracted.id) {
-          console.info(`[SSR product] OK ${label} ${url}`);
-          return extracted;
-        }
-        console.warn(`[SSR product] Unexpected shape/no match from ${label}:`, typeof data, Array.isArray(data) ? 'array' : Object.keys(data || {}));
-        return null;
-      } catch (e) {
-        const status = e?.response?.status;
-        const msg = e?.response?.data || e.message;
-        console.error(`[SSR product] FAIL ${label} ${url} ->`, status, msg);
-        return null;
-      }
-    };
-
-    // Deneme sırası (currency parametresi gönderilmiyor, backend IP'ye göre tespit etsin)
-    product = await tryFetch('id-headers-only', `${baseURL}/products/${id}`, { headers });
-
+    // 2) Product bulunamadıysa 404 döndür
     if (!product) {
-      const encTitle = encodeURIComponent(title || '');
-      product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`, { headers });
+        return { notFound: true };
     }
 
-    if (!product) {
-      product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`, { headers });
-    }
+    // 3) Açıklamayı plain text’e çevir
+    const plainDesc = product.description
+        ? stripHtmlTags(product.description).replace(/\s+/g, ' ').trim()
+        : '';
 
-    if (!product) {
-      const decodedTitle = decodeURIComponent(title || '');
-      product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50 }, headers });
-    }
+    // 4) Meta description hazırla
+    const metaDescription = plainDesc && plainDesc.length > 0
+        ? plainDesc.length > 160
+            ? plainDesc.slice(0, 157) + '…'
+            : plainDesc
+        : `${product.title || product.name || 'Ürün'} - ${product.category || ''}`;
 
-    if (!product || !product.id) {
-      return { props: { product: null, seo: null, structuredData: null, pageLocale: locale || 'tr', defaultLocale: defaultLocale || 'tr', asPath: resolvedUrl || '/', initialIsTR } };
-    }
-
-    const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
-    const actualTitle = product.title || product.name || '';
-    const sanitizedActual = sanitizeTitle(actualTitle);
-    const decodedParamTitle = sanitizeTitle(decodeURIComponent(title || ''));
-    if (sanitizedActual && decodedParamTitle && sanitizedActual !== decodedParamTitle) {
-      const destination = `/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
-      return { redirect: { destination, permanent: true } };
-    }
-
-    // Helper: locale-aware description (SSR)
-    const pickLocalizedDescription = (p, loc) => {
-      if (!p) return '';
-      const l = (loc || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
-      const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
-      if (trans) {
-        const d = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
-        if (typeof d === 'string' && d.trim()) return d.trim();
-      }
-      if (l === 'en') {
-        const enList = [p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc, p.longDescriptionEn, p.shortDescriptionEn];
-        for (const c of enList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-      } else {
-        const trList = [p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc, p.longDescriptionTr, p.shortDescriptionTr];
-        for (const c of trList) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-      }
-      return (typeof p.description === 'string' && p.description.trim()) ? p.description.trim() : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
-    };
-
-    const reqHeaders = req?.headers || {};
-    const proto = reqHeaders['x-forwarded-proto'] || 'http';
-    const host = reqHeaders['host'] || 'localhost:3000';
-    const origin = `${proto}://${host}`;
-
-    const rawDesc = pickLocalizedDescription(product, locale);
-    const plainDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const metaDescription = (plainDesc && plainDesc.length > 160)
-      ? plainDesc.slice(0, 157).replace(/[,:;.!?]*$/, '') + '…'
-      : (plainDesc || `${product?.title || 'Ürün'} uygun fiyatlı kına gecesi ürünleri.`);
-
-    const currentLang = locale === 'en' ? 'en' : 'tr';
-    const safeTitle = encodeURIComponent(sanitizedActual || 'product');
-    const pathTR = `/products/detail/${id}/${safeTitle}`;
-    const pathEN = `/en/products/detail/${id}/${safeTitle}`;
-    const canonical = `${origin}${currentLang === 'tr' ? pathTR : pathEN}`;
-
-    const images = (product?.photos || []).map(p => p.photo).filter(Boolean);
-    const ogImage = images[0] || `${origin}/ksLogo.jpeg`;
-
+    // 5) SEO objesi
+    const slug = encodeURIComponent(sanitizeTitle(product.title || product.name || ''));
     const seo = {
-      metaTitle: `${product?.title || 'Ürün'} | Kına Sepeti`,
-      metaDescription,
-      canonical,
-      ogImage,
-      alternates: {
-        tr: `${origin}${pathTR}`,
-        en: `${origin}${pathEN}`,
-        xDefault: `${origin}${pathTR}`
-      }
+        metaTitle: product.title || product.name,
+        metaDescription,
+        canonical: `${origin}/products/detail/${id}/${slug}`,
+        ogImage: product.photos?.[0]?.photo || null,
+        alternates: {
+            tr: `${origin}/tr/products/detail/${id}/${slug}`,
+            en: `${origin}/en/products/detail/${id}/${slug}`,
+        }
     };
 
-    const schemaCurrency = (typeof product.is_turkey_user === 'boolean' ? product.is_turkey_user : initialIsTR) ? 'TRY' : 'EUR';
-    const schemaUnitPrice = schemaCurrency === 'TRY'
-      ? (Number(product?.tl_price ?? product?.price) || 0)
-      : (Number(product?.eur_price ?? product?.price) || 0);
-
-    const productSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product?.title,
-      image: images,
-      description: plainDesc || undefined,
-      sku: product?.id ? String(product.id) : undefined,
-      brand: { '@type': 'Brand', name: 'Kina Sepeti' },
-      offers: {
-        '@type': 'Offer',
-        priceCurrency: schemaCurrency,
-        price: schemaUnitPrice.toFixed(2),
-        availability: 'https://schema.org/InStock',
-        itemCondition: 'https://schema.org/NewCondition',
-        url: canonical
-      }
-    };
-
-    const breadcrumbs = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${currentLang === 'tr' ? '' : 'en'}` },
-        { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${currentLang === 'tr' ? '' : 'en/'}products` },
-        { '@type': 'ListItem', position: 3, name: product?.title || 'Ürün', item: canonical }
-      ]
-    };
-
-    const structuredData = { product: productSchema, breadcrumbs };
-
-    // Ürüne SSR kararı da not düş (UI için ipucu)
-    const productWithFlag = { ...product, is_turkey_user: typeof product.is_turkey_user === 'boolean' ? product.is_turkey_user : initialIsTR };
+    // 6) Props döndür
     return {
         props: {
-            product: { ...productWithFlag, structuredData: { /* ... */ } },
-            // Benzer ürünleri de prop olarak gönderiyoruz
-            similarProducts,
+            product,
             seo,
-            pageLocale: lang,
-            initialIsTR
+            pageLocale: locale || 'tr',
+            defaultLocale: defaultLocale || 'tr',
+            asPath: resolvedUrl || '/',
+            initialIsTR,
         }
     };
 }
