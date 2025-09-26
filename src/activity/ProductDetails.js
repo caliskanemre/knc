@@ -215,39 +215,87 @@ const ProductDetails = () => {
         }
     }, [product]);
 
-    // selectedImage değişince progressive load başlat
+    // Ağ hızına göre başlangıç stratejisi
+    const shouldStartWithSmall = () => {
+        try {
+            const conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
+            if (!conn) return false; // bilgi yoksa medium
+            const et = (conn.effectiveType || '').toLowerCase();
+            const slow = ['slow-2g', '2g', '3g'];
+            if (slow.includes(et)) return true;
+            if (conn.saveData) return true;
+            // RTT çok yüksekse ( > 600ms ) küçük başla
+            if (typeof conn.rtt === 'number' && conn.rtt > 600) return true;
+            // Downlink çok düşükse ( < 1.2 Mbps ) küçük başla
+            if (typeof conn.downlink === 'number' && conn.downlink < 1.2) return true;
+            return false;
+        } catch (_) { return false; }
+    };
+
+    // selectedImage değişince progressive load başlat (adaptif)
     useEffect(() => {
         if (!selectedImage || isVideoUrl(selectedImage)) {
             setHeroDisplaySrc(selectedImage);
             setHeroHighResLoaded(true);
             return;
         }
-        // Her koşulda önce small göster
         const small = getPrefixedImage(selectedImage, 'small');
-        setHeroDisplaySrc(small);
-        // Mobilde yalnızca small kullan, ek preload yok
-        if (isMobile) {
-            setHeroHighResLoaded(true);
-            return;
-        }
-        // Masaüstünde small -> medium -> large zinciri
-        setHeroHighResLoaded(false);
         const medium = getPrefixedImage(selectedImage, 'medium');
-        const mediumImg = new Image();
-        mediumImg.src = medium;
-        mediumImg.onload = () => {
+        const large = getPrefixedImage(selectedImage, 'large');
+
+        const startSmall = shouldStartWithSmall();
+        const startTs = performance.now();
+        let swapDone = false;
+        setHeroHighResLoaded(false);
+
+        if (startSmall) {
+            // Küçük ile hızlı piksel boyama, sonra medium preload ve swap
+            setHeroDisplaySrc(small);
+            const probe = new Image();
+            probe.src = medium;
+            probe.onload = () => {
+                if (!swapDone) {
+                    swapDone = true;
+                    setHeroDisplaySrc(medium);
+                    setHeroHighResLoaded(true);
+                    const dur = Math.round(performance.now() - startTs);
+                    try { console.log('[HeroImage Adaptive] swapped small->medium in', dur, 'ms'); } catch(_){}
+                    // Large preload
+                    if (large && large !== medium) { const pre = new Image(); pre.src = large; }
+                }
+            };
+            probe.onerror = () => {
+                setHeroHighResLoaded(true); // small ile kal
+            };
+        } else {
+            // Doğrudan medium
             setHeroDisplaySrc(medium);
-            setHeroHighResLoaded(true);
-            const large = getPrefixedImage(selectedImage, 'large');
-            if (large && large !== medium) {
-                const largeImg = new Image();
-                largeImg.src = large; // arka planda preload
+            const probe = new Image();
+            probe.src = medium;
+            probe.onload = () => {
+                if (!swapDone) {
+                    swapDone = true;
+                    setHeroHighResLoaded(true);
+                    const dur = Math.round(performance.now() - startTs);
+                    try { console.log('[HeroImage Adaptive] medium loaded in', dur, 'ms'); } catch(_){}
+                    if (large && large !== medium) { const pre = new Image(); pre.src = large; }
+                }
+            };
+            probe.onerror = () => {
+                // medium başarısızsa small'a dön
+                setHeroDisplaySrc(small || selectedImage);
+                setHeroHighResLoaded(true);
+            };
+        }
+
+        // Güvenlik: 3500ms içinde medium gelmezse kullanıcıya küçük ile net görüntü ver (blur kalksın)
+        const failSafe = setTimeout(() => {
+            if (!swapDone) {
+                setHeroHighResLoaded(true); // mevcut (small veya medium bekleyen) blur kalksın
+                try { console.log('[HeroImage Adaptive] fail-safe blur removal after 3500ms'); } catch(_){}
             }
-        };
-        mediumImg.onerror = () => {
-            // Medium yüklenemezse small ile kal
-            setHeroHighResLoaded(true);
-        };
+        }, 3500);
+        return () => clearTimeout(failSafe);
     }, [selectedImage, isMobile]);
 
     // GA view_item event: Ürün detayları yüklendiğinde tetiklenir
@@ -682,8 +730,71 @@ const ProductDetails = () => {
         return getPosterFromPhotos(product?.photos || [], size);
     };
 
+    // Görsel domainine preconnect + medium görseline preload ekle
+    useEffect(() => {
+        if (!selectedImage || isVideoUrl(selectedImage)) return;
+        try {
+            const url = new URL(selectedImage, window.location.href);
+            const origin = url.origin;
+            const medium = getPrefixedImage(selectedImage, 'medium');
+
+            // Preconnect / dns-prefetch
+            const pcId = 'preconnect-img-origin';
+            if (!document.getElementById(pcId)) {
+                const dns = document.createElement('link');
+                dns.id = pcId;
+                dns.rel = 'dns-prefetch';
+                dns.href = origin;
+                document.head.appendChild(dns);
+                const pc = document.createElement('link');
+                pc.rel = 'preconnect';
+                pc.href = origin;
+                pc.crossOrigin = 'anonymous';
+                document.head.appendChild(pc);
+            }
+            // Preload medium (eğer zaten head içinde yoksa)
+            const preloadId = 'preload-hero-medium';
+            if (medium && !document.getElementById(preloadId)) {
+                const link = document.createElement('link');
+                link.id = preloadId;
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = medium;
+                document.head.appendChild(link);
+            }
+        } catch (_) { /* ignore */ }
+    }, [selectedImage]);
+
+    // Basit performans ölçümü: hero görseli yüklenince tarayıcı timing bilgilerini logla
+    const measureImagePerf = (url) => {
+        try {
+            requestAnimationFrame(() => {
+                const entries = performance.getEntriesByName(url) || [];
+                if (entries.length) {
+                    const e = entries[0];
+                    console.log('[HeroImagePerf]', {
+                        name: e.name,
+                        startTime: Math.round(e.startTime),
+                        duration: Math.round(e.duration),
+                        transferSize: e.transferSize,
+                        encodedBodySize: e.encodedBodySize,
+                        decodedBodySize: e.decodedBodySize,
+                        redirect: e.redirectEnd - e.redirectStart,
+                        dns: e.domainLookupEnd - e.domainLookupStart,
+                        connect: e.connectEnd - e.connectStart,
+                        ttfb: e.responseStart - e.requestStart,
+                        response: e.responseEnd - e.responseStart,
+                        fetchUntilResponseEnd: e.responseEnd - e.startTime
+                    });
+                }
+            });
+        } catch (_) { /* ignore */ }
+    };
+
     return (
         <div className="activity-details-container">
+            {/* Küçük arka plan placeholder için small varyant */}
+            {(() => {})()}
             <SEO
                 title={seoTitle}
                 description={metaDescription}
@@ -692,6 +803,11 @@ const ProductDetails = () => {
                 structuredData={[productSchema, breadcrumbSchema]}
             />
             <Header />
+            { /* small placeholder değişkeni */ }
+            { /* render öncesi hesap */ }
+            {/* eslint-disable-next-line */}
+            {(() => { /* no-op self-invoking to keep structure */ })()}
+            {/* Devam */}
             <Box sx={{
                 px: { xs: 1, sm: 2, md: 3 },
                 py: { xs: 1, sm: 2 },
@@ -747,38 +863,56 @@ const ProductDetails = () => {
                                         }}
                                     />
                                 ) : (
+                                    // Wrapper: arka plan small, üstte medium img
                                     <Box
-                                        component="img"
-                                        src={heroDisplaySrc || getPrefixedImage(selectedImage, 'small')}
-                                        // Mobilde yalnızca small indirilsin: srcSet vermiyoruz
-                                        {...(!isMobile && { srcSet: `${getPrefixedImage(selectedImage, 'small')} 400w, ${getPrefixedImage(selectedImage, 'medium')} 800w, ${getPrefixedImage(selectedImage, 'large')} 1200w` })}
-                                        sizes={isMobile ? undefined : '(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px'}
-                                        alt={product.title || 'Ürün görseli'}
-                                        onClick={openModal}
-                                        loading="eager"
-                                        decoding="async"
-                                        fetchpriority="high"
-                                        style={{
-                                            filter: (!heroHighResLoaded && !isMobile) ? 'blur(12px) saturate(120%)' : 'none',
-                                            transition: 'filter 0.6s ease',
-                                            backgroundColor: '#f2f2f2'
-                                        }}
                                         sx={{
                                             width: '100%',
                                             maxWidth: { xs: '100%', sm: '400px', md: '500px' },
-                                            height: 'auto',
                                             borderRadius: 2,
                                             cursor: 'pointer',
                                             mb: 2,
                                             boxShadow: 2,
                                             position: 'relative',
+                                            backgroundImage: `url(${getPrefixedImage(selectedImage, 'small')})`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            overflow: 'hidden',
                                             '&:hover': {
                                                 boxShadow: 4,
                                                 transform: 'scale(1.02)',
                                                 transition: 'all 0.3s ease'
                                             }
                                         }}
-                                    />
+                                        onClick={openModal}
+                                    >
+                                        <img
+                                            src={heroDisplaySrc || getPrefixedImage(selectedImage, 'medium')}
+                                            {...(!isMobile && { srcSet: `${getPrefixedImage(selectedImage, 'medium')} 800w, ${getPrefixedImage(selectedImage, 'large')} 1200w` })}
+                                            sizes={isMobile ? '100vw' : '(max-width: 960px) 800px, 1200px'}
+                                            alt={product.title || 'Ürün görseli'}
+                                            loading="eager"
+                                            decoding="async"
+                                            fetchpriority="high"
+                                            style={{
+                                                display: 'block',
+                                                width: '100%',
+                                                height: 'auto',
+                                                filter: (!heroHighResLoaded) ? 'blur(10px) saturate(115%)' : 'none',
+                                                transition: 'filter 0.5s ease'
+                                            }}
+                                            onLoad={(e) => {
+                                                setHeroHighResLoaded(true);
+                                                measureImagePerf(e.currentTarget.currentSrc || e.currentTarget.src);
+                                            }}
+                                            onError={(e) => {
+                                                const fallback = getPrefixedImage(selectedImage, 'small');
+                                                if (fallback && e.currentTarget.src !== fallback) {
+                                                    e.currentTarget.src = fallback;
+                                                }
+                                                setHeroHighResLoaded(true);
+                                            }}
+                                        />
+                                    </Box>
                                 )
                             )}
 
