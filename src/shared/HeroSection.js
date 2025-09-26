@@ -14,65 +14,40 @@ export default function HeroSection() {
     const heroTitle = tTitle === 'heroTitle' ? 'Hayalinizdeki Kına Gecesi' : tTitle;
 
     // Responsive görsel URL'leri - farklı boyutlarda optimize edilmiş versiyonlar
-    const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/sade-mobile.webp";
-    const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
-
-    // Hangi görsel URL'ini kullanacağımızı belirle
+    const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/small_sade.webp"; // small/mobile
+    const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp"; // large/desktop
     const currentImageUrl = isMobile ? mobileImageUrl : desktopImageUrl;
 
-    // Critical resources preload için React.useEffect kullan
+    // Yalnız seçilen varyantı preload et (mobilde desktop israfı yok)
     useEffect(() => {
-        // Her iki görsel için de preload ekle (mobil geçiş durumları için)
-        const mobileLink = document.createElement('link');
-        mobileLink.rel = 'preload';
-        mobileLink.as = 'image';
-        mobileLink.href = mobileImageUrl;
-        mobileLink.fetchPriority = 'high';
-        document.head.appendChild(mobileLink);
+        const preloadLink = document.createElement('link');
+        preloadLink.rel = 'preload';
+        preloadLink.as = 'image';
+        preloadLink.href = currentImageUrl;
+        preloadLink.fetchPriority = 'high';
+        document.head.appendChild(preloadLink);
 
-        const desktopLink = document.createElement('link');
-        desktopLink.rel = 'preload';
-        desktopLink.as = 'image';
-        desktopLink.href = desktopImageUrl;
-        desktopLink.fetchPriority = 'high';
-        document.head.appendChild(desktopLink);
-
-        // Görseli programatik olarak yükle
         const img = new Image();
-
         const handleLoad = () => {
-            console.log('Hero image loaded:', currentImageUrl);
             setImageLoaded(true);
             setImageError(false);
         };
-
         const handleError = () => {
-            console.error('Hero image load error:', currentImageUrl);
             setImageError(true);
-            setImageLoaded(true); // Hata durumunda da göster
+            setImageLoaded(true);
         };
-
         img.addEventListener('load', handleLoad);
         img.addEventListener('error', handleError);
-
-        // Crossorigin ekle (CDN için)
-        img.crossOrigin = 'anonymous';
         img.src = currentImageUrl;
+        img.decoding = 'async';
+        img.fetchPriority = 'high';
 
-        // Cleanup
         return () => {
             img.removeEventListener('load', handleLoad);
             img.removeEventListener('error', handleError);
-
-            // Preload linklerini temizle
-            if (document.head.contains(mobileLink)) {
-                document.head.removeChild(mobileLink);
-            }
-            if (document.head.contains(desktopLink)) {
-                document.head.removeChild(desktopLink);
-            }
+            try { document.head.removeChild(preloadLink); } catch(_) {}
         };
-    }, [currentImageUrl, mobileImageUrl, desktopImageUrl]);
+    }, [currentImageUrl]);
 
     // Aggressive fallback - 1.5 saniye sonra zorla göster
     useEffect(() => {
@@ -103,7 +78,7 @@ export default function HeroSection() {
                 backgroundColor: '#C84B31', // Brand color fallback
             }}
         >
-            {/* Background Image - Simplified approach */}
+            {/* Arka plan: mobilde sadece küçük görsel kullanılacak */}
             <Box
                 sx={{
                     position: 'absolute',
@@ -116,7 +91,7 @@ export default function HeroSection() {
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     opacity: imageLoaded ? 1 : 0,
-                    transition: 'opacity 0.5s ease-in-out',
+                    transition: 'opacity 0.45s ease',
                     zIndex: 1,
                 }}
             />
