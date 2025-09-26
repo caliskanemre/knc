@@ -232,71 +232,71 @@ const ProductDetails = () => {
         } catch (_) { return false; }
     };
 
-    // selectedImage değişince progressive load başlat (adaptif)
+    // selectedImage değişince aggressive preload başlat
     useEffect(() => {
         if (!selectedImage || isVideoUrl(selectedImage)) {
             setHeroDisplaySrc(selectedImage);
             setHeroHighResLoaded(true);
             return;
         }
+
         const small = getPrefixedImage(selectedImage, 'small');
         const medium = getPrefixedImage(selectedImage, 'medium');
         const large = getPrefixedImage(selectedImage, 'large');
 
-        const startSmall = shouldStartWithSmall();
+        // Her durumda hemen small göster
+        setHeroDisplaySrc(small);
+        setHeroHighResLoaded(true); // blur'ı hemen kaldır
+
         const startTs = performance.now();
-        let swapDone = false;
-        setHeroHighResLoaded(false);
 
-        if (startSmall) {
-            // Küçük ile hızlı piksel boyama, sonra medium preload ve swap
-            setHeroDisplaySrc(small);
-            const probe = new Image();
-            probe.src = medium;
-            probe.onload = () => {
-                if (!swapDone) {
-                    swapDone = true;
-                    setHeroDisplaySrc(medium);
-                    setHeroHighResLoaded(true);
-                    const dur = Math.round(performance.now() - startTs);
-                    try { console.log('[HeroImage Adaptive] swapped small->medium in', dur, 'ms'); } catch(_){}
-                    // Large preload
-                    if (large && large !== medium) { const pre = new Image(); pre.src = large; }
-                }
-            };
-            probe.onerror = () => {
-                setHeroHighResLoaded(true); // small ile kal
-            };
-        } else {
-            // Doğrudan medium
+        // Arka planda medium preload (görünmez)
+        const mediumImg = new Image();
+        mediumImg.src = medium;
+        mediumImg.onload = () => {
+            // Medium yüklendikten sonra swap
             setHeroDisplaySrc(medium);
-            const probe = new Image();
-            probe.src = medium;
-            probe.onload = () => {
-                if (!swapDone) {
-                    swapDone = true;
-                    setHeroHighResLoaded(true);
-                    const dur = Math.round(performance.now() - startTs);
-                    try { console.log('[HeroImage Adaptive] medium loaded in', dur, 'ms'); } catch(_){}
-                    if (large && large !== medium) { const pre = new Image(); pre.src = large; }
-                }
-            };
-            probe.onerror = () => {
-                // medium başarısızsa small'a dön
-                setHeroDisplaySrc(small || selectedImage);
-                setHeroHighResLoaded(true);
-            };
-        }
+            const dur = Math.round(performance.now() - startTs);
+            try { console.log('[HeroImage Fast] upgraded small->medium in', dur, 'ms'); } catch(_){}
 
-        // Güvenlik: 3500ms içinde medium gelmezse kullanıcıya küçük ile net görüntü ver (blur kalksın)
-        const failSafe = setTimeout(() => {
-            if (!swapDone) {
-                setHeroHighResLoaded(true); // mevcut (small veya medium bekleyen) blur kalksın
-                try { console.log('[HeroImage Adaptive] fail-safe blur removal after 3500ms'); } catch(_){}
+            // Large arka planda preload
+            if (large && large !== medium) {
+                const largeImg = new Image();
+                largeImg.src = large;
             }
-        }, 3500);
-        return () => clearTimeout(failSafe);
-    }, [selectedImage, isMobile]);
+        };
+        mediumImg.onerror = () => {
+            console.log('[HeroImage Fast] medium failed, staying with small');
+        };
+
+    }, [selectedImage]);
+
+    // Sayfa yüklenirken tüm görselleri agresif preload
+    useEffect(() => {
+        if (!product?.photos?.length) return;
+
+        const preloadAll = () => {
+            product.photos.forEach((photo, index) => {
+                if (!isVideoUrl(photo.photo)) {
+                    // İlk 3 görseli small+medium preload
+                    if (index < 3) {
+                        const smallImg = new Image();
+                        smallImg.src = getPrefixedImage(photo.photo, 'small');
+                        const mediumImg = new Image();
+                        mediumImg.src = getPrefixedImage(photo.photo, 'medium');
+                    } else {
+                        // Diğerleri sadece small preload
+                        const smallImg = new Image();
+                        smallImg.src = getPrefixedImage(photo.photo, 'small');
+                    }
+                }
+            });
+        };
+
+        // 100ms gecikmeyle preload başlat (sayfa render'ını engellememek için)
+        const preloadTimer = setTimeout(preloadAll, 100);
+        return () => clearTimeout(preloadTimer);
+    }, [product?.photos]);
 
     // GA view_item event: Ürün detayları yüklendiğinde tetiklenir
     useEffect(() => {
@@ -1323,7 +1323,7 @@ const ProductDetails = () => {
                             const spCurr = (sp?.currency || '').toUpperCase();
                             const spIsTR = spCurr === 'TRY' || spCurr === 'TL' ? true
                                 : spCurr === 'EUR' ? false
-                                : isTR; // sp bilgisinde yoksa sayfa para birimine düş
+                                : isTR;
                             const spBaseOriginal = spIsTR ? (sp.tl_price ?? sp.price) : (sp.eur_price ?? sp.price);
                             const spOriginalNum = Number(spBaseOriginal) || 0;
                             const spOriginal = sp.photos?.[0]?.photo || "https://via.placeholder.com/300x200?text=No+Image";
@@ -1349,12 +1349,9 @@ const ProductDetails = () => {
                                             alt={sp.title}
                                             height="140"
                                             image={getPrefixedImage(spOriginal, 'small')}
-                                            srcSet={`
-                                            ${getPrefixedImage(spOriginal, 'small')} 400w,
-                                            ${getPrefixedImage(spOriginal, 'medium')} 800w,
-                                            ${getPrefixedImage(spOriginal, 'large')} 1200w
-                                        `}
-                                            sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                            loading="lazy"
+                                            fetchPriority="low"
+                                            style={{ objectFit: 'cover' }}
                                         />
                                     )}
                                     <CardContent>
