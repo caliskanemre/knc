@@ -215,23 +215,6 @@ const ProductDetails = () => {
         }
     }, [product]);
 
-    // Ağ hızına göre başlangıç stratejisi
-    const shouldStartWithSmall = () => {
-        try {
-            const conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
-            if (!conn) return false; // bilgi yoksa medium
-            const et = (conn.effectiveType || '').toLowerCase();
-            const slow = ['slow-2g', '2g', '3g'];
-            if (slow.includes(et)) return true;
-            if (conn.saveData) return true;
-            // RTT çok yüksekse ( > 600ms ) küçük başla
-            if (typeof conn.rtt === 'number' && conn.rtt > 600) return true;
-            // Downlink çok düşükse ( < 1.2 Mbps ) küçük başla
-            if (typeof conn.downlink === 'number' && conn.downlink < 1.2) return true;
-            return false;
-        } catch (_) { return false; }
-    };
-
     // selectedImage değişince aggressive preload başlat
     useEffect(() => {
         if (!selectedImage || isVideoUrl(selectedImage)) {
