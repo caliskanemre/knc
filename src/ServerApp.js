@@ -1,3 +1,4 @@
+/*
 import React from 'react';
 import { StaticRouter } from 'react-router-dom/server';
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -44,3 +45,4 @@ const ServerApp = ({ location, initialData = {}, i18nStore }) => {
 };
 
 export default ServerApp;
+*/

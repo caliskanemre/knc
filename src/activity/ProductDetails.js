@@ -1,3 +1,4 @@
+/*
 import React, { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import Axios from "axios";
@@ -79,7 +80,7 @@ function generateUUID() {
                 (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
             );
         }
-    } catch (_) { /* ignore */ }
+    } catch (_) { /!* ignore *!/ }
     // Fallback: timestamp + random
     const ts = Date.now().toString(16);
     const rnd = Math.floor(Math.random() * 1e16).toString(16);
@@ -107,7 +108,7 @@ const readIsTRFromStorage = () => {
         if (ls !== null && ls !== undefined) {
             if (ls === '1' || ls === 'true') return true;
             if (ls === '0' || ls === 'false') return false;
-            try { return JSON.parse(ls); } catch (_) { /* ignore */ }
+            try { return JSON.parse(ls); } catch (_) { /!* ignore *!/ }
         }
         const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
         if (m) {
@@ -115,7 +116,7 @@ const readIsTRFromStorage = () => {
             if (v === '1' || v === 'true') return true;
             if (v === '0' || v === 'false') return false;
         }
-    } catch (_) { /* ignore */ }
+    } catch (_) { /!* ignore *!/ }
     return null;
 };
 
@@ -124,7 +125,7 @@ const writeIsTRToStorage = (isTR) => {
         if (typeof window === 'undefined') return;
         window.localStorage?.setItem('is_turkey_user', JSON.stringify(!!isTR));
         document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`;
-    } catch (_) { /* ignore */ }
+    } catch (_) { /!* ignore *!/ }
 };
 
 const guessTRFromNavigator = () => {
@@ -527,9 +528,9 @@ const ProductDetails = () => {
                         send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-',
                         value: totalValueUI,
                         currency: currencyCode,
-                        event_callback: () => { /* no-op */ }
+                        event_callback: () => { /!* no-op *!/ }
                     });
-                } catch (_) { /* ignore */ }
+                } catch (_) { /!* ignore *!/ }
 
                 try {
                     // GA4 add_to_cart (analitik amaçlı)
@@ -543,7 +544,7 @@ const ProductDetails = () => {
                             price: unitPriceUI
                         }]
                     });
-                } catch (_) { /* ignore */ }
+                } catch (_) { /!* ignore *!/ }
 
                 console.log("Conversion & GA4 add_to_cart gönderildi:", {
                     id: product.id,
@@ -675,7 +676,7 @@ const ProductDetails = () => {
                 </Typography>
 
                 <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-                    {/* Left Section - Image/Video */}
+                    {/!* Left Section - Image/Video *!/}
                     <Grid item xs={12} md={6}>
                         <Box sx={{
                             display: 'flex',
@@ -736,7 +737,7 @@ const ProductDetails = () => {
                                 )
                             )}
 
-                            {/* Thumbnail Container */}
+                            {/!* Thumbnail Container *!/}
                             {product.photos && product.photos.length > 0 && (
                                 <Box sx={{
                                     display: 'flex',
@@ -797,7 +798,7 @@ const ProductDetails = () => {
                         </Box>
                     </Grid>
 
-                    {/* Right Section - Product Info */}
+                    {/!* Right Section - Product Info *!/}
                     <Grid item xs={12} md={6}>
                         <Box sx={{ p: { xs: 1, sm: 2 } }}>
                             <Typography
@@ -817,7 +818,7 @@ const ProductDetails = () => {
                                 {product.title}
                             </Typography>
 
-                            {/* Price Section */}
+                            {/!* Price Section *!/}
                             {product.price && (
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 3 }}>
@@ -833,7 +834,7 @@ const ProductDetails = () => {
                                 </Box>
                             )}
 
-                            {/* Quantity Control */}
+                            {/!* Quantity Control *!/}
                             <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -879,7 +880,7 @@ const ProductDetails = () => {
                                 </Button>
                             </Box>
 
-                            {/* Order Note Section */}
+                            {/!* Order Note Section *!/}
                             <Box sx={{ mb: 3 }}>
                                 <Typography
                                     component="label"
@@ -920,7 +921,7 @@ const ProductDetails = () => {
                                 />
                             </Box>
 
-                            {/* Add to Cart Button */}
+                            {/!* Add to Cart Button *!/}
                             <Button
                                 onClick={() => addToCart(quantity)}
                                 variant="contained"
@@ -947,7 +948,7 @@ const ProductDetails = () => {
                                 {t('Add to Cart')}
                             </Button>
 
-                            {/* WhatsApp Order Button */}
+                            {/!* WhatsApp Order Button *!/}
                             <Button
                                 onClick={handleWhatsAppOrder}
                                 variant="outlined"
@@ -978,7 +979,7 @@ const ProductDetails = () => {
                                 {t('Order via WhatsApp')}
                             </Button>
 
-                            {/* Product Type */}
+                            {/!* Product Type *!/}
                             {product.type && (
                                 <Typography sx={{
                                     mb: 2,
@@ -991,7 +992,7 @@ const ProductDetails = () => {
                                 </Typography>
                             )}
 
-                            {/* Share Buttons */}
+                            {/!* Share Buttons *!/}
                             <Box sx={{
                                 display: 'flex',
                                 gap: { xs: 1, sm: 2 },
@@ -1022,7 +1023,7 @@ const ProductDetails = () => {
                                 </FacebookShareButton>
                             </Box>
 
-                            {/* Favorite Button */}
+                            {/!* Favorite Button *!/}
                             <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
                                 <IconButton
                                     aria-label="add to favorites"
@@ -1036,7 +1037,7 @@ const ProductDetails = () => {
                                 </IconButton>
                             </Box>
 
-                            {/* Description Accordion */}
+                            {/!* Description Accordion *!/}
                             {descriptionLines.length > 0 && (
                                 <Box sx={{ mt: 3, width: '100%' }}>
                                     <Typography
@@ -1209,3 +1210,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+*/

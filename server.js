@@ -1,3 +1,4 @@
+/*
 const { createServer } = require('http');
 const next = require('next');
 
@@ -29,3 +30,4 @@ app.prepare().then(() => {
       console.log(`SSR server is running on port ${port}`);
     });
 });
+*/

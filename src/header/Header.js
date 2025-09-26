@@ -1,3 +1,4 @@
+/*
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import './css/Header.css';
@@ -230,7 +231,7 @@ export default function Header() {
                 </IconButton>
             )}
 
-            {/* Brand Name - Desktop */}
+            {/!* Brand Name - Desktop *!/}
             {!isMobile && !isTablet && (
                 <Typography
                     variant="h1"
@@ -251,7 +252,7 @@ export default function Header() {
                 </Typography>
             )}
 
-            {/* Brand Name - Mobile & Tablet */}
+            {/!* Brand Name - Mobile & Tablet *!/}
             {(isMobile || isTablet) && (
                 <Typography
                     variant="h1"
@@ -391,7 +392,7 @@ export default function Header() {
 
             <Box flexGrow={1} />
 
-            {/* Language Selector - Compact for tablet */}
+            {/!* Language Selector - Compact for tablet *!/}
             {(!isMobile && !isTablet) && (
                 <Tooltip title="Select Language">
                   <IconButton
@@ -412,7 +413,7 @@ export default function Header() {
                 </Tooltip>
             )}
 
-            {/* Desktop Language Menu */}
+            {/!* Desktop Language Menu *!/}
             {(!isMobile && !isTablet) && (
               <Menu
                 anchorEl={languageAnchorEl}
@@ -451,7 +452,7 @@ export default function Header() {
               </Menu>
             )}
 
-            {/* Cart Icon with Count */}
+            {/!* Cart Icon with Count *!/}
             <IconButton
                 aria-label="cart"
                 sx={{
@@ -466,7 +467,7 @@ export default function Header() {
               </Badge>
             </IconButton>
 
-            {/* Avatar with Menu - Compact for tablet */}
+            {/!* Avatar with Menu - Compact for tablet *!/}
             <Tooltip title={isLoggedIn ? username : t('user_menu')}>
               <IconButton
                   onClick={handleMenuClick}
@@ -540,7 +541,7 @@ export default function Header() {
           </Toolbar>
         </AppBar>
 
-        {/* Mobile & Tablet Drawer */}
+        {/!* Mobile & Tablet Drawer *!/}
         {(isMobile || isTablet) && (
             <Drawer
                 anchor="left"
@@ -556,7 +557,7 @@ export default function Header() {
                 }}
             >
               <List sx={{ padding: '16px' }}>
-                {/* Drawer Brand Name */}
+                {/!* Drawer Brand Name *!/}
                 <Typography
                     variant="h1"
                     component="h1"
@@ -576,7 +577,7 @@ export default function Header() {
                   Kınasepeti
                 </Typography>
 
-                {/* Instagram Link */}
+                {/!* Instagram Link *!/}
                 <ListItem
                     button
                     component="a"
@@ -615,7 +616,7 @@ export default function Header() {
                   </Box>
                 </ListItem>
 
-                {/* Search Link */}
+                {/!* Search Link *!/}
                 <ListItem button onClick={() => handleNavigation('/search')}>
                   <Box display="flex" alignItems="center">
                     <i className="fas fa-search" style={{ marginRight: '10px' }}></i>
@@ -623,20 +624,20 @@ export default function Header() {
                   </Box>
                 </ListItem>
 
-                {/* Products Submenu */}
+                {/!* Products Submenu *!/}
                 <ProductsSubHeaderMobile />
 
-                {/* Articles */}
+                {/!* Articles *!/}
                 <ListItem button onClick={() => handleNavigation('/articles')}>
                   <ListItemText primary={t('Articles')} />
                 </ListItem>
 
-                {/* About Us */}
+                {/!* About Us *!/}
                 <ListItem button onClick={() => handleNavigation('/about-us')}>
                   <ListItemText primary={t('How it works')} />
                 </ListItem>
 
-                {/* Policies Submenu */}
+                {/!* Policies Submenu *!/}
                 <ListItem button onClick={handlePoliciesMenuOpen}>
                   <ListItemText primary={t('Policies')} />
                 </ListItem>
@@ -685,12 +686,12 @@ export default function Header() {
                   </MenuItem>
                 </Menu>
 
-                {/* Contact Us */}
+                {/!* Contact Us *!/}
                 <ListItem button onClick={() => handleNavigation('/contact-us')}>
                   <ListItemText primary={t('Contact Us')} />
                 </ListItem>
 
-                {/* Favorites */}
+                {/!* Favorites *!/}
                 <ListItem button onClick={handleFetchFavorites}>
                   <ListItemText primary={t('Favorites')} />
                 </ListItem>
@@ -772,14 +773,14 @@ export default function Header() {
             </Drawer>
         )}
 
-        {/* Register Dialog */}
+        {/!* Register Dialog *!/}
         <Dialog open={openRegisterDialog} onClose={handleCloseRegisterDialog}>
           <DialogContent>
             <Register open={openRegisterDialog} handleClose={handleCloseRegisterDialog} />
           </DialogContent>
         </Dialog>
 
-        {/* Login Dialog */}
+        {/!* Login Dialog *!/}
         <Dialog open={openLoginDialog} onClose={handleCloseLoginDialog}>
           <DialogContent>
             <Login
@@ -794,3 +795,4 @@ export default function Header() {
   );
 }
 
+*/
