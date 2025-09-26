@@ -55,7 +55,7 @@ export default function PaymentSuccessPage() {
       clearInterval(interval);
     }, 30000);
     return () => { clearInterval(interval); clearTimeout(timeout); };
-  }, [orderDetails]);
+  }, [orderDetails, status]);
 
   useEffect(() => {
     if (status === 'completed' && !conversionSent && orderDetails) {

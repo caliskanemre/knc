@@ -175,7 +175,7 @@ export default function PaymentPage() {
       setShippingAddress(prev => ({ ...prev, country: 'TR' }));
       setShippingCost(calculateShippingCost('TR', totals.discounted));
     }
-  }, [currency, totals.discounted, shippingAddress.country]);
+  }, [currency, totals.discounted, shippingAddress.country, calculateShippingCost]);
 
   const handleCountrySelect = (e) => {
     const code = e.target.value;
@@ -360,4 +360,3 @@ export default function PaymentPage() {
     </>
   );
 }
-

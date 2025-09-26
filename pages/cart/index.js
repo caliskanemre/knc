@@ -78,7 +78,7 @@ export default function CartPage() {
     };
     run();
     return () => { cancelled = true; };
-  }, [isLoggedIn, username, i18n.language]);
+  }, [isLoggedIn, username, i18n.language, t]);
 
   const totals = useMemo(() => {
     const total = (items || []).reduce((acc, it) => acc + (Number(it.price) || 0), 0);
