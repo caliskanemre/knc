@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom"; // useLocation eklendi
 import Axios from "axios";
 import Header from "../header/Header";
 import './css/ActivityDetails.css';
@@ -136,13 +136,18 @@ const guessTRFromNavigator = () => {
 
 const ProductDetails = () => {
     const { id, title } = useParams();
+    const location = useLocation();
+    // Route state üzerinden (varsa) product'ı hemen kullanarak ilk network gecikmesini azalt
+    const routeStateProduct = location?.state?.product;
     const initialData = useInitialData();
-    const initialProduct = initialData?.product;
+    const initialProduct = routeStateProduct || initialData?.product;
     const [product, setProduct] = useState(initialProduct || null);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [similarProducts, setSimilarProducts] = useState([]);
+    // Hero görsel optimizasyonu için ek state'ler
+    const [heroDisplaySrc, setHeroDisplaySrc] = useState(null); // Şu an img tag'inde gösterilen kaynak
+    const [heroHighResLoaded, setHeroHighResLoaded] = useState(false); // Medium/large yüklendi mi
+    const [heroLoading, setHeroLoading] = useState(false); // Preload süreci
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -185,6 +190,7 @@ const ProductDetails = () => {
         }
     }, [product]);
 
+    // Ürün fetch (yalnızca elimizde yoksa)
     useEffect(() => {
         if (product && product.id) return; // already have
         Axios.get(`${baseURL}/products/detail/${id}/${title}` , {
@@ -204,9 +210,47 @@ const ProductDetails = () => {
     // Set default selected image
     useEffect(() => {
         if (product && product.photos && product.photos.length > 0) {
-            setSelectedImage(product.photos[0].photo);
+            setSelectedImage(prev => prev || product.photos[0].photo);
         }
     }, [product]);
+
+    // selectedImage değişince progressive load başlat
+    useEffect(() => {
+        if (!selectedImage || isVideoUrl(selectedImage)) {
+            setHeroDisplaySrc(selectedImage);
+            setHeroHighResLoaded(true);
+            return;
+        }
+        const small = getPrefixedImage(selectedImage, 'small');
+        const medium = getPrefixedImage(selectedImage, 'medium');
+        // Mobilde sadece small kullan (performans için medium'u yükleme)
+        if (isMobile) {
+            setHeroDisplaySrc(small);
+            setHeroHighResLoaded(true); // blur hemen kalksın
+            setHeroLoading(false);
+            return;
+        }
+        // Masaüstü progressive
+        setHeroHighResLoaded(false);
+        setHeroDisplaySrc(small);
+        setHeroLoading(true);
+        const img = new Image();
+        img.src = medium;
+        img.onload = () => {
+            setHeroDisplaySrc(medium);
+            setHeroHighResLoaded(true);
+            setHeroLoading(false);
+            const large = getPrefixedImage(selectedImage, 'large');
+            if (large && large !== medium) {
+                const largeImg = new Image();
+                largeImg.src = large;
+            }
+        };
+        img.onerror = () => {
+            setHeroHighResLoaded(true);
+            setHeroLoading(false);
+        };
+    }, [selectedImage, isMobile]);
 
     // GA view_item event: Ürün detayları yüklendiğinde tetiklenir
     useEffect(() => {
@@ -709,15 +753,18 @@ const ProductDetails = () => {
                                 ) : (
                                     <Box
                                         component="img"
-                                        src={getPrefixedImage(selectedImage, 'small')}
-                                        srcSet={`
-                                        ${getPrefixedImage(selectedImage, 'small')} 400w,
-                                        ${getPrefixedImage(selectedImage, 'medium')} 800w,
-                                        ${getPrefixedImage(selectedImage, 'large')} 1200w
-                                    `}
-                                        sizes="(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px"
+                                        src={heroDisplaySrc || getPrefixedImage(selectedImage, 'small')}
+                                        srcSet={isMobile ? `${getPrefixedImage(selectedImage, 'small')} 400w` : `\n                                        ${getPrefixedImage(selectedImage, 'small')} 400w,\n                                        ${getPrefixedImage(selectedImage, 'medium')} 800w,\n                                        ${getPrefixedImage(selectedImage, 'large')} 1200w\n                                    `}
+                                        sizes={isMobile ? '400px' : '(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px'}
                                         alt={product.title || 'Ürün görseli'}
                                         onClick={openModal}
+                                        loading="eager"
+                                        style={{
+                                            filter: (!heroHighResLoaded && !isMobile) ? 'blur(12px) saturate(120%)' : 'none',
+                                            transition: 'filter 0.6s ease',
+                                            backgroundColor: '#f2f2f2'
+                                        }}
+                                        onLoad={() => {}}
                                         sx={{
                                             width: '100%',
                                             maxWidth: { xs: '100%', sm: '400px', md: '500px' },
@@ -726,6 +773,7 @@ const ProductDetails = () => {
                                             cursor: 'pointer',
                                             mb: 2,
                                             boxShadow: 2,
+                                            position: 'relative',
                                             '&:hover': {
                                                 boxShadow: 4,
                                                 transform: 'scale(1.02)',
@@ -736,8 +784,15 @@ const ProductDetails = () => {
                                 )
                             )}
 
+                            {/* Küçük preload göstergesi */}
+                            {!heroHighResLoaded && !isVideoUrl(selectedImage) && (
+                                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 1 }}>
+                                    {t('Loading high quality image')}...
+                                </Box>
+                            )}
+
                             {/* Thumbnail Container */}
-                            {product.photos && product.photos.length > 0 && (
+                            {product?.photos && product.photos.length > 0 && (
                                 <Box sx={{
                                     display: 'flex',
                                     flexWrap: 'wrap',
@@ -786,6 +841,7 @@ const ProductDetails = () => {
                                                         component="img"
                                                         src={getPrefixedImage(url, 'small')}
                                                         alt={`${product.title || 'Ürün'} küçük görsel ${index + 1}`}
+                                                        loading="lazy"
                                                         sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     />
                                                 )}

@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { ActivityFilter } from "../filter/ActivityFilter";
 import { Helmet } from "react-helmet";
 import { useAuth } from "../auth/AuthProvider";
@@ -330,8 +330,9 @@ const ProductList = () => {
                                     flexDirection: 'column',
                                     position: 'relative'
                                 }}>
-                                    <a href={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
-                                       style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <Link to={`/${i18n.language}/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
+                                          state={{ product: item }}
+                                          style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <CardMedia
                                             component="img"
                                             image={smallImageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
@@ -414,7 +415,7 @@ const ProductList = () => {
                                                 )}
                                             </Box>
                                         </Box>
-                                    </a>
+                                    </Link>
                                     <IconButton
                                         aria-label="add to favorites"
                                         onClick={() => handleFavoriteClick(item.id)}

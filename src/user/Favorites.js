@@ -15,6 +15,8 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import axios from "axios";
 import { t } from "i18next";
+import { Link } from 'react-router-dom';
+import i18n from 'i18next';
 
 // Helper function to generate a prefixed image URL
 const getPrefixedImage = (url, prefix) => {
@@ -179,8 +181,9 @@ const Favorites = () => {
                                             position: "relative",
                                         }}
                                     >
-                                        <a
-                                            href={`/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
+                                        <Link
+                                            to={`/${(i18n?.language)||'tr'}/products/detail/${item.id}/${encodeURIComponent(item.title || 'product')}`}
+                                            state={{ product: item }}
                                             style={{ textDecoration: "none", color: "inherit" }}
                                         >
                                             <CardMedia
@@ -195,7 +198,7 @@ const Favorites = () => {
                                                     objectFit: "cover",
                                                 }}
                                             />
-                                        </a>
+                                        </Link>
                                         <Box sx={{ p: 2, flex: 1 }}>
                                             <Typography
                                                 sx={{
