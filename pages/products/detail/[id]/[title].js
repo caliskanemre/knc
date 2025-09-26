@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
-import dynamic from 'next/dynamic';
-import useSWR from 'swr';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
@@ -10,9 +8,13 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Card from '@mui/material/Card';
 import Image from 'next/image';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -24,12 +26,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
-
-// Dinamik import'lar
-const Snackbar = dynamic(() => import('@mui/material/Snackbar'), { ssr: false });
-const Alert = dynamic(() => import('@mui/material/Alert'), { ssr: false });
-const Dialog = dynamic(() => import('@mui/material/Dialog'), { ssr: false });
-const DialogContent = dynamic(() => import('@mui/material/DialogContent'), { ssr: false });
 
 // Shimmer placeholder
 const toBase64 = (str) => (typeof window === 'undefined' ? Buffer.from(str).toString('base64') : window.btoa(str));
@@ -67,7 +63,7 @@ const stripHtmlTags = (str) => (str || '').replace(/<[^>]+>/g, ' ').replace(/\s+
 
 const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
 
-export default function ProductDetail({ product, seo, initialIsTR = null }) {
+export default function ProductDetailPage({ product, seo, similarProducts, initialIsTR = null }) {
     const { t } = useTranslation();
     const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
     const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
@@ -145,12 +141,33 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
     const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
     const currencySymbol = isTRDisplay ? '₺' : '€';
 
-    const fetcher = url => axios.get(url, { headers: { 'Accept-Language': t('i18n.language') === 'en' ? 'en' : 'tr' } }).then(res => res.data);
-    const { data: similar, isLoading: loadingSimilar } = useSWR(
-        product?.category ? `${baseURL}/products/${encodeURIComponent(product.category)}?page=0&size=6&locale=${t('i18n.language') === 'en' ? 'en' : 'tr'}` : null,
-        fetcher,
-        { revalidateOnFocus: false }
-    );
+    const getLocalizedDescription = (p, lang) => {
+        if (!p) return '';
+        const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+        if (trans) {
+            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+            if (typeof desc === 'string' && desc.trim()) return desc.trim();
+        }
+        if (l === 'en') {
+            const candidatesEN = [
+                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
+                p.longDescriptionEn, p.shortDescriptionEn
+            ];
+            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        } else {
+            const candidatesTR = [
+                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
+                p.longDescriptionTr, p.shortDescriptionTr
+            ];
+            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        }
+        return (typeof p.description === 'string' && p.description.trim())
+            ? p.description.trim()
+            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+    };
+
+    const localizedDescription = useMemo(() => getLocalizedDescription(product, t('i18n.language')), [product, t]);
 
     const handleAddToCart = async () => {
         if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid quantity'), severity: 'warning' });
@@ -201,20 +218,20 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
 
                     const headers = { 'X-Guest-Token': guestToken, 'X-Request-ID': requestId, 'Accept-Language': lang };
                     try {
-                        await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 5000 });
+                        await axios.post(`${baseURL}/cart/guest`, localCart, { headers, timeout: 8000 });
                     } catch (err) {
                         if (err?.response?.status === 401) {
                             const newToken = generateUUID();
                             localStorage.setItem('guestToken', newToken);
-                            await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 5000 });
+                            await axios.post(`${baseURL}/cart/guest`, localCart, { headers: { ...headers, 'X-Guest-Token': newToken }, timeout: 8000 });
                         } else if ([400, 404, 405, 415, 422].includes(err?.response?.status)) {
                             try {
-                                await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 5000 });
+                                await axios.post(`${baseURL}/cart/guest`, cartItem, { headers, timeout: 8000 });
                             } catch (err2) {
                                 if (err2?.response?.status === 401) {
                                     const newToken2 = generateUUID();
                                     localStorage.setItem('guestToken', newToken2);
-                                    await axios.post(`${baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 5000 });
+                                    await axios.post(`${baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 8000 });
                                 } else {
                                     throw err2;
                                 }
@@ -293,34 +310,6 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
         setSnackbar({ open: true, message: t('Redirecting to WhatsApp...'), severity: 'info' });
     };
 
-    const getLocalizedDescription = (p, lang) => {
-        if (!p) return '';
-        const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
-        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
-        if (trans) {
-            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
-            if (typeof desc === 'string' && desc.trim()) return desc.trim();
-        }
-        if (l === 'en') {
-            const candidatesEN = [
-                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
-                p.longDescriptionEn, p.shortDescriptionEn
-            ];
-            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        } else {
-            const candidatesTR = [
-                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
-                p.longDescriptionTr, p.shortDescriptionTr
-            ];
-            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        }
-        return (typeof p.description === 'string' && p.description.trim())
-            ? p.description.trim()
-            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
-    };
-
-    const localizedDescription = useMemo(() => getLocalizedDescription(product, t('i18n.language')), [product, t]);
-
     const handleImageClick = () => {
         const currentIndex = optimizedImages.findIndex(img => img === selectedUrl);
         setCurrentImageIndex(currentIndex >= 0 ? currentIndex : 0);
@@ -364,7 +353,7 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
 
     const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
     const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
-    const shimmerPlaceholder = shimmer(400, 400);
+    const shimmerPlaceholder = shimmer(700, 700);
 
     return (
         <>
@@ -396,15 +385,15 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                        <Card className="aspect-ratio-box" sx={{ mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
+                        <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
                             <Image
                                 src={selectedUrl || (optimizedImages[0] || placeholderImg)}
                                 alt={product.title || 'Product'}
                                 fill
-                                sizes="(max-width: 600px) 100vw, 400px"
+                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
                                 style={{ objectFit: 'cover' }}
                                 priority
-                                quality={75}
+                                quality={85}
                                 placeholder="blur"
                                 blurDataURL={shimmerPlaceholder}
                             />
@@ -427,7 +416,7 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
                         </Card>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {optimizedImages.map((url, index) => (
-                                <Box key={url} sx={{ width: 80, height: 80, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
+                                <Box key={url} sx={{ width: 72, height: 72, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
                                     {isVideoUrl(url) ? (
                                         <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
                                             <source src={url} />
@@ -437,10 +426,10 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
                                             src={url || placeholderImg}
                                             alt={product.title || 'thumb'}
                                             fill
-                                            sizes="80px"
+                                            sizes="72px"
                                             style={{ objectFit: 'cover' }}
-                                            quality={50}
-                                            loading="lazy"
+                                            quality={75}
+                                            loading={index < 4 ? "eager" : "lazy"}
                                         />
                                     )}
                                 </Box>
@@ -478,17 +467,17 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
                 </Grid>
                 <Box sx={{ mt: 6 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>{t('Similar Products', 'Benzer Ürünler')}</Typography>
-                    {loadingSimilar ? (
+                    {similarProducts.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
                     ) : (
                         <Grid container spacing={2}>
-                            {(similar?.content || []).filter(p => p.id !== product.id).map(p => {
+                            {similarProducts.map(p => {
                                 const img = p.photos?.[0]?.photo || placeholderImg;
                                 const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
                                 return (
                                     <Grid item key={p.id} xs={6} sm={4} md={3}>
-                                        <Card sx={{ p: 1 }} className="aspect-ratio-box">
-                                            <Box component="a" href={href} sx={{ position: 'relative', display: 'block' }}>
+                                        <Card sx={{ p: 1, position: 'relative', aspectRatio: '1 / 1' }}>
+                                            <Box component="a" href={href} sx={{ position: 'relative', display: 'block', height: '100%' }}>
                                                 <Image src={img} alt={p.title || 'product'} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: 'cover' }} quality={50} loading="lazy" />
                                             </Box>
                                             <Typography variant="body2" noWrap sx={{ mt: 1 }}>{p.title}</Typography>
@@ -511,9 +500,9 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
                                 src={optimizedImages[currentImageIndex]}
                                 alt={product.title || 'Product'}
                                 fill
-                                sizes="(max-width: 600px) 100vw, 400px"
+                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
                                 style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
-                                quality={75}
+                                quality={85}
                                 placeholder="empty"
                                 loading="eager"
                             />
@@ -538,53 +527,161 @@ export default function ProductDetail({ product, seo, initialIsTR = null }) {
     );
 }
 
-export async function getStaticProps(context) {
-    const { params, locale } = context;
-    const { id } = params;
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+export async function getServerSideProps({ params, locale, req }) {
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+    const { id, title } = params;
+    const lang = locale === 'en' ? 'en' : 'tr';
+    const acceptLang = lang === 'en' ? 'en-US,en;q=0.9' : 'tr-TR,tr;q=0.9,en;q=0.5';
 
-    const initialIsTR = locale === 'tr';
+    const inHeaders = req?.headers || {};
+    const cookie = inHeaders.cookie || '';
+    const rawAcceptLang = inHeaders['accept-language'] || '';
+    const urlIsTR = !!(req.url && /(^|\/)tr(\/|$)/i.test(req.url));
+    const cookieIsTR = /(?:^|;)\s*is_turkey_user=1\b/.test(cookie);
+    const langIsTR = (locale?.toLowerCase().startsWith('tr') || /\btr\b/i.test(rawAcceptLang));
+    const initialIsTR = urlIsTR || cookieIsTR || langIsTR;
 
-    async function tryFetch(url, options) {
+    const fwdFor = inHeaders['x-forwarded-for'] || inHeaders['x-real-ip'] || '';
+    const socketIp = req?.socket?.remoteAddress || '';
+    const clientIp = (typeof fwdFor === 'string' && fwdFor) ? fwdFor.split(',')[0].trim() : (socketIp || '');
+    const headers = {
+        'Accept-Language': acceptLang,
+        'Accept': 'application/json',
+        ...(clientIp ? { 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp } : {})
+    };
+
+    const tryFetch = async (label, url, opts = {}) => {
         try {
-            const res = await fetch(url, { ...options, next: { revalidate: 60 } });
-            if (!res.ok) throw new Error('Failed to fetch');
-            return await res.json();
-        } catch (err) {
-            console.error(`Error fetching ${url}`, err);
+            const res = await axios.get(url, {
+                headers: opts.headers ?? headers,
+                params: { ...(opts.params || {}), locale: lang },
+                timeout: opts.timeout || 7000
+            });
+            const data = res.data;
+            const extracted = extractProduct(data, id);
+            if (extracted && extracted.id) {
+                console.info(`[SSR product] OK ${label} ${url}`);
+                return extracted;
+            }
+            console.warn(`[SSR product] Unexpected shape/no match from ${label}:`, typeof data, Array.isArray(data) ? 'array' : Object.keys(data || {}));
+            return null;
+        } catch (e) {
+            const status = e?.response?.status;
+            const msg = e?.response?.data || e.message;
+            console.error(`[SSR product] FAIL ${label} ${url} ->`, status, msg);
             return null;
         }
-    }
+    };
 
-    let product = null;
-    if (initialIsTR) {
-        product = await tryFetch(`${API_BASE}/products/tr/${id}`);
-        if (!product) product = await tryFetch(`${API_BASE}/products/en/${id}`);
-    } else {
-        product = await tryFetch(`${API_BASE}/products/en/${id}`);
-        if (!product) product = await tryFetch(`${API_BASE}/products/tr/${id}`);
-    }
+    const extractProduct = (data, wantedId) => {
+        if (!data) return null;
+        if (data.id) return data;
+        if (data.product && typeof data.product === 'object') return extractProduct(data.product, wantedId);
+        if (data.result && typeof data.result === 'object') return extractProduct(data.result, wantedId);
+        if (data.data && typeof data.data === 'object') return extractProduct(data.data, wantedId);
+        if (Array.isArray(data)) {
+            if (wantedId != null) {
+                const found = data.find((d) => d && String(d.id) === String(wantedId));
+                return found || data[0] || null;
+            }
+            return data[0] || null;
+        }
+        if (data.content && Array.isArray(data.content)) {
+            if (wantedId != null) {
+                const found = data.content.find((d) => d && String(d.id) === String(wantedId));
+                return found || data.content[0] || null;
+            }
+            return data.content[0] || null;
+        }
+        return null;
+    };
 
+    let product = await tryFetch('id-only', `${baseURL}/products/${id}`);
     if (!product) {
+        const encTitle = encodeURIComponent(title || '');
+        product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`);
+    }
+    if (!product) {
+        product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`);
+    }
+    if (!product) {
+        const decodedTitle = decodeURIComponent(title || '');
+        product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50 } });
+    }
+
+    if (!product || !product.id) {
         return { notFound: true };
     }
 
-    const plainDesc = product.description ? stripHtmlTags(product.description).replace(/\s+/g, ' ').trim() : '';
+    const actualTitle = product.title || product.name || '';
+    const sanitizedActual = sanitizeTitle(actualTitle);
+    const decodedParamTitle = sanitizeTitle(decodeURIComponent(title || ''));
+    if (sanitizedActual && decodedParamTitle && sanitizedActual !== decodedParamTitle) {
+        const destination = `/${lang}/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
+        return { redirect: { destination, permanent: true } };
+    }
+
+    let similarProducts = [];
+    if (product.category) {
+        try {
+            const similarRes = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
+                params: { page: 0, size: 6, locale: lang },
+                headers,
+            });
+            similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
+        } catch (e) {
+            console.error('SSR: Failed to fetch similar products:', e.message);
+        }
+    }
+
+    const pickLocalizedDescription = (p, loc) => {
+        if (!p) return '';
+        const l = (loc || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+        if (trans) {
+            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+            if (typeof desc === 'string' && desc.trim()) return desc.trim();
+        }
+        if (l === 'en') {
+            const candidatesEN = [
+                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
+                p.longDescriptionEn, p.shortDescriptionEn
+            ];
+            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        } else {
+            const candidatesTR = [
+                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
+                p.longDescriptionTr, p.shortDescriptionTr
+            ];
+            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        }
+        return (typeof p.description === 'string' && p.description.trim())
+            ? p.description.trim()
+            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+    };
+
+    const proto = inHeaders['x-forwarded-proto'] || 'http';
+    const host = inHeaders['host'] || 'localhost:3000';
+    const origin = `${proto}://${host}`;
+    const rawDesc = pickLocalizedDescription(product, lang);
+    const plainDesc = stripHtmlTags(rawDesc);
     const metaDescription = plainDesc && plainDesc.length > 0
         ? plainDesc.length > 160 ? plainDesc.slice(0, 157) + '…' : plainDesc
         : `${product.title || product.name || 'Ürün'} - ${product.category || ''}`;
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000';
-    const slug = encodeURIComponent(sanitizeTitle(product.title || product.name || ''));
+    const pathTR = `/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
+    const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
+    const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
+
     const seo = {
         metaTitle: product.title || product.name,
         metaDescription,
-        canonical: `${origin}/products/detail/${id}/${slug}`,
+        canonical,
         ogImage: product.photos?.[0]?.photo || null,
         alternates: {
-            tr: `${origin}/tr/products/detail/${id}/${slug}`,
-            en: `${origin}/en/products/detail/${id}/${slug}`,
-            xDefault: `${origin}/products/detail/${id}/${slug}`,
+            tr: `${origin}${pathTR}`,
+            en: `${origin}${pathEN}`,
+            xDefault: `${origin}${pathTR}`,
         },
     };
 
@@ -607,7 +704,7 @@ export async function getStaticProps(context) {
             price: schemaUnitPrice.toFixed(2),
             availability: 'https://schema.org/InStock',
             itemCondition: 'https://schema.org/NewCondition',
-            url: `${origin}/products/detail/${id}/${slug}`,
+            url: canonical,
         },
     };
 
@@ -615,9 +712,9 @@ export async function getStaticProps(context) {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${locale === 'tr' ? '' : 'en'}` },
-            { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${locale === 'tr' ? '' : 'en/'}products` },
-            { '@type': 'ListItem', position: 3, name: product?.title || 'Ürün', item: `${origin}/products/detail/${id}/${slug}` },
+            { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${lang === 'tr' ? '' : 'en'}` },
+            { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${lang === 'tr' ? '' : 'en/'}products` },
+            { '@type': 'ListItem', position: 3, name: product?.title || 'Ürün', item: canonical },
         ],
     };
 
@@ -625,28 +722,8 @@ export async function getStaticProps(context) {
         props: {
             product: { ...product, structuredData: { product: productSchema, breadcrumbs } },
             seo,
+            similarProducts,
             initialIsTR,
         },
-        revalidate: 60,
     };
-}
-
-export async function getStaticPaths({ locales }) {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-    const paths = [];
-
-    for (const locale of locales || ['tr', 'en']) {
-        try {
-            const res = await fetch(`${API_BASE}/products/popular?locale=${locale}&size=100`);
-            const products = await res.json();
-            paths.push(...products.map(p => ({
-                params: { id: p.id.toString(), title: encodeURIComponent(sanitizeTitle(p.title || p.name)) },
-                locale,
-            })));
-        } catch (err) {
-            console.error(`Error fetching popular products for locale ${locale}`, err);
-        }
-    }
-
-    return { paths, fallback: 'blocking' };
 }
