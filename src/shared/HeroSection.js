@@ -10,7 +10,7 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
 
     // Resimlerin hem webp hem de jpg versiyonlarının olduğunu varsayıyoruz.
     const mobileImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/sade";
-    const desktopImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/sade";
+    const desktopImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/small_sade";
 
 
     return (
