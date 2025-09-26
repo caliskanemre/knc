@@ -222,29 +222,30 @@ const ProductDetails = () => {
             setHeroHighResLoaded(true);
             return;
         }
+        // Her koşulda önce small göster
         const small = getPrefixedImage(selectedImage, 'small');
-        const medium = getPrefixedImage(selectedImage, 'medium');
-        // Mobilde sadece small kullan (performans için medium'u yükleme)
+        setHeroDisplaySrc(small);
+        // Mobilde yalnızca small kullan, ek preload yok
         if (isMobile) {
-            setHeroDisplaySrc(small);
-            setHeroHighResLoaded(true); // blur hemen kalksın
+            setHeroHighResLoaded(true);
             return;
         }
-        // Masaüstü progressive
+        // Masaüstünde small -> medium -> large zinciri
         setHeroHighResLoaded(false);
-        setHeroDisplaySrc(small);
-        const img = new Image();
-        img.src = medium;
-        img.onload = () => {
+        const medium = getPrefixedImage(selectedImage, 'medium');
+        const mediumImg = new Image();
+        mediumImg.src = medium;
+        mediumImg.onload = () => {
             setHeroDisplaySrc(medium);
             setHeroHighResLoaded(true);
             const large = getPrefixedImage(selectedImage, 'large');
             if (large && large !== medium) {
                 const largeImg = new Image();
-                largeImg.src = large;
+                largeImg.src = large; // arka planda preload
             }
         };
-        img.onerror = () => {
+        mediumImg.onerror = () => {
+            // Medium yüklenemezse small ile kal
             setHeroHighResLoaded(true);
         };
     }, [selectedImage, isMobile]);
@@ -749,17 +750,19 @@ const ProductDetails = () => {
                                     <Box
                                         component="img"
                                         src={heroDisplaySrc || getPrefixedImage(selectedImage, 'small')}
-                                        srcSet={isMobile ? `${getPrefixedImage(selectedImage, 'small')} 400w` : `\n                                        ${getPrefixedImage(selectedImage, 'small')} 400w,\n                                        ${getPrefixedImage(selectedImage, 'medium')} 800w,\n                                        ${getPrefixedImage(selectedImage, 'large')} 1200w\n                                    `}
-                                        sizes={isMobile ? '400px' : '(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px'}
+                                        // Mobilde yalnızca small indirilsin: srcSet vermiyoruz
+                                        {...(!isMobile && { srcSet: `${getPrefixedImage(selectedImage, 'small')} 400w, ${getPrefixedImage(selectedImage, 'medium')} 800w, ${getPrefixedImage(selectedImage, 'large')} 1200w` })}
+                                        sizes={isMobile ? undefined : '(max-width: 600px) 400px, (max-width: 960px) 800px, 1200px'}
                                         alt={product.title || 'Ürün görseli'}
                                         onClick={openModal}
                                         loading="eager"
+                                        decoding="async"
+                                        fetchpriority="high"
                                         style={{
                                             filter: (!heroHighResLoaded && !isMobile) ? 'blur(12px) saturate(120%)' : 'none',
                                             transition: 'filter 0.6s ease',
                                             backgroundColor: '#f2f2f2'
                                         }}
-                                        onLoad={() => {}}
                                         sx={{
                                             width: '100%',
                                             maxWidth: { xs: '100%', sm: '400px', md: '500px' },
