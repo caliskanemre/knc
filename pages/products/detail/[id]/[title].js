@@ -169,8 +169,13 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
             <Head>
                 {/* ... */}
             </Head>
-            <SEO/>
-
+            <SEO
+                title={seoTitle}
+                description={metaDescription}
+                image={primarySeoImage}
+                type="product"
+                structuredData={[productSchema, breadcrumbSchema]}
+            />
             <Header />
 
             <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1, sm: 2 } }}>
