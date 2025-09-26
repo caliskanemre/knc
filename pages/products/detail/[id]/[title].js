@@ -422,6 +422,7 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 
   const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
   const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
+  const shimmerPlaceholder = shimmer(700, 700);
 
   return (
     <>
