@@ -129,7 +129,7 @@ export async function getServerSideProps(context) {
         const t = i18n.getFixedT(locale || 'tr');
         const heroTitle = t('heroTitle', 'Hayalinizdeki Kına Gecesi');
         const heroSubtitle = t('heroSubtitle', 'Size özel kına organizasyonları ve ürünleri.');
-        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/sade-mobile.webp";
+        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/small_sade.webp";
         const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
         const heroData = { isMobile, heroTitle, heroSubtitle, mobileImageUrl, desktopImageUrl };
 

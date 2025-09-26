@@ -3,15 +3,9 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 
-// mobileImageUrl ve desktopImageUrl prop'larının .webp uzantısız geldiğini varsayalım
-// Örn: "https://d2830psw11bu27.cloudfront.net/sade-mobile"
+// 🚀 REFAKTÖR: Bileşen artık client-side logic içermiyor. Sadece aldığı prop'ları gösteriyor.
 export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileImageUrl, desktopImageUrl }) {
     const theme = useTheme();
-
-    // Resimlerin hem webp hem de jpg versiyonlarının olduğunu varsayıyoruz.
-    const mobileImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/small_sade";
-    const desktopImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/sade";
-
 
     return (
         <Box
@@ -44,32 +38,19 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
                 {/* Mobil için: Önce WebP'yi dene, desteklemiyorsa JPG'yi kullan */}
                 <source
                     media="(max-width: 599px)"
-                    srcSet={`${mobileImageBaseUrl}.webp`} // Varsa .webp uzantılı URL
-                    type="image/webp"
-                />
-                <source
-                    media="(max-width: 599px)"
-                    srcSet={`${mobileImageBaseUrl}.jpg`} // Varsa .jpg uzantılı URL
-                    type="image/jpeg"
-                />
-
-                {/* Masaüstü için: Önce WebP'yi dene, desteklemiyorsa JPG'yi kullan */}
-                <source
-                    media="(min-width: 600px)"
-                    srcSet={`${desktopImageBaseUrl}.webp`} // Varsa .webp uzantılı URL
+                    srcSet={mobileImageUrl}
                     type="image/webp"
                 />
                 <source
                     media="(min-width: 600px)"
-                    srcSet={`${desktopImageBaseUrl}.jpg`} // Varsa .jpg uzantılı URL
-                    type="image/jpeg"
+                    srcSet={desktopImageUrl}
+                    type="image/webp"
                 />
-
-                {/* En son fallback: Hiçbiri olmazsa veya picture desteklenmiyorsa bunu yükle */}
                 <Box
                     component="img"
-                    src={`${desktopImageBaseUrl}.jpg`} // En uyumlu formatı fallback yapın
+                    src={desktopImageUrl} // Fallback için masaüstü versiyonu
                     alt={heroTitle || "Kına gecesi organizasyonu"}
+                    // Bu prop'lar tarayıcıya en öncelikli olarak bu resmi indirmesini söyler
                     fetchPriority="high"
                     loading="eager"
                     decoding="async"
@@ -84,11 +65,8 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
                 />
             </Box>
 
-            {/* 3. İÇERİK (YAZI) KATMANI: Resmin üzerinde durması için 'zIndex: 2' olmalı. 'position: relative' olması zIndex'in çalışmasını sağlar. */}
-            <Box sx={{
-                position: 'relative',
-                zIndex: 2  // <- BU ÇOK ÖNEMLİ
-            }}>
+            {/* İçerik */}
+            <Box sx={{ position: 'relative', zIndex: 2 }}>
                 <Typography
                     variant={isMobile ? 'h4' : 'h2'}
                     component="h1"
