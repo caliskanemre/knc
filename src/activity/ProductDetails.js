@@ -1,3 +1,4 @@
+/*
 // Temel React ve Next.js import'ları
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router'; // useParams yerine useRouter kullanıyoruz
@@ -48,13 +49,13 @@ import './css/ActivityDetails.css';
 
 // --- HELPER FONKSİYONLAR (Değişiklik yok) ---
 const slugify = (str) => str ? str.toString().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 80) : '';
-const pickLocalizedDescription = (p, lang) => { /* ... mevcut kod ... */ };
-const generateUUID = () => { /* ... mevcut kod ... */ };
+const pickLocalizedDescription = (p, lang) => { /!* ... mevcut kod ... *!/ };
+const generateUUID = () => { /!* ... mevcut kod ... *!/ };
 const getPrefixedImage = (url, prefix) => url ? url.replace(/([^/]+)$/, `${prefix}_$1`) : url;
-const isVideoUrl = (url) => { /* ... mevcut kod ... */ };
-const readIsTRFromStorage = () => { /* ... mevcut kod ... */ };
-const writeIsTRToStorage = (isTR) => { /* ... mevcut kod ... */ };
-const guessTRFromNavigator = () => { /* ... mevcut kod ... */ };
+const isVideoUrl = (url) => { /!* ... mevcut kod ... *!/ };
+const readIsTRFromStorage = () => { /!* ... mevcut kod ... *!/ };
+const writeIsTRToStorage = (isTR) => { /!* ... mevcut kod ... *!/ };
+const guessTRFromNavigator = () => { /!* ... mevcut kod ... *!/ };
 
 
 // ==================================================================
@@ -100,14 +101,14 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
     // GA event'i için
     useEffect(() => {
         if (product && product.id) {
-            trackEvent('view_item', { /* ... */ });
+            trackEvent('view_item', { /!* ... *!/ });
         }
     }, [product]);
 
     // Diğer client-side effect'ler (değişiklik yok)
-    useEffect(() => { /* ... guestToken yönetimi ... */ }, [guestToken]);
-    useEffect(() => { /* ... is_turkey_user storage yönetimi ... */ }, [product]);
-    useEffect(() => { /* ... thumbnail'leri preload etme (isteğe bağlı) ... */ }, [product?.photos]);
+    useEffect(() => { /!* ... guestToken yönetimi ... *!/ }, [guestToken]);
+    useEffect(() => { /!* ... is_turkey_user storage yönetimi ... *!/ }, [product]);
+    useEffect(() => { /!* ... thumbnail'leri preload etme (isteğe bağlı) ... *!/ }, [product?.photos]);
 
 
     // --- RENDER ÖNCESİ HESAPLAMALAR ---
@@ -143,18 +144,18 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
     const metaDescription = plainDesc.slice(0, 157) + (plainDesc.length > 157 ? '…' : '');
     const seoTitle = `${product.title} | ${product.category || 'Ürünler'} | Kına Sepeti`;
     const primarySeoImage = product.photos?.map(p => p.photo).find(u => !isVideoUrl(u)) || product.photos?.[0]?.photo || '/ksLogo.jpeg';
-    const productSchema = { /* ... */ };
-    const breadcrumbSchema = { /* ... */ };
+    const productSchema = { /!* ... *!/ };
+    const breadcrumbSchema = { /!* ... *!/ };
 
     // Ana resmin preload edilecek versiyonu
     const heroPreloadUrl = getPrefixedImage(selectedImage, 'medium');
 
 
     // --- HANDLER FONKSİYONLAR (Değişiklik yok) ---
-    const addToCart = debounce(async () => { /* ... mevcut kod ... */ }, 500);
-    const handleFavoriteClick = async () => { /* ... mevcut kod ... */ };
-    const handleWhatsAppOrder = () => { /* ... mevcut kod ... */ };
-    const showSnackbar = (message, severity) => { /* ... */ };
+    const addToCart = debounce(async () => { /!* ... mevcut kod ... *!/ }, 500);
+    const handleFavoriteClick = async () => { /!* ... mevcut kod ... *!/ };
+    const handleWhatsAppOrder = () => { /!* ... mevcut kod ... *!/ };
+    const showSnackbar = (message, severity) => { /!* ... *!/ };
     const handleSnackbarClose = () => setSnackbarOpen(false);
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -167,38 +168,38 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
         // --- 1. TEK BİR ANA SARMALAYICI ELEMENT ---
         <div className="activity-details-container">
             <Head>
-                {/* ... */}
+                {/!* ... *!/}
             </Head>
             <SEO
-                {/* ... */}
+                {/!* ... *!/}
             />
 
             <Header />
 
             <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1, sm: 2 } }}>
                 <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-                    {/* Grid içeriği (resimler ve ürün bilgileri) */}
-                    {/* ... */}
+                    {/!* Grid içeriği (resimler ve ürün bilgileri) *!/}
+                    {/!* ... *!/}
                 </Grid>
             </Box>
 
-            {/* --- 2. MODAL VE DİĞER ELEMENTLER ANA DIV'İN İÇİNDE --- */}
+            {/!* --- 2. MODAL VE DİĞER ELEMENTLER ANA DIV'İN İÇİNDE --- *!/}
 
-            {/* Modal'ı render et */}
+            {/!* Modal'ı render et *!/}
             {isModalOpen && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content">
-                        {/* Modal içeriği buraya gelecek (img veya video) */}
+                        {/!* Modal içeriği buraya gelecek (img veya video) *!/}
                         <p>Modal içeriği...</p>
                     </div>
                 </div>
             )}
 
-            {/* Benzer ürünleri render et */}
+            {/!* Benzer ürünleri render et *!/}
             {similarProducts.length > 0 && (
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
                     <h2>{t("Similar Products")}</h2>
-                    {/* Benzer ürünler listesi buraya gelecek */}
+                    {/!* Benzer ürünler listesi buraya gelecek *!/}
                     <p>Benzer ürünler...</p>
                 </div>
             )}
@@ -216,7 +217,7 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
 
             <Footer />
 
-            {/* --- 3. ANA SARMALAYICI ELEMENTİN KAPANIŞI --- */}
+            {/!* --- 3. ANA SARMALAYICI ELEMENTİN KAPANIŞI --- *!/}
         </div>
     );
 };
@@ -278,3 +279,4 @@ export async function getServerSideProps(context) {
         };
     }
 }
+*/

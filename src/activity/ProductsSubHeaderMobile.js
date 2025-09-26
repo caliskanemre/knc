@@ -1,3 +1,4 @@
+/*
 import { Collapse, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import React, { useState } from 'react';
@@ -77,3 +78,4 @@ function ProductsSubHeaderMobile() {
 }
 
 export default ProductsSubHeaderMobile;
+*/

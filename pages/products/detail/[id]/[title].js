@@ -110,48 +110,18 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
 
   const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
 
+
+
   // Ana fotoğraf için optimize edilmiş URL'ler ve preloading
-  const optimizedImages = useMemo(() => {
-    if (!images.length) return [];
-    return images.map(url => {
-      if (!url) return url;
-      // Small prefix kullan (daha hızlı yüklenme)
-      return url.replace(/([^/]+)$/, `small_$1`) || url;
-    });
-  }, [images]);
-
-  // Ana görsel için immediate preloading
-  useEffect(() => {
-    if (optimizedImages[0]) {
-      // Ana görseli hemen preload et
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = optimizedImages[0];
-      link.fetchPriority = 'high';
-      document.head.appendChild(link);
-
-      // İlk 3 görseli de preload et (thumbnail'lar için)
-      optimizedImages.slice(1, 3).forEach(url => {
-        const thumbLink = document.createElement('link');
-        thumbLink.rel = 'preload';
-        thumbLink.as = 'image';
-        thumbLink.href = url;
-        thumbLink.fetchPriority = 'low';
-        document.head.appendChild(thumbLink);
-      });
-
-      return () => {
-        // Cleanup
-        const links = document.head.querySelectorAll('link[rel="preload"][as="image"]');
-        links.forEach(link => {
-          if (optimizedImages.includes(link.href)) {
-            document.head.removeChild(link);
-          }
+    const optimizedImages = useMemo(() => {
+        if (!images.length) return [];
+        return images.map(url => {
+            if (!url) return url;
+            return url.replace(/([^/]+)$/, `medium_$1`) || url;
         });
-      };
-    }
-  }, [optimizedImages]);
+    }, [images]);
+
+
 
   useEffect(() => {
     if (!selectedUrl && optimizedImages[0]) setSelectedUrl(optimizedImages[0]);
@@ -472,23 +442,23 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             {/* Main media */}
-            <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
-              {isVideoUrl(selectedUrl) ? (
-                <video controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} poster={images.find((u) => !isVideoUrl(u)) || undefined}>
-                  <source src={selectedUrl} />
-                </video>
-              ) : (
-                <Image
-                  src={selectedUrl || (optimizedImages[0] || placeholderImg)}
-                  alt={product.title || 'Product'}
-                  fill
-                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
-                  style={{ objectFit: 'cover' }}
-                  priority
-                  quality={85}
-                  placeholder="empty"
-                  loading="eager"
-                />
+              <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
+                  {isVideoUrl(selectedUrl) ? (
+                      <video controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} poster={images.find((u) => !isVideoUrl(u)) || undefined}>
+                          <source src={selectedUrl} />
+                      </video>
+                  ) : (
+                      <Image
+                          src={selectedUrl || (optimizedImages[0] || placeholderImg)}
+                          alt={product.title || 'Product'}
+                          fill
+                          sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
+                          style={{ objectFit: 'cover' }}
+                          // 🚀 DEĞİŞİKLİK 2: "priority" prop'u, Next.js'e bu resmi en öncelikli olarak
+                          // yüklemesini ve preload etmesini söyler. Manuel script'ten çok daha etkilidir.
+                          priority
+                          quality={85} // Kaliteyi biraz artırabiliriz
+                      />
               )}
               {/* Zoom indicator */}
               <Box sx={{ 

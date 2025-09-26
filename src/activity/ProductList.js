@@ -1,3 +1,4 @@
+/*
 import React, { useEffect, useRef, useState } from 'react';
 import Axios from 'axios';
 import axios from 'axios';
@@ -376,7 +377,7 @@ const ProductList = () => {
                                             >
                                                 {item.short_description || t('No description available.')}
                                             </Typography>
-                                            {/* Pricing & Discount Section */}
+                                            {/!* Pricing & Discount Section *!/}
                                             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                                 <Typography
                                                     sx={{
@@ -487,3 +488,4 @@ const ProductList = () => {
 };
 
 export default ProductList;
+*/

@@ -1,3 +1,4 @@
+/*
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Container, Grid, Typography, Card, CardMedia, CardContent, Chip, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -39,7 +40,7 @@ export default function ArticlesPage() {
             />
             <Header />
             <Container sx={{ mt: 4 }}>
-                {/* Page Title */}
+                {/!* Page Title *!/}
                 <Box sx={{ textAlign: 'center', mb: 5 }}>
                     <Typography 
                         variant="h3" 
@@ -70,7 +71,7 @@ export default function ArticlesPage() {
                     </Typography>
                 </Box>
 
-                {/* Topic Filter */}
+                {/!* Topic Filter *!/}
                 <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <Chip
                         label="All"
@@ -115,7 +116,7 @@ export default function ArticlesPage() {
                     ))}
                 </Box>
 
-                {/* Articles Grid */}
+                {/!* Articles Grid *!/}
                 <Grid container spacing={4}>
                     {filteredArticles.map((article) => (
                         <Grid key={article.id} item xs={12} sm={6} md={4}>
@@ -211,3 +212,4 @@ export default function ArticlesPage() {
         </div>
     );
 }
+*/

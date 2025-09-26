@@ -1,3 +1,4 @@
+/*
 import React, {lazy, Suspense, useEffect, useState, useCallback} from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -297,3 +298,4 @@ export default function Main() {
         </ThemeProvider>
     );
 }
+*/
