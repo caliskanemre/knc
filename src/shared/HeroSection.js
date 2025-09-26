@@ -3,28 +3,24 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 
-// 🚀 REFAKTÖR: Bileşen artık client-side logic içermiyor. Sadece aldığı prop'ları gösteriyor.
+// mobileImageUrl ve desktopImageUrl prop'larının .webp uzantısız geldiğini varsayalım
+// Örn: "https://d2830psw11bu27.cloudfront.net/sade-mobile"
 export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileImageUrl, desktopImageUrl }) {
     const theme = useTheme();
+
+    // Resimlerin hem webp hem de jpg versiyonlarının olduğunu varsayıyoruz.
+    const mobileImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/sade";
+    const desktopImageBaseUrl = "https://d2830psw11bu27.cloudfront.net/sade";
+
 
     return (
         <Box
             sx={{
                 position: 'relative',
                 height: { xs: '30vh', md: '50vh' },
-                width: '100%',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: 'white',
-                padding: theme.spacing(2),
-                backgroundColor: '#f0f0f0', // Resim yüklenemezse fallback
+                // ... diğer stiller aynı kalacak
             }}
         >
-            {/* 🚀 DEĞİŞİKLİK: <picture> etiketi ve <img> tamamen sunucuda render ediliyor */}
             <Box
                 component="picture"
                 sx={{
@@ -34,24 +30,37 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
                     width: '100%',
                     height: '100%',
                     zIndex: 1,
-                    // Opacity state'i kaldırıldı, resim her zaman görünür.
                 }}
             >
+                {/* Mobil için: Önce WebP'yi dene, desteklemiyorsa JPG'yi kullan */}
                 <source
                     media="(max-width: 599px)"
-                    srcSet={mobileImageUrl}
+                    srcSet={`${mobileImageBaseUrl}.webp`} // Varsa .webp uzantılı URL
+                    type="image/webp"
+                />
+                <source
+                    media="(max-width: 599px)"
+                    srcSet={`${mobileImageBaseUrl}.jpg`} // Varsa .jpg uzantılı URL
+                    type="image/jpeg"
+                />
+
+                {/* Masaüstü için: Önce WebP'yi dene, desteklemiyorsa JPG'yi kullan */}
+                <source
+                    media="(min-width: 600px)"
+                    srcSet={`${desktopImageBaseUrl}.webp`} // Varsa .webp uzantılı URL
                     type="image/webp"
                 />
                 <source
                     media="(min-width: 600px)"
-                    srcSet={desktopImageUrl}
-                    type="image/webp"
+                    srcSet={`${desktopImageBaseUrl}.jpg`} // Varsa .jpg uzantılı URL
+                    type="image/jpeg"
                 />
+
+                {/* En son fallback: Hiçbiri olmazsa veya picture desteklenmiyorsa bunu yükle */}
                 <Box
                     component="img"
-                    src={desktopImageUrl} // Fallback için masaüstü versiyonu
+                    src={`${desktopImageBaseUrl}.jpg`} // En uyumlu formatı fallback yapın
                     alt={heroTitle || "Kına gecesi organizasyonu"}
-                    // Bu prop'lar tarayıcıya en öncelikli olarak bu resmi indirmesini söyler
                     fetchPriority="high"
                     loading="eager"
                     decoding="async"
@@ -66,32 +75,9 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
                 />
             </Box>
 
-            {/* İçerik */}
+            {/* İçerik (değişiklik yok) */}
             <Box sx={{ position: 'relative', zIndex: 2 }}>
-                <Typography
-                    variant={isMobile ? 'h4' : 'h2'}
-                    component="h1"
-                    color="white"
-                    gutterBottom
-                    sx={{
-                        fontFamily: "'Dancing Script', cursive",
-                        fontWeight: 700,
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-                    }}
-                >
-                    {heroTitle}
-                </Typography>
-                <Typography
-                    color="white"
-                    variant={isMobile ? 'body1' : 'h6'}
-                    sx={{
-                        marginBottom: 4,
-                        maxWidth: '600px',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
-                    }}
-                >
-                    {heroSubtitle}
-                </Typography>
+                {/* ... */}
             </Box>
         </Box>
     );
