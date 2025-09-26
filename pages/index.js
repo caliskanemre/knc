@@ -84,7 +84,7 @@ export async function getServerSideProps(context) {
         const heroSubtitle = t('heroSubtitle', 'Size özel kına organizasyonları ve ürünleri.');
 
         // Resim URL'leri
-        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/sade-mobile.webp";
+        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/small_sade.webp";
         const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
 
         const heroData = {
