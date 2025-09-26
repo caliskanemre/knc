@@ -18,7 +18,16 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
             sx={{
                 position: 'relative',
                 height: { xs: '30vh', md: '50vh' },
-                // ... diğer stiller aynı kalacak
+                width: '100%',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center',
+                color: 'white',
+                padding: theme.spacing(2),
+                backgroundColor: '#f0f0f0',
             }}
         >
             <Box
@@ -75,9 +84,35 @@ export default function HeroSection({ isMobile, heroTitle, heroSubtitle, mobileI
                 />
             </Box>
 
-            {/* İçerik (değişiklik yok) */}
-            <Box sx={{ position: 'relative', zIndex: 2 }}>
-                {/* ... */}
+            {/* 3. İÇERİK (YAZI) KATMANI: Resmin üzerinde durması için 'zIndex: 2' olmalı. 'position: relative' olması zIndex'in çalışmasını sağlar. */}
+            <Box sx={{
+                position: 'relative',
+                zIndex: 2  // <- BU ÇOK ÖNEMLİ
+            }}>
+                <Typography
+                    variant={isMobile ? 'h4' : 'h2'}
+                    component="h1"
+                    color="white"
+                    gutterBottom
+                    sx={{
+                        fontFamily: "'Dancing Script', cursive",
+                        fontWeight: 700,
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
+                    }}
+                >
+                    {heroTitle}
+                </Typography>
+                <Typography
+                    color="white"
+                    variant={isMobile ? 'body1' : 'h6'}
+                    sx={{
+                        marginBottom: 4,
+                        maxWidth: '600px',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                    }}
+                >
+                    {heroSubtitle}
+                </Typography>
             </Box>
         </Box>
     );
