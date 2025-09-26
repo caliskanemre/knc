@@ -668,15 +668,12 @@ export async function getServerSideProps(context) {
         : '';
 
     function sanitizeTitle(str) {
-        if (!str) return '';
-        return str
-            .toString()
-            .normalize("NFD")                  // Türkçe/Avrupa karakterlerini ayır
-            .replace(/[\u0300-\u036f]/g, "")   // aksan işaretlerini kaldır
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')       // harf ve sayı dışındaki her şeyi tire yap
-            .replace(/^-+|-+$/g, '');          // baştaki/sondaki fazla tireleri sil
+        return (str || 'product')
+            .replace(/[\\/]+/g, '-')   // \ ve / yerine -
+            .replace(/\s+/g, ' ')      // fazla boşlukları tek boşluk yap
+            .trim();                   // baştaki/sondaki boşlukları sil
     }
+
 
     // 4) Meta description hazırla
     const metaDescription = plainDesc && plainDesc.length > 0
