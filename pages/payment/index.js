@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import {
@@ -106,7 +106,7 @@ export default function PaymentPage() {
     return shippingCountries.filter(c => c.code !== 'TR');
   };
 
-  const calculateShippingCost = (countryCode, currentTotal) => {
+  const calculateShippingCost = useCallback((countryCode, currentTotal) => {
     if (!countryCode) return 0;
     const found = shippingCountries.find(c => c.code === countryCode);
     if (!found) return 0;
@@ -116,7 +116,7 @@ export default function PaymentPage() {
     }
     if (countryCode === 'TR') return 0;
     return currentTotal >= 150 ? 0 : found.cost;
-  };
+  }, [currency, shippingCountries]);
 
   const getFreeShippingInfo = (totalPrice) => {
     if (currency === 'TRY' || currency === 'TL') {

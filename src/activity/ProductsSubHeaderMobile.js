@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
 import { Collapse, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
 import "./css/ActivitySubHeader.css";
 
-import flower from "../images/flower.jpg"
 import tamborine from "../images/tamborine.jpg"
 import ornament from "../images/ornament.jpg"
 import gift from "../images/gift.jpg"
@@ -15,7 +14,7 @@ import {useTranslation} from "react-i18next";
 
 function ProductsSubHeaderMobile() {
     const [open, setOpen] = useState(true);
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     const handleClick = () => {
         setOpen(!open);

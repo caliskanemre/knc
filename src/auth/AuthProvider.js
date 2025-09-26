@@ -1,5 +1,5 @@
 // AuthProvider.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
@@ -13,30 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [favorites, setFavorites] = useState({ favoriteEvents: [], favoriteActivities: [] });
   const [cart, setCart] = useState([]);
 
-  // On component mount, check localStorage for a token
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      try {
-        const decoded = jwtDecode(storedToken);
-        const userEmail = decoded.sub;
-        setToken(storedToken);
-        setUsername(userEmail); // Store email in username
-        setIsLoggedIn(true);
-        fetchFavorites(storedToken, userEmail);
-        fetchCart(storedToken, userEmail);
-      } catch (error) {
-        console.error('Invalid token:', error);
-        localStorage.removeItem('token'); // Clear invalid token
-        setToken('');
-        setUsername('');
-        setIsLoggedIn(false);
-      }
-    }
-  }, []);
-
-  const fetchCart = async (authToken, userEmail) => {
+  const fetchCart = useCallback(async (authToken, userEmail) => {
     try {
       const email = userEmail || username;
       if (!email) return;
@@ -48,9 +25,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching cart items:', error.response?.data || error.message);
     }
-  };
+  }, [username, token]);
 
-  const fetchFavorites = async (authToken, userEmail) => {
+  const fetchFavorites = useCallback(async (authToken, userEmail) => {
     try {
       const email = userEmail || username;
       if (!email) return;
@@ -76,7 +53,37 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching favorites:', error.response?.data || error.message);
     }
-  };
+  }, [username, token]);
+
+  // On component mount, check localStorage for a token
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      try {
+        const decoded = jwtDecode(storedToken);
+        const userEmail = decoded.sub;
+        setToken(storedToken);
+        setUsername(userEmail); // Store email in username
+        setIsLoggedIn(true);
+        fetchFavorites(storedToken, userEmail);
+        fetchCart(storedToken, userEmail);
+      } catch (error) {
+        console.error('Invalid token:', error);
+        localStorage.removeItem('token'); // Clear invalid token
+        setToken('');
+        setUsername('');
+        setIsLoggedIn(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && token && username) {
+      fetchCart(token, username);
+      fetchFavorites(token, username);
+    }
+  }, [isLoggedIn, token, username, fetchCart, fetchFavorites]);
 
   const toggleCartItem = async (itemId, isInCart, quantity = 1, price) => {
     try {

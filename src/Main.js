@@ -4,7 +4,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import Axios from 'axios';
 import axios from 'axios';
 import { useAuth } from './auth/AuthProvider';
 import Header from './header/Header';
@@ -70,7 +69,7 @@ export default function Main() {
             }
             let url = categoryType ? `${baseURL}/products/${categoryType}` : `${baseURL}/products/all`;
             const response = await axios.get(url, {
-                params: { page: 0, size: 20 },
+                params: { page: 0, size: PAGE_SIZE },
                 headers: { 'Accept-Language': i18n.language === 'en' ? 'en' : 'tr' }
             });
             const fetchedProducts = response.data.content || [];
@@ -87,7 +86,7 @@ export default function Main() {
                 setLoading(false);
             }
         }
-    }, [baseURL, i18n.language]);
+    }, [baseURL, t]);
 
     useEffect(() => {
         // 1. ADIM: Sunucudan gelen veri var mı diye kontrol et
@@ -112,7 +111,7 @@ export default function Main() {
             setHasMore(true);
             fetchProducts('', true);
         }
-    }, [fetchProducts, i18n.language]); // Dil değiştiğinde verinin yeniden çekilmesi doğru bir davranış
+    }, [fetchProducts]);
 
     // Infinite scroll effect - Optimized version
     useEffect(() => {
