@@ -456,11 +456,6 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
           <Grid item xs={12} md={6}>
             {/* Main media */}
             <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
-              {isVideoUrl(selectedUrl) ? (
-                <video controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} poster={images.find((u) => !isVideoUrl(u)) || undefined}>
-                  <source src={selectedUrl} />
-                </video>
-              ) : (
                 <Image
                   src={selectedUrl || (optimizedImages[0] || placeholderImg)}
                   alt={product.title || 'Product'}
@@ -469,10 +464,9 @@ export default function ProductDetailPage({ product, seo, pageLocale = 'tr', ini
                   style={{ objectFit: 'cover' }}
                   priority
                   quality={85}
-                  placeholder="empty"
-                  loading="eager"
+                  placeholder="blur"
+                  blurDataURL={shimmerPlaceholder}
                 />
-              )}
               {/* Zoom indicator */}
               <Box sx={{ 
                 position: 'absolute', 
