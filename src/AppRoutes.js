@@ -1,3 +1,4 @@
+/*
 // Shared routes for both client (BrowserRouter) and server (StaticRouter)
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
@@ -26,7 +27,7 @@ import SalesAgreement from './links/SalesAggrement';
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Main Routes */}
+      {/!* Main Routes *!/}
       <Route path=":lang/" element={<Main />} />
       <Route path=":lang/products" element={<ProductList />} />
       <Route path=":lang/products/:type" element={<ProductList />} />
@@ -34,7 +35,7 @@ export default function AppRoutes() {
       <Route path=":lang/products/detail/:id" element={<ProductDetails />} />
       <Route path=":lang/search" element={<SearchPage />} />
 
-      {/* Legal Pages */}
+      {/!* Legal Pages *!/}
       <Route path=":lang/about-us" element={<AboutUs />} />
       <Route path=":lang/privacy-policy" element={<PrivacyPolicy />} />
       <Route path=":lang/shipping-policy" element={<ShippingPolicy />} />
@@ -42,22 +43,23 @@ export default function AppRoutes() {
       <Route path=":lang/sales-agreement" element={<SalesAgreement />} />
       <Route path=":lang/contact-us" element={<ContactUs />} />
 
-      {/* User Routes */}
+      {/!* User Routes *!/}
       <Route path=":lang/login" element={<Login />} />
       <Route path=":lang/users/favorites" element={<Favorites />} />
       <Route path=":lang/my-orders" element={<MyOrders />} />
       <Route path=":lang/register" element={<Register />} />
       <Route path=":lang/reset-password" element={<ResetPassword />} />
 
-      {/* Cart and Payment Routes */}
+      {/!* Cart and Payment Routes *!/}
       <Route path=":lang/cart" element={<Cart />} />
       <Route path=":lang/payment" element={<Payment />} />
       <Route path=":lang/payment-success" element={<PaymentSuccess />} />
       <Route path=":lang/payment-failure" element={<PaymentFailure />} />
 
-      {/* Articles */}
+      {/!* Articles *!/}
       <Route path=":lang/articles" element={<ArticlesPage />} />
       <Route path=":lang/articles/:id" element={<ArticleDetailPage />} />
     </Routes>
   );
 }
+*/

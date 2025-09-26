@@ -169,9 +169,7 @@ const ProductDetails = ({ initialProduct, initialSimilarProducts }) => {
             <Head>
                 {/* ... */}
             </Head>
-            <SEO
-                {/* ... */}
-            />
+            <SEO/>
 
             <Header />
 
