@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
@@ -27,7 +27,9 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 
-// Shimmer placeholder
+// --- HELPER FUNCTIONS ---
+
+// Shimmer placeholder for images
 const toBase64 = (str) => (typeof window === 'undefined' ? Buffer.from(str).toString('base64') : window.btoa(str));
 const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
     `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
@@ -43,14 +45,10 @@ const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
      <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1.2s" repeatCount="indefinite" />
    </svg>`)}`;
 
+// Generates a UUID for guest users
 function generateUUID() {
     try {
-        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-                (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
-            );
-        }
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
             return crypto.randomUUID();
         }
     } catch (_) { /* ignore */ }
@@ -59,9 +57,62 @@ function generateUUID() {
     return `${ts}-${rnd}-${ts.slice(-4)}-${rnd.slice(-4)}-${ts}${rnd}`.slice(0, 36);
 }
 
+// Strips HTML tags from a string for meta descriptions
 const stripHtmlTags = (str) => (str || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
-export default function ProductDetailPage({ product, seo, similarProducts }) {
+// Creates a URL-friendly slug from a title (Handles Turkish characters)
+const sanitizeTitle = (title) => {
+    if (!title) return 'product';
+    const a = { 'ş': 's', 'ç': 'c', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ı': 'i' };
+    return title.toString().toLowerCase()
+        .replace(/[şçğüöı]/g, (c) => a[c] || c)
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+};
+
+// Fetches a single product by its ID
+const fetchProductById = async (id) => {
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    try {
+        const response = await axios.get(`${baseURL}/products/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`[Data Fetch] Failed to fetch product with ID ${id}:`, error.message);
+        return null;
+    }
+};
+
+const getLocalizedDescription = (p, lang) => {
+    if (!p) return '';
+    const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+    const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+    if (trans) {
+        const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+        if (typeof desc === 'string' && desc.trim()) return desc.trim();
+    }
+    if (l === 'en') {
+        const candidatesEN = [
+            p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
+            p.longDescriptionEn, p.shortDescriptionEn
+        ];
+        for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    } else {
+        const candidatesTR = [
+            p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
+            p.longDescriptionTr, p.shortDescriptionTr
+        ];
+        for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+    }
+    return (typeof p.description === 'string' && p.description.trim())
+        ? p.description.trim()
+        : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+};
+
+// --- COMPONENT ---
+
+export default function ProductDetailPage({ product, seo, similarProducts, initialIsTR }) {
     const { t } = useTranslation();
     const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
     const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
@@ -71,6 +122,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const [imageModalOpen, setImageModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [displayIsTR, setDisplayIsTR] = useState(() => {
+        // FIX: Check for the 'initialIsTR' prop passed from getStaticProps
         if (typeof initialIsTR === 'boolean') return initialIsTR;
         if (typeof product?.is_turkey_user === 'boolean') return !!product.is_turkey_user;
         return null;
@@ -139,31 +191,6 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const displayDiscounted = displayOriginal * (1 - discountPercent / 100);
     const currencySymbol = isTRDisplay ? '₺' : '€';
 
-    const getLocalizedDescription = (p, lang) => {
-        if (!p) return '';
-        const l = (lang || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
-        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
-        if (trans) {
-            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
-            if (typeof desc === 'string' && desc.trim()) return desc.trim();
-        }
-        if (l === 'en') {
-            const candidatesEN = [
-                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
-                p.longDescriptionEn, p.shortDescriptionEn
-            ];
-            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        } else {
-            const candidatesTR = [
-                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
-                p.longDescriptionTr, p.shortDescriptionTr
-            ];
-            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        }
-        return (typeof p.description === 'string' && p.description.trim())
-            ? p.description.trim()
-            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
-    };
 
     const localizedDescription = useMemo(() => getLocalizedDescription(product, t('i18n.language')), [product, t]);
 
@@ -193,7 +220,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                     localStorage.setItem('guestToken', guestToken);
                 }
 
-                const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : generateUUID();
+                const requestId = generateUUID();
                 const lang = t('i18n.language') === 'en' ? 'en' : 'tr';
 
                 if (tokenStr) {
@@ -230,13 +257,9 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                     const newToken2 = generateUUID();
                                     localStorage.setItem('guestToken', newToken2);
                                     await axios.post(`${baseURL}/cart/guest`, cartItem, { headers: { ...headers, 'X-Guest-Token': newToken2 }, timeout: 8000 });
-                                } else {
-                                    throw err2;
-                                }
+                                } else { throw err2; }
                             }
-                        } else {
-                            throw err;
-                        }
+                        } else { throw err; }
                     }
                 }
 
@@ -282,7 +305,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                     localStorage.setItem('favorites', JSON.stringify(localFavorites));
                     setSnackbar({ open: true, message: t('Removed from favorites') + ' ❌', severity: 'success' });
                 } else {
-                    const guestToken = localStorage.getItem('guestToken') || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
+                    const guestToken = localStorage.getItem('guestToken') || generateUUID();
                     if (!localStorage.getItem('guestToken')) localStorage.setItem('guestToken', guestToken);
                     await axios.post(`${baseURL}/users/guest/favorites/${product.id}`, {}, { headers: { 'X-Guest-Token': guestToken } });
                     const favItem = { id: product.id, title: product.title || product.name || 'Unknown', price: product.price || 0, photos: product.photos || [] };
@@ -314,17 +337,16 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         setImageModalOpen(true);
     };
 
-    const handleModalClose = () => {
-        setImageModalOpen(false);
-    };
+    const handleModalClose = () => setImageModalOpen(false);
 
-    const handlePrevImage = () => {
+    // FIX: useCallback for functions used in useEffect
+    const handlePrevImage = useCallback(() => {
         setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : optimizedImages.length - 1));
-    };
+    }, [optimizedImages.length]);
 
-    const handleNextImage = () => {
+    const handleNextImage = useCallback(() => {
         setCurrentImageIndex(prev => (prev < optimizedImages.length - 1 ? prev + 1 : 0));
-    };
+    }, [optimizedImages.length]);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -336,7 +358,8 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [imageModalOpen, optimizedImages.length]);
+        // FIX: Added missing dependencies
+    }, [imageModalOpen, handlePrevImage, handleNextImage, optimizedImages.length]);
 
     if (!product) {
         return (
@@ -395,20 +418,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                 placeholder="blur"
                                 blurDataURL={shimmerPlaceholder}
                             />
-                            <Box sx={{
-                                position: 'absolute',
-                                top: 8,
-                                left: 8,
-                                backgroundColor: 'rgba(0,0,0,0.6)',
-                                color: 'white',
-                                px: 1,
-                                py: 0.5,
-                                borderRadius: 1,
-                                fontSize: '0.75rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.5
-                            }}>
+                            <Box sx={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', px: 1, py: 0.5, borderRadius: 1, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 🔍 {t('Click to zoom', 'Yakınlaştırmak için tıklayın')}
                             </Box>
                         </Card>
@@ -471,7 +481,8 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         <Grid container spacing={2}>
                             {similarProducts.map(p => {
                                 const img = p.photos?.[0]?.photo || placeholderImg;
-                                const href = `/products/detail/${p.id}/${encodeURIComponent(p.title || 'product')}`;
+                                // FIX: Use the sanitizeTitle function for consistent linking
+                                const href = `/products/detail/${p.id}/${sanitizeTitle(p.title)}`;
                                 return (
                                     <Grid item key={p.id} xs={6} sm={4} md={3}>
                                         <Card sx={{ p: 1, position: 'relative', aspectRatio: '1 / 1' }}>
@@ -525,40 +536,44 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     );
 }
 
-export async function getStaticProps({ params, locale }) {
-    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
-    const { id, title } = params;
-    const lang = locale === 'en' ? 'en' : 'tr';
-    const headers = { 'Accept-Language': lang, 'Accept': 'application/json' };
+// --- DATA FETCHING ---
 
+export async function getStaticProps({ params, locale }) {
+    const { id, title: titleFromUrl } = params;
+    const lang = locale === 'en' ? 'en' : 'tr';
+
+    // FIX: Use the defined fetchProductById function
     const product = await fetchProductById(id);
 
     if (!product || !product.id) {
         return { notFound: true };
     }
 
-    const actualTitleSlug = sanitizeTitle(product.title);
-    if (title !== actualTitleSlug) {
+    // FIX: Refactored and simplified redirect logic
+    // Create the correct, canonical slug from the fetched product title.
+    const correctSlug = sanitizeTitle(product.title);
+
+    // If the slug in the URL doesn't match the correct one, redirect permanently.
+    if (titleFromUrl !== correctSlug) {
+        const destination = lang === 'en'
+            ? `/en/products/detail/${id}/${correctSlug}`
+            : `/products/detail/${id}/${correctSlug}`;
         return {
             redirect: {
-                destination: `/${locale}/products/detail/${id}/${actualTitleSlug}`,
+                destination: destination,
                 permanent: true,
             },
         };
     }
 
-    const decodedParamTitle = sanitizeTitle(decodeURIComponent(title || ''));
-    if (sanitizedActual && decodedParamTitle && sanitizedActual !== decodedParamTitle) {
-        const destination = `/${lang}/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
-        return { redirect: { destination, permanent: true } };
-    }
-
+    // Fetch similar products
     let similarProducts = [];
     if (product.category) {
         try {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
             const similarRes = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}`, {
                 params: { page: 0, size: 6, locale: lang },
-                headers,
+                headers: { 'Accept-Language': lang, 'Accept': 'application/json' },
             });
             similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
         } catch (e) {
@@ -566,27 +581,13 @@ export async function getStaticProps({ params, locale }) {
         }
     }
 
+    // SEO and Structured Data Generation
     const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const plainDesc = stripHtmlTags(getLocalizedDescription(product, lang));
+    const metaDescription = plainDesc.length > 157 ? plainDesc.slice(0, 157) + '...' : plainDesc;
 
-    // --- CORRECTED REDIRECT AND PATH LOGIC ---
-    const actualTitle = product.title || 'product';
-    const sanitizedActual = sanitizeTitle(actualTitle); // Re-define and use this
-
-    // Redirect if the URL title doesn't match the sanitized title
-    if (title !== sanitizedActual) {
-        return {
-            redirect: {
-                destination: `/${lang}/products/detail/${id}/${sanitizedActual}`,
-                permanent: true,
-            },
-        };
-    }
-
-    const plainDesc = stripHtmlTags(product.description || '');
-    const metaDescription = plainDesc.slice(0, 157) + '...';
-
-    const pathTR = `/products/detail/${id}/${sanitizedActual}`;
-    const pathEN = `/en/products/detail/${id}/${sanitizedActual}`;
+    const pathTR = `/products/detail/${id}/${correctSlug}`;
+    const pathEN = `/en/products/detail/${id}/${correctSlug}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
 
     const seo = {
@@ -629,8 +630,8 @@ export async function getStaticProps({ params, locale }) {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${lang === 'tr' ? '' : 'en'}` },
-            { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${lang === 'tr' ? '' : 'en/'}products` },
+            { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}${lang === 'tr' ? '' : '/en'}` },
+            { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}${lang === 'tr' ? '/products' : '/en/products'}` },
             { '@type': 'ListItem', position: 3, name: product?.title || 'Ürün', item: canonical },
         ],
     };
@@ -645,30 +646,47 @@ export async function getStaticProps({ params, locale }) {
         revalidate: 3600,
     };
 }
-// Dosyanın sonuna, getStaticProps'un üstüne ekleyin
-// [id]/[title].js dosyasındaki getStaticPaths fonksiyonunu bununla değiştirin
+
+// In pages/products/detail/[id]/[title].js
 
 export async function getStaticPaths({ locales }) {
+    console.log('Running getStaticPaths...');
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
     let products = [];
+
     try {
         const res = await axios.get(`${baseURL}/products/all?size=10000`);
         products = res.data?.content || [];
-    } catch (error) { /* ... */ }
+        // --- DEBUG LOGGING ---
+        console.log(`[getStaticPaths] Successfully fetched ${products.length} products.`);
+
+    } catch (error) {
+        // --- DEBUG LOGGING ---
+        console.error('[getStaticPaths] CRITICAL: Failed to fetch product list during build.');
+        console.error(`[getStaticPaths] URL: ${baseURL}/products/all?size=10000`);
+        console.error(`[getStaticPaths] Error: ${error.message}`);
+    }
 
     const paths = [];
     for (const product of products) {
-        // --- DEĞİŞİKLİK BURADA ---
-        const encodedTitle = encodeURIComponent(product.title || 'product');
+        const slug = sanitizeTitle(product.title);
         for (const locale of locales) {
             paths.push({
                 params: {
                     id: String(product.id),
-                    title: encodedTitle, // Parametre olarak kodlanmış başlığı gönder
+                    title: slug,
                 },
                 locale,
             });
         }
+    }
+
+    // --- DEBUG LOGGING ---
+    if (paths.length > 0) {
+        console.log(`[getStaticPaths] Generated ${paths.length} total paths.`);
+        console.log('[getStaticPaths] Example path:', JSON.stringify(paths[0]));
+    } else {
+        console.warn('[getStaticPaths] WARNING: No paths were generated. The product list might be empty or the API call failed.');
     }
 
     return {

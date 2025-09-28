@@ -20,6 +20,17 @@ const formatPrice = (amount, isTR) => {
     return `${num.toFixed(2)} ${symbol}`;
 };
 
+const sanitizeTitle = (title) => {
+    if (!title) return 'product';
+    const a = { 'ş': 's', 'ç': 'c', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ı': 'i' };
+    return title.toString().toLowerCase()
+        .replace(/[şçğüöı]/g, (c) => a[c] || c)
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+};
+
 export default function ProductGrid({ products, favorites, isLoggedIn, handleFavoriteClick, pageLocale = 'tr', defaultLocale = 'tr' }) {
     const isClient = typeof window !== 'undefined';
 
@@ -68,8 +79,8 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
 
                 const productTitle = item.productName || item.title || item.name || 'Unknown';
 
-
-                const href = `/products/detail/${item.id}/${encodeURIComponent(productTitle)}`;
+                // --- DEĞİŞİKLİK 2: href'i sanitizeTitle ile oluşturun ---
+                const href = `/products/detail/${item.id}/${sanitizeTitle(productTitle)}`;
 
 
                 return (
