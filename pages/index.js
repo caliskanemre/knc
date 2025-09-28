@@ -58,55 +58,42 @@ export default function HomePage({ products, seo, heroData, pageLocale = 'tr', d
     );
 }
 
-export async function getServerSideProps(context) {
+// getServerSideProps fonksiyonunu silin ve yerine bunu ekleyin
+export async function getStaticProps(context) {
     try {
-        const { locale, defaultLocale, resolvedUrl, req } = context;
+        const { locale, defaultLocale } = context;
         const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
-        // Mevcut ürün çekme mantığınız aynı kalıyor
-        const fwdFor = req?.headers?.['x-forwarded-for'];
-        const clientIp = Array.isArray(fwdFor) ? fwdFor[0] : (typeof fwdFor === 'string' ? fwdFor.split(',')[0].trim() : (req?.socket?.remoteAddress || ''));
-
+        // 1. Ürünleri çek
         const res = await axios.get(`${baseURL}/products/all`, {
             params: { page: 0, size: 20, locale },
-            headers: { 'Accept-Language': locale, 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp },
+            headers: { 'Accept-Language': locale },
             timeout: 5000
         });
         const { content = [] } = res.data || {};
 
-        // 🚀 YENİ: Sunucu tarafında HeroSection için gerekli verileri hazırlıyoruz.
-        const userAgent = req.headers['user-agent'] || '';
-        const { isMobile } = getSelectorsByUserAgent(userAgent);
-
-        // Sunucuda dil çevirilerini alıyoruz
+        // 2. Dil çevirilerini al (i18n ve diğer kısımlar aynı kalabilir)
         const t = i18n.getFixedT(locale || 'tr');
         const heroTitle = t('heroTitle', 'Hayalinizdeki Kına Gecesi');
         const heroSubtitle = t('heroSubtitle', 'Size özel kına organizasyonları ve ürünleri.');
 
-        // Resim URL'leri
-        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/small_sade.webp";
-        const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
-
         const heroData = {
-            isMobile,
+            isMobile: false, // getStaticProps'ta 'req' nesnesi olmadığı için bu dinamik olamaz
             heroTitle,
             heroSubtitle,
-            mobileImageUrl,
-            desktopImageUrl
+            mobileImageUrl: "https://d2830psw11bu27.cloudfront.net/small_sade.webp",
+            desktopImageUrl: "https://d2830psw11bu27.cloudfront.net/sade.webp"
         };
 
-        // Mevcut SEO mantığınız aynı kalıyor
-        const headers = req?.headers || {};
-        const proto = headers['x-forwarded-proto'] || 'http';
-        const host = headers['host'] || 'localhost:3000';
-        const origin = `${proto}://${host}`;
+        // 3. SEO verilerini oluştur (host bilgisi dinamik olmayacak)
+        const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kinasepeti.com'; // .env dosyasından site URL'nizi alın
         const pathTR = `/`;
         const pathEN = `/en`;
         const canonical = `${origin}${locale === 'tr' ? pathTR : pathEN}`;
 
         const seo = {
             title: 'Kınasepeti - Kına ve Düğün Ürünleri',
-            description: 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin. Kişiselleştirilmiş setler, hediyelikler ve daha fazlası.',
+            description: 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin.',
             canonical,
             alternates: { tr: `${origin}${pathTR}`, en: `${origin}${pathEN}`, xDefault: `${origin}${pathTR}` }
         };
@@ -115,34 +102,20 @@ export async function getServerSideProps(context) {
             props: {
                 products: content,
                 seo,
-                heroData, // Hazırlanan veriyi prop olarak gönderiyoruz
-                pageLocale: locale || 'tr',
-                defaultLocale: defaultLocale || 'tr',
-                asPath: resolvedUrl || '/'
-            }
-        };
-    } catch (e) {
-        // Hata durumunda da heroData'yı oluşturup göndermek, sayfanın çökmesini engeller
-        const { req, locale, defaultLocale, resolvedUrl } = context;
-        const userAgent = req.headers['user-agent'] || '';
-        const { isMobile } = getSelectorsByUserAgent(userAgent);
-        const t = i18n.getFixedT(locale || 'tr');
-        const heroTitle = t('heroTitle', 'Hayalinizdeki Kına Gecesi');
-        const heroSubtitle = t('heroSubtitle', 'Size özel kına organizasyonları ve ürünleri.');
-        const mobileImageUrl = "https://d2830psw11bu27.cloudfront.net/small_sade.webp";
-        const desktopImageUrl = "https://d2830psw11bu27.cloudfront.net/sade.webp";
-        const heroData = { isMobile, heroTitle, heroSubtitle, mobileImageUrl, desktopImageUrl };
-
-        console.info('SSR fetch skipped or failed:', e?.message || e);
-        return {
-            props: {
-                products: [],
-                seo: null,
                 heroData,
                 pageLocale: locale || 'tr',
                 defaultLocale: defaultLocale || 'tr',
-                asPath: resolvedUrl || '/'
-            }
+            },
+            // Sayfanın her 60 saniyede bir arkaplanda güncellenmesini sağlar.
+            // Bu süre içinde gelen tüm isteklere cache'lenmiş sayfa sunulur.
+            revalidate: 60
+        };
+
+    } catch (e) {
+        console.error('getStaticProps failed:', e?.message || e);
+        return {
+            props: { products: [], seo: null, heroData: {} },
+            revalidate: 10 // Hata durumunda 10 saniye sonra tekrar denesin
         };
     }
 }

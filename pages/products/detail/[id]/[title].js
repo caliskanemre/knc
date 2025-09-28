@@ -61,9 +61,7 @@ function generateUUID() {
 
 const stripHtmlTags = (str) => (str || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
-const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
-
-export default function ProductDetailPage({ product, seo, similarProducts, initialIsTR = null }) {
+export default function ProductDetailPage({ product, seo, similarProducts }) {
     const { t } = useTranslation();
     const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
     const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
@@ -473,7 +471,7 @@ export default function ProductDetailPage({ product, seo, similarProducts, initi
                         <Grid container spacing={2}>
                             {similarProducts.map(p => {
                                 const img = p.photos?.[0]?.photo || placeholderImg;
-                                const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
+                                const href = `/products/detail/${p.id}/${encodeURIComponent(p.title || 'product')}`;
                                 return (
                                     <Grid item key={p.id} xs={6} sm={4} md={3}>
                                         <Card sx={{ p: 1, position: 'relative', aspectRatio: '1 / 1' }}>
@@ -527,94 +525,28 @@ export default function ProductDetailPage({ product, seo, similarProducts, initi
     );
 }
 
-export async function getServerSideProps({ params, locale, req }) {
-    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
+export async function getStaticProps({ params, locale }) {
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
     const { id, title } = params;
     const lang = locale === 'en' ? 'en' : 'tr';
-    const acceptLang = lang === 'en' ? 'en-US,en;q=0.9' : 'tr-TR,tr;q=0.9,en;q=0.5';
+    const headers = { 'Accept-Language': lang, 'Accept': 'application/json' };
 
-    const inHeaders = req?.headers || {};
-    const cookie = inHeaders.cookie || '';
-    const rawAcceptLang = inHeaders['accept-language'] || '';
-    const urlIsTR = !!(req.url && /(^|\/)tr(\/|$)/i.test(req.url));
-    const cookieIsTR = /(?:^|;)\s*is_turkey_user=1\b/.test(cookie);
-    const langIsTR = (locale?.toLowerCase().startsWith('tr') || /\btr\b/i.test(rawAcceptLang));
-    const initialIsTR = urlIsTR || cookieIsTR || langIsTR;
-
-    const fwdFor = inHeaders['x-forwarded-for'] || inHeaders['x-real-ip'] || '';
-    const socketIp = req?.socket?.remoteAddress || '';
-    const clientIp = (typeof fwdFor === 'string' && fwdFor) ? fwdFor.split(',')[0].trim() : (socketIp || '');
-    const headers = {
-        'Accept-Language': acceptLang,
-        'Accept': 'application/json',
-        ...(clientIp ? { 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp } : {})
-    };
-
-    const tryFetch = async (label, url, opts = {}) => {
-        try {
-            const res = await axios.get(url, {
-                headers: opts.headers ?? headers,
-                params: { ...(opts.params || {}), locale: lang },
-                timeout: opts.timeout || 7000
-            });
-            const data = res.data;
-            const extracted = extractProduct(data, id);
-            if (extracted && extracted.id) {
-                console.info(`[SSR product] OK ${label} ${url}`);
-                return extracted;
-            }
-            console.warn(`[SSR product] Unexpected shape/no match from ${label}:`, typeof data, Array.isArray(data) ? 'array' : Object.keys(data || {}));
-            return null;
-        } catch (e) {
-            const status = e?.response?.status;
-            const msg = e?.response?.data || e.message;
-            console.error(`[SSR product] FAIL ${label} ${url} ->`, status, msg);
-            return null;
-        }
-    };
-
-    const extractProduct = (data, wantedId) => {
-        if (!data) return null;
-        if (data.id) return data;
-        if (data.product && typeof data.product === 'object') return extractProduct(data.product, wantedId);
-        if (data.result && typeof data.result === 'object') return extractProduct(data.result, wantedId);
-        if (data.data && typeof data.data === 'object') return extractProduct(data.data, wantedId);
-        if (Array.isArray(data)) {
-            if (wantedId != null) {
-                const found = data.find((d) => d && String(d.id) === String(wantedId));
-                return found || data[0] || null;
-            }
-            return data[0] || null;
-        }
-        if (data.content && Array.isArray(data.content)) {
-            if (wantedId != null) {
-                const found = data.content.find((d) => d && String(d.id) === String(wantedId));
-                return found || data.content[0] || null;
-            }
-            return data.content[0] || null;
-        }
-        return null;
-    };
-
-    let product = await tryFetch('id-only', `${baseURL}/products/${id}`);
-    if (!product) {
-        const encTitle = encodeURIComponent(title || '');
-        product = await tryFetch('detail-with-title', `${baseURL}/products/detail/${id}/${encTitle}`);
-    }
-    if (!product) {
-        product = await tryFetch('detail-id-only', `${baseURL}/products/detail/${id}`);
-    }
-    if (!product) {
-        const decodedTitle = decodeURIComponent(title || '');
-        product = await tryFetch('search-fts', `${baseURL}/products/searchByFts`, { params: { query: decodedTitle, page: 0, size: 50 } });
-    }
+    const product = await fetchProductById(id);
 
     if (!product || !product.id) {
         return { notFound: true };
     }
 
-    const actualTitle = product.title || product.name || '';
-    const sanitizedActual = sanitizeTitle(actualTitle);
+    const actualTitleSlug = sanitizeTitle(product.title);
+    if (title !== actualTitleSlug) {
+        return {
+            redirect: {
+                destination: `/${locale}/products/detail/${id}/${actualTitleSlug}`,
+                permanent: true,
+            },
+        };
+    }
+
     const decodedParamTitle = sanitizeTitle(decodeURIComponent(title || ''));
     if (sanitizedActual && decodedParamTitle && sanitizedActual !== decodedParamTitle) {
         const destination = `/${lang}/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
@@ -630,47 +562,31 @@ export async function getServerSideProps({ params, locale, req }) {
             });
             similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
         } catch (e) {
-            console.error('SSR: Failed to fetch similar products:', e.message);
+            console.error('[Static Gen] Failed to fetch similar products:', e.message);
         }
     }
 
-    const pickLocalizedDescription = (p, loc) => {
-        if (!p) return '';
-        const l = (loc || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
-        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
-        if (trans) {
-            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
-            if (typeof desc === 'string' && desc.trim()) return desc.trim();
-        }
-        if (l === 'en') {
-            const candidatesEN = [
-                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
-                p.longDescriptionEn, p.shortDescriptionEn
-            ];
-            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        } else {
-            const candidatesTR = [
-                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
-                p.longDescriptionTr, p.shortDescriptionTr
-            ];
-            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
-        }
-        return (typeof p.description === 'string' && p.description.trim())
-            ? p.description.trim()
-            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
-    };
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-    const proto = inHeaders['x-forwarded-proto'] || 'http';
-    const host = inHeaders['host'] || 'localhost:3000';
-    const origin = `${proto}://${host}`;
-    const rawDesc = pickLocalizedDescription(product, lang);
-    const plainDesc = stripHtmlTags(rawDesc);
-    const metaDescription = plainDesc && plainDesc.length > 0
-        ? plainDesc.length > 160 ? plainDesc.slice(0, 157) + '…' : plainDesc
-        : `${product.title || product.name || 'Ürün'} - ${product.category || ''}`;
+    // --- CORRECTED REDIRECT AND PATH LOGIC ---
+    const actualTitle = product.title || 'product';
+    const sanitizedActual = sanitizeTitle(actualTitle); // Re-define and use this
 
-    const pathTR = `/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
-    const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
+    // Redirect if the URL title doesn't match the sanitized title
+    if (title !== sanitizedActual) {
+        return {
+            redirect: {
+                destination: `/${lang}/products/detail/${id}/${sanitizedActual}`,
+                permanent: true,
+            },
+        };
+    }
+
+    const plainDesc = stripHtmlTags(product.description || '');
+    const metaDescription = plainDesc.slice(0, 157) + '...';
+
+    const pathTR = `/products/detail/${id}/${sanitizedActual}`;
+    const pathEN = `/en/products/detail/${id}/${sanitizedActual}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
 
     const seo = {
@@ -685,7 +601,8 @@ export async function getServerSideProps({ params, locale, req }) {
         },
     };
 
-    const schemaCurrency = initialIsTR ? 'TRY' : 'EUR';
+    const isTR = lang === 'tr';
+    const schemaCurrency = isTR ? 'TRY' : 'EUR';
     const schemaUnitPrice = schemaCurrency === 'TRY'
         ? (Number(product?.tl_price ?? product?.price) || 0)
         : (Number(product?.eur_price ?? product?.price) || 0);
@@ -723,7 +640,39 @@ export async function getServerSideProps({ params, locale, req }) {
             product: { ...product, structuredData: { product: productSchema, breadcrumbs } },
             seo,
             similarProducts,
-            initialIsTR,
+            initialIsTR: isTR,
         },
+        revalidate: 3600,
+    };
+}
+// Dosyanın sonuna, getStaticProps'un üstüne ekleyin
+// [id]/[title].js dosyasındaki getStaticPaths fonksiyonunu bununla değiştirin
+
+export async function getStaticPaths({ locales }) {
+    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    let products = [];
+    try {
+        const res = await axios.get(`${baseURL}/products/all?size=10000`);
+        products = res.data?.content || [];
+    } catch (error) { /* ... */ }
+
+    const paths = [];
+    for (const product of products) {
+        // --- DEĞİŞİKLİK BURADA ---
+        const encodedTitle = encodeURIComponent(product.title || 'product');
+        for (const locale of locales) {
+            paths.push({
+                params: {
+                    id: String(product.id),
+                    title: encodedTitle, // Parametre olarak kodlanmış başlığı gönder
+                },
+                locale,
+            });
+        }
+    }
+
+    return {
+        paths,
+        fallback: 'blocking',
     };
 }

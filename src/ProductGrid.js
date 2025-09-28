@@ -13,10 +13,6 @@ const getPrefixedImage = (url, prefix) => {
     return url.replace(/([^/]+)$/, `${prefix}_$1`);
 };
 
-const sanitizeTitle = (str) => (str || 'product')
-    .replace(/[\\/]+/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 const formatPrice = (amount, isTR) => {
     const symbol = isTR ? '₺' : '€';
@@ -70,9 +66,11 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                     } catch (_) { /* ignore */ }
                 }
 
-                const productTitle = sanitizeTitle(item.productName || item.title || item.name || 'Unknown');
-                // Next Link mevcut locale'i otomatik uygular; manuel prefix eklemeyelim
-                const href = `/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`;
+                const productTitle = item.productName || item.title || item.name || 'Unknown';
+
+
+                const href = `/products/detail/${item.id}/${encodeURIComponent(productTitle)}`;
+
 
                 return (
                     <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
