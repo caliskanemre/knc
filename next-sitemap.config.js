@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 
-const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const BACKEND_API_BASE_URL = 'https://kinasepeti-f99dbcee65cd.herokuapp.com';
 const SITE_URL = process.env.SITE_URL || 'https://www.kinasepeti.com';
 
 module.exports = {
@@ -8,40 +8,25 @@ module.exports = {
     generateRobotsTxt: true,
     exclude: ['/api/*'],
 
-    // Genel alternateRefs ayarını kaldırıyoruz.
-    // Bunun yerine transform fonksiyonu ile kontrol edeceğiz.
-
-    // ✅ Her URL için özel dönüşüm uygula
     transform: async (config, path) => {
-        let alternateRefs = []; // Varsayılan olarak dil alternatifi yok
+        let alternateRefs = [];
 
-        // Sadece /tr veya /en ile başlayan path'ler için hreflang ekle
         if (path.startsWith('/tr') || path.startsWith('/en')) {
-            // Mevcut dil ön ekini kaldırıp ana yolu bul (örn: /products/detail/123)
             const pathWithoutLocale = path.replace(/^\/(tr|en)/, '');
 
             alternateRefs = [
-                {
-                    href: `${SITE_URL}/tr${pathWithoutLocale}`,
-                    hreflang: 'tr',
-                },
-                {
-                    href: `${SITE_URL}/en${pathWithoutLocale}`,
-                    hreflang: 'en',
-                },
-                {
-                    href: `${SITE_URL}/tr${pathWithoutLocale}`,
-                    hreflang: 'x-default',
-                },
+                { href: `${SITE_URL}/tr${pathWithoutLocale}`, hreflang: 'tr' },
+                { href: `${SITE_URL}/en${pathWithoutLocale}`, hreflang: 'en' },
+                { href: `${SITE_URL}/tr${pathWithoutLocale}`, hreflang: 'x-default' },
             ];
         }
 
         return {
-            loc: path, // '/tr/urun-adi' veya '/articles/3' gibi
+            loc: path,
             changefreq: 'weekly',
             priority: 0.7,
             lastmod: new Date().toISOString(),
-            alternateRefs: alternateRefs, // Sadece uygunsa eklenecek, değilse boş dizi olacak
+            alternateRefs,
         };
     },
 
