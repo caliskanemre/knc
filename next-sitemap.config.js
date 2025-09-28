@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 
-const BACKEND_API_BASE_URL = 'https://kinasepeti-f99dbcee65cd.herokuapp.com';
+const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 const SITE_URL = process.env.SITE_URL || 'https://www.kinasepeti.com';
 
 module.exports = {
@@ -32,7 +32,7 @@ module.exports = {
 
     additionalPaths: async (config) => {
         const backendApiUrl = `${BACKEND_API_BASE_URL}/api/sitemap/urls`;
-        console.log(`Fetching dynamic URLs from: ${backendApiUrl}`);
+        console.log(`[DEBUG] Fetching dynamic URLs from: ${backendApiUrl}`);
 
         try {
             const response = await fetch(backendApiUrl);
@@ -41,11 +41,25 @@ module.exports = {
             }
             const dynamicUrls = await response.json();
 
-            // Sadece path kısmını al
-            return dynamicUrls.map(item => new URL(item.loc).pathname);
+            // ✅ 1. HATA AYIKLAMA LOGU: API'den gelen ham veriyi görelim
+            console.log('[DEBUG] Fetched Data:', JSON.stringify(dynamicUrls, null, 2));
+
+            const paths = dynamicUrls.map(item => {
+                // Her bir item'ın loc özelliğinin geçerli bir URL olduğundan emin olalım
+                if (!item || !item.loc) {
+                    console.warn('[DEBUG] Warning: Found an item without a .loc property:', item);
+                    return null; // Geçersiz item'ları atla
+                }
+                return new URL(item.loc).pathname;
+            }).filter(Boolean); // Null değerleri listeden temizle
+
+            // ✅ 2. HATA AYIKLAMA LOGU: İşlenmiş path'leri görelim
+            console.log('[DEBUG] Processed Paths:', paths);
+
+            return paths;
 
         } catch (error) {
-            console.error("Failed to fetch dynamic URLs from backend:", error);
+            console.error("[DEBUG] Error in additionalPaths:", error);
             return [];
         }
     },
