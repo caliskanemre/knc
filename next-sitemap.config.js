@@ -8,6 +8,8 @@ module.exports = {
     generateRobotsTxt: true,
     exclude: ['/api/*'],
 
+    // Bu fonksiyon ARTIK SADECE STATİK SAYFALAR İÇİN ÇALIŞACAK.
+    // Dinamik sayfaların tüm mantığı additionalPaths'e taşındı.
     transform: async (config, path) => {
         let alternateRefs = [];
 
@@ -26,13 +28,14 @@ module.exports = {
             changefreq: 'weekly',
             priority: 0.7,
             lastmod: new Date().toISOString(),
-            alternateRefs,
+            alternateRefs: alternateRefs,
         };
     },
 
+    // ✅ DEĞİŞİKLİK BURADA:
+    // Artık sadece path değil, her bir dinamik URL için tam bir sitemap objesi oluşturuyoruz.
     additionalPaths: async (config) => {
         const backendApiUrl = `${BACKEND_API_BASE_URL}/api/sitemap/urls`;
-        console.log(`[DEBUG] Fetching dynamic URLs from: ${backendApiUrl}`);
 
         try {
             const response = await fetch(backendApiUrl);
@@ -41,25 +44,34 @@ module.exports = {
             }
             const dynamicUrls = await response.json();
 
-            // ✅ 1. HATA AYIKLAMA LOGU: API'den gelen ham veriyi görelim
-            console.log('[DEBUG] Fetched Data:', JSON.stringify(dynamicUrls, null, 2));
+            // Gelen her bir dinamik URL için tam sitemap objesi oluştur
+            const fields = dynamicUrls.map(item => {
+                const path = new URL(item.loc).pathname;
+                let alternateRefs = [];
 
-            const paths = dynamicUrls.map(item => {
-                // Her bir item'ın loc özelliğinin geçerli bir URL olduğundan emin olalım
-                if (!item || !item.loc) {
-                    console.warn('[DEBUG] Warning: Found an item without a .loc property:', item);
-                    return null; // Geçersiz item'ları atla
+                // hreflang mantığını doğrudan buraya taşıdık
+                if (path.startsWith('/tr') || path.startsWith('/en')) {
+                    const pathWithoutLocale = path.replace(/^\/(tr|en)/, '');
+                    alternateRefs = [
+                        { href: `${SITE_URL}/tr${pathWithoutLocale}`, hreflang: 'tr' },
+                        { href: `${SITE_URL}/en${pathWithoutLocale}`, hreflang: 'en' },
+                        { href: `${SITE_URL}/tr${pathWithoutLocale}`, hreflang: 'x-default' },
+                    ];
                 }
-                return new URL(item.loc).pathname;
-            }).filter(Boolean); // Null değerleri listeden temizle
 
-            // ✅ 2. HATA AYIKLAMA LOGU: İşlenmiş path'leri görelim
-            console.log('[DEBUG] Processed Paths:', paths);
+                return {
+                    loc: path,
+                    changefreq: 'weekly',
+                    priority: path.includes('/products/') ? 0.8 : 0.7, // Ürünlere daha yüksek öncelik
+                    lastmod: new Date().toISOString(),
+                    alternateRefs: alternateRefs,
+                };
+            });
 
-            return paths;
+            return fields;
 
         } catch (error) {
-            console.error("[DEBUG] Error in additionalPaths:", error);
+            console.error("Error in additionalPaths:", error);
             return [];
         }
     },

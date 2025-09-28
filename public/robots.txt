@@ -1,3 +1,9 @@
-# https://www.robotstxt.org/robotstxt.html
+# *
 User-agent: *
-Disallow:
+Allow: /
+
+# Host
+Host: https://www.kinasepeti.com
+
+# Sitemaps
+Sitemap: https://www.kinasepeti.com/sitemap.xml
