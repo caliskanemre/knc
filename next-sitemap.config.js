@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 
-const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
 const SITE_URL = process.env.SITE_URL || 'https://www.kinasepeti.com';
 
 module.exports = {
