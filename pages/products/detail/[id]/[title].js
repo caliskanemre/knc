@@ -28,22 +28,6 @@ import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 
-// Shimmer placeholder
-const toBase64 = (str) => (typeof window === 'undefined' ? Buffer.from(str).toString('base64') : window.btoa(str));
-const shimmer = (w, h) => `data:image/svg+xml;base64,${toBase64(
-    `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-     <defs>
-       <linearGradient id="g">
-         <stop stop-color="#f6f7f8" offset="20%"/>
-         <stop stop-color="#edeef1" offset="50%"/>
-         <stop stop-color="#f6f7f8" offset="70%"/>
-       </linearGradient>
-     </defs>
-     <rect width="${w}" height="${h}" fill="#f6f7f8"/>
-     <rect id="r" width="${w}" height="${h}" fill="url(#g)"/>
-     <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1.2s" repeatCount="indefinite" />
-   </svg>`)}`;
-
 function generateUUID() {
     try {
         if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -64,7 +48,7 @@ const stripHtmlTags = (str) => (str || '').replace(/<[^>]+>/g, ' ').replace(/\s+
 
 const sanitizeTitle = (str) => (str || 'product').replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim();
 
-export default function ProductDetailPage({ product, seo, similarProducts, initialIsTR = null }) {
+export default function ProductDetailPage({ product, seo, similarProducts }) {
     const { t } = useTranslation();
     const { isLoggedIn, favorites = {}, toggleFavorite, token } = useAuth();
     const [selectedUrl, setSelectedUrl] = useState(product?.photos?.[0]?.photo || '');
@@ -73,6 +57,7 @@ export default function ProductDetailPage({ product, seo, similarProducts, initi
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [imageModalOpen, setImageModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [imageLoaded, setImageLoaded] = useState(false);
 
     const router = useRouter();
     const { locale } = router; // Get the locale here
@@ -352,7 +337,13 @@ export default function ProductDetailPage({ product, seo, similarProducts, initi
 
     const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
     const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
-    const shimmerPlaceholder = shimmer(700, 700);
+
+    // Ana görsel için optimizasyon - medium_ prefix kaldırılmış original kullan
+    const mainImageUrl = useMemo(() => {
+        const url = selectedUrl || optimizedImages[0] || placeholderImg;
+        // CloudFront'tan gelen görseller zaten optimize, medium_ prefix'ini kaldır
+        return url.replace(/medium_/g, '');
+    }, [selectedUrl, optimizedImages, placeholderImg]);
 
     return (
         <>
@@ -379,23 +370,41 @@ export default function ProductDetailPage({ product, seo, similarProducts, initi
                     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(product.structuredData.breadcrumbs) }} />
                 )}
                 <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
+                {/* Preload ana görsel */}
+                <link rel="preload" as="image" href={mainImageUrl} />
             </Head>
             <CssBaseline />
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer' }} onClick={handleImageClick}>
+                        <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer', overflow: 'hidden' }} onClick={handleImageClick}>
                             <Image
-                                src={selectedUrl || (optimizedImages[0] || placeholderImg)}
+                                src={mainImageUrl}
                                 alt={product.title || 'Product'}
                                 fill
-                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
+                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px"
                                 style={{ objectFit: 'cover' }}
                                 priority
-                                quality={85}
-                                placeholder="blur"
-                                blurDataURL={shimmerPlaceholder}
+                                quality={90}
+                                unoptimized
+                                loading="eager"
+                                onLoad={() => setImageLoaded(true)}
                             />
+                            {!imageLoaded && (
+                                <Box sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: '#f6f7f8'
+                                }}>
+                                    <CircularProgress size={40} />
+                                </Box>
+                            )}
                             <Box sx={{
                                 position: 'absolute',
                                 top: 8,
@@ -637,11 +646,34 @@ export async function getStaticProps({ params, locale }) {
 
     // SEO and Structured Data generation
     // Use an environment variable for the site URL, as 'req.headers.host' is not available.
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.example.com';
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kinasepeti.com';
 
-    // ... (The rest of your SEO and Schema generation logic is exactly the same)
-    // Just make sure to replace the dynamic `origin` with the one from the environment variable.
-    const pickLocalizedDescription = (p, loc) => { /* ... same as before ... */ };
+    const pickLocalizedDescription = (p, loc) => {
+        if (!p) return '';
+        const l = (loc || 'tr').toLowerCase().startsWith('en') ? 'en' : 'tr';
+        const trans = p.translations && (p.translations[l] || p.translations[l.toUpperCase()] || p.translations[l === 'en' ? 'En' : 'Tr']);
+        if (trans) {
+            const desc = trans.description || trans.desc || trans.longDescription || trans.shortDescription;
+            if (typeof desc === 'string' && desc.trim()) return desc.trim();
+        }
+        if (l === 'en') {
+            const candidatesEN = [
+                p.descriptionEn, p.descriptionEN, p.en_description, p.descEn, p.descEN, p.enDesc,
+                p.longDescriptionEn, p.shortDescriptionEn
+            ];
+            for (const c of candidatesEN) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        } else {
+            const candidatesTR = [
+                p.descriptionTr, p.descriptionTR, p.tr_description, p.descTr, p.descTR, p.trDesc,
+                p.longDescriptionTr, p.shortDescriptionTr
+            ];
+            for (const c of candidatesTR) { if (typeof c === 'string' && c.trim()) return c.trim(); }
+        }
+        return (typeof p.description === 'string' && p.description.trim())
+            ? p.description.trim()
+            : (typeof p.shortDescription === 'string' ? p.shortDescription.trim() : '');
+    };
+
     const rawDesc = pickLocalizedDescription(product, lang);
     const plainDesc = stripHtmlTags(rawDesc);
     const metaDescription = plainDesc && plainDesc.length > 0
@@ -650,7 +682,19 @@ export async function getStaticProps({ params, locale }) {
     const pathTR = `/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
     const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
-    const seo = { /* ... same as before, using the new `origin` ... */ };
+
+    const seo = {
+        metaTitle: `${product.title || product.name || 'Ürün'} | Kına Sepeti`,
+        metaDescription,
+        canonical,
+        alternates: {
+            tr: `${origin}${pathTR}`,
+            en: `${origin}${pathEN}`,
+            xDefault: `${origin}${pathTR}`,
+        },
+        ogImage: product.photos?.[0]?.photo || null,
+    };
+
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -658,19 +702,15 @@ export async function getStaticProps({ params, locale }) {
         image: (product?.photos || []).map(p => p.photo).filter(Boolean),
         description: plainDesc || undefined,
         sku: product?.id ? String(product.id) : undefined,
-        brand: { '@type': 'Brand', name: 'Kina Sepeti' },
+        brand: { '@type': 'Brand', name: 'Kına Sepeti' },
         offers: {
             '@type': 'Offer',
-            // We'll set the price and currency next
             availability: 'https://schema.org/InStock',
             itemCondition: 'https://schema.org/NewCondition',
             url: canonical,
         },
     };
 
-    // Note: The schema currency will be based on the language of the statically generated page.
-    // This is acceptable, as Google can index both language versions with their respective currencies.
-    // The client-side will show the geo-correct price regardless.
     const schemaCurrency = lang === 'tr' ? 'TRY' : 'EUR';
     const schemaUnitPrice = schemaCurrency === 'TRY'
         ? (Number(product?.tl_price ?? product?.price) || 0)
@@ -694,9 +734,7 @@ export async function getStaticProps({ params, locale }) {
             product: { ...product, structuredData: { product: productSchema, breadcrumbs } },
             seo,
             similarProducts,
-            // We NO LONGER pass initialIsTR from here.
         },
-        // Revalidate the page every hour (3600 seconds) to fetch fresh data.
         revalidate: 3600,
     };
 }
