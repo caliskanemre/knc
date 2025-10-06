@@ -39,7 +39,6 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
 
   const [searchQuery, setSearchQuery] = useState(initialQuery || '');
   const [allResult, setAllResult] = useState({ event: Array.isArray(initialResults) ? initialResults : [], activity: [] });
-  const [eventResult, setEventResult] = useState(Array.isArray(initialResults) ? initialResults : []);
   const [eventPage, setEventPage] = useState(initialResults && initialResults.length > 0 ? 1 : 0);
   const [hasMoreEvents, setHasMoreEvents] = useState(!!initialHasMore);
   const [hasMoreActivity] = useState(false);
@@ -75,7 +74,6 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
       ...prev,
       event: [...filteredEvents],
     }));
-    setEventResult([...filteredEvents]);
     setEventPage(filteredEvents.length > 0 ? 1 : 0);
     setHasMoreEvents(filteredEvents.length >= 20);
   };
@@ -94,7 +92,6 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
         },
       });
       const events = eventResponse.data?.content || [];
-      setEventResult((prev) => [...prev, ...events]);
       setAllResult((prev) => ({ ...prev, event: [...prev.event, ...events] }));
       if (events.length === eventSize) {
         setEventPage((prev) => prev + 1);
@@ -110,7 +107,6 @@ export default function SearchPage({ initialQuery = '', initialResults = [], ini
   const handleNewSearch = async (term) => {
     setEventPage(0);
     setActivityPage(0);
-    setEventResult([]);
     setAllResult({ event: [], activity: [] });
     setSearchQuery(term);
     await extractedEvent({ query: term, eventPageNumber: 0 });

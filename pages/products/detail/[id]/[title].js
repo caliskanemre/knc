@@ -322,7 +322,14 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [imageModalOpen, optimizedImages.length]);
+    }, [imageModalOpen, optimizedImages.length, handlePrevImage, handleNextImage]);
+
+    // Ana görsel için optimizasyon - early return'den önce hesaplanmalı
+    const mainImageUrl = useMemo(() => {
+        if (!product) return placeholderImg;
+        const url = selectedUrl || optimizedImages[0] || placeholderImg;
+        return url.replace(/medium_/g, '');
+    }, [product, selectedUrl, optimizedImages, placeholderImg]);
 
     if (!product) {
         return (
@@ -337,13 +344,6 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
 
     const { metaTitle, metaDescription, canonical, alternates, ogImage } = seo || {};
     const shareUrl = typeof window !== 'undefined' ? window.location.href : canonical;
-
-    // Ana görsel için optimizasyon - medium_ prefix kaldırılmış original kullan
-    const mainImageUrl = useMemo(() => {
-        const url = selectedUrl || optimizedImages[0] || placeholderImg;
-        // CloudFront'tan gelen görseller zaten optimize, medium_ prefix'ini kaldır
-        return url.replace(/medium_/g, '');
-    }, [selectedUrl, optimizedImages, placeholderImg]);
 
     return (
         <>
