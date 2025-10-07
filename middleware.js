@@ -1,151 +1,103 @@
 import { NextResponse } from 'next/server';
 
-/**
- * IP'den ülke tespiti yapar (Backend'deki getCountryFromIp ile aynı mantık)
- */
-async function getCountryFromIp(ip) {
-    // Local/development IP kontrolü
-    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-        return null;
-    }
+const SUPPORTED_LOCALES = ['tr', 'en'];
 
-    try {
-        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,countryCode`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(2000)
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                return data.countryCode;
-            }
-        }
-    } catch (error) {
-        console.log('[Middleware] IP lookup failed:', error.message);
-    }
-
-    return null;
+function getPathLocale(pathname) {
+    const seg = pathname.split('/')[1];
+    return SUPPORTED_LOCALES.includes(seg) ? seg : null;
 }
 
-/**
- * Client IP adresini alır
- */
+function stripLeadingLocale(pathname) {
+    const loc = getPathLocale(pathname);
+    if (!loc) return pathname;
+    const rest = pathname.slice(loc.length + 1); // remove '/{loc}'
+    return rest ? `/${rest}` : '/';
+}
+
 function getClientIp(request) {
-    let clientIp = request.headers.get('x-forwarded-for');
-    if (!clientIp || clientIp === 'unknown') {
-        clientIp = request.headers.get('x-real-ip');
+    let ip = request.headers.get('x-forwarded-for');
+    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+    if (!ip || ip === 'unknown') ip = request.headers.get('x-real-ip');
+    if (!ip) ip = request.ip; // next runtime ip
+    return ip || '';
+}
+
+async function lookupCountry(ip) {
+    // Private / local IP ise lookup yapmaya gerek yok
+    if (!ip || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('127.') || ip === '::1') {
+        return null; // geo yok, default EN'a düşeceğiz
     }
-    if (!clientIp) {
-        clientIp = request.ip;
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1200);
+        const resp = await fetch(`https://ipapi.co/${ip}/json/`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return (data && data.country_code) ? data.country_code.toUpperCase() : null;
+    } catch (_) {
+        return null;
     }
-    if (clientIp && clientIp.includes(',')) {
-        clientIp = clientIp.split(',')[0].trim();
-    }
-    return clientIp || '127.0.0.1';
 }
 
 export async function middleware(request) {
-    const { pathname, locale } = request.nextUrl;
+    const { pathname } = request.nextUrl;
 
-    // Skip middleware for static files, api routes, and _next internal routes
+    // Statik ve internal dosyaları atla
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api') ||
-        pathname.startsWith('/static') ||
-        pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js)$/)
+        pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|json|txt|xml|map)$/)
     ) {
         return NextResponse.next();
     }
 
-    // Check if the 'is_turkey_user' cookie is already set
     const cookie = request.cookies.get('is_turkey_user');
-
-    // Eğer cookie varsa, middleware'i bypass et - kullanıcı tercihini yapmış
     if (cookie) {
+        // Kullanıcı tercihi / ilk tespit yapılmış
         return NextResponse.next();
     }
 
-    // Cookie yok - ilk ziyaret, lokasyon tespiti yap
-    let isTR = false;
+    // Path üzerinde locale var mı? (kullanıcı manuel seçmiş olabilir)
+    const pathLocale = getPathLocale(pathname);
 
-    // 1. Önce Vercel geo-location bilgisini kontrol et
-    const country = request.geo?.country?.toUpperCase();
-
-    if (country === 'TR') {
-        isTR = true;
-    } else if (country) {
-        isTR = false;
-    } else {
-        // 2. Geo bilgisi yoksa, IP'den ülke tespiti yap
-        const clientIp = getClientIp(request);
-
-        try {
-            const ipCountry = await getCountryFromIp(clientIp);
-
-            if (ipCountry === 'TR') {
-                isTR = true;
-            } else if (ipCountry) {
-                isTR = false;
-            } else {
-                // 3. IP lookup da başarısız olursa, Accept-Language header'ına bak
-                const acceptLanguage = request.headers.get('accept-language');
-                if (acceptLanguage && acceptLanguage.toLowerCase().includes('tr')) {
-                    isTR = true;
-                }
-            }
-        } catch (error) {
-            // Fallback: Accept-Language header'ına bak
-            const acceptLanguage = request.headers.get('accept-language');
-            if (acceptLanguage && acceptLanguage.toLowerCase().includes('tr')) {
-                isTR = true;
-            }
-        }
+    // Ülke tespiti: Önce Vercel geo (Vercel deploy'unda çalışır), yoksa IP lookup, o da yoksa default EN
+    let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
+    if (!country) {
+        const ip = getClientIp(request);
+        country = await lookupCountry(ip); // başarısız olursa null döner
     }
 
-    // Hedef locale'i belirle
+    // Türkiye ise TR, değilse EN aç.
+    const isTR = country === 'TR';
     const targetLocale = isTR ? 'tr' : 'en';
 
-    // Eğer mevcut locale hedef locale ile eşleşmiyorsa, redirect et
-    if (locale !== targetLocale) {
-        // URL'i manuel olarak oluştur
+    // Eğer path üzerinde locale yoksa ilk ziyarette otomatik ekle
+    if (!pathLocale) {
         const url = request.nextUrl.clone();
-
-        // Mevcut pathname'den locale'i çıkar ve yeni locale ekle
-        let newPathname = pathname;
-        if (pathname.startsWith(`/${locale}`)) {
-            // Mevcut locale'i kaldır
-            newPathname = pathname.substring(`/${locale}`.length) || '/';
-        }
-        // Yeni locale'i ekle
-        url.pathname = `/${targetLocale}${newPathname}`;
-
+        const cleanPath = stripLeadingLocale(pathname); // güvenlik için
+        url.pathname = `/${targetLocale}${cleanPath === '/' ? '' : cleanPath}`;
         const response = NextResponse.redirect(url);
-
-        // Cookie'yi set et ki bir sonraki istekte tekrar redirect olmasın
-        response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
-            path: '/',
-            maxAge: 15552000,
-            sameSite: 'lax'
-        });
-
+        response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
         return response;
     }
 
-    // Locale doğru, sadece cookie'yi set et
-    const response = NextResponse.next();
-    response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
-        path: '/',
-        maxAge: 15552000,
-        sameSite: 'lax'
-    });
+    // Path locale mevcut ama yanlış ve henüz cookie yoksa (ilk ziyaret) düzelt
+    if (pathLocale !== targetLocale) {
+        const url = request.nextUrl.clone();
+        const remainder = stripLeadingLocale(pathname); // mevcut locale'i at
+        url.pathname = `/${targetLocale}${remainder === '/' ? '' : remainder}`;
+        const response = NextResponse.redirect(url);
+        response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
+        return response;
+    }
 
+    // Locale zaten doğru: sadece cookie set et ve devam et
+    const response = NextResponse.next();
+    response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
     return response;
 }
 
 export const config = {
-    matcher: [
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
 };
