@@ -60,19 +60,25 @@ export default function HomePage({ products, seo, heroData, pageLocale = 'tr', d
 
 export async function getServerSideProps(context) {
     try {
-        const { locale, defaultLocale, resolvedUrl, req } = context;
+        const { locale, defaultLocale, resolvedUrl, req, res } = context;
         const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
         // Mevcut ürün çekme mantığınız aynı kalıyor
         const fwdFor = req?.headers?.['x-forwarded-for'];
         const clientIp = Array.isArray(fwdFor) ? fwdFor[0] : (typeof fwdFor === 'string' ? fwdFor.split(',')[0].trim() : (req?.socket?.remoteAddress || ''));
 
-        const res = await axios.get(`${baseURL}/products/all`, {
+        const apiRes = await axios.get(`${baseURL}/products/all`, {
             params: { page: 0, size: 20, locale },
             headers: { 'Accept-Language': locale, 'X-Forwarded-For': clientIp, 'X-Real-IP': clientIp },
             timeout: 5000
         });
-        const { content = [] } = res.data || {};
+        const { content = [] } = apiRes.data || {};
+
+        // 🚀 YENİ: Backend'den gelen is_turkey_user bilgisini cookie'ye yazalım
+        if (content && content.length > 0 && content[0].is_turkey_user !== undefined) {
+            const isTurkeyUser = content[0].is_turkey_user;
+            res.setHeader('Set-Cookie', `is_turkey_user=${isTurkeyUser ? '1' : '0'}; Path=/; Max-Age=15552000; SameSite=Lax`);
+        }
 
         // 🚀 YENİ: Sunucu tarafında HeroSection için gerekli verileri hazırlıyoruz.
         const userAgent = req.headers['user-agent'] || '';
