@@ -109,8 +109,17 @@ export async function middleware(request) {
 
     // Eğer mevcut locale hedef locale ile eşleşmiyorsa, redirect et
     if (locale !== targetLocale) {
+        // URL'i manuel olarak oluştur
         const url = request.nextUrl.clone();
-        url.locale = targetLocale;
+
+        // Mevcut pathname'den locale'i çıkar ve yeni locale ekle
+        let newPathname = pathname;
+        if (pathname.startsWith(`/${locale}`)) {
+            // Mevcut locale'i kaldır
+            newPathname = pathname.substring(`/${locale}`.length) || '/';
+        }
+        // Yeni locale'i ekle
+        url.pathname = `/${targetLocale}${newPathname}`;
 
         const response = NextResponse.redirect(url);
 
