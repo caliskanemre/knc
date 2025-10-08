@@ -4,8 +4,10 @@ import React, { useEffect } from 'react';
 import { Grid, Card, Box, IconButton, Typography } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import StarIcon from '@mui/icons-material/Star';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getAverageRating, getReviewCount } from './data/productReviews';
 
 // Yardımcı fonksiyonlar
 const getPrefixedImage = (url, prefix) => {
@@ -74,6 +76,10 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                 // Next Link mevcut locale'i otomatik uygular; manuel prefix eklemeyelim
                 const href = `/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`;
 
+                // Yıldız puanını ve inceleme sayısını al
+                const averageRating = getAverageRating(item.id);
+                const reviewCount = getReviewCount(item.id);
+
                 return (
                     <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: 'none' }}>
@@ -104,6 +110,17 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto', pt: 1 }}>
                                     <Typography sx={{ fontWeight: 'bold' }}>{formatPrice(discountedPriceNum, isTR)}</Typography>
                                     <Typography sx={{ textDecoration: 'line-through', color: 'gray', ml: 1 }}>{formatPrice(originalPriceNum, isTR)}</Typography>
+                                </Box>
+                                {/* Yıldız puanlama ve inceleme sayısı */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                    <StarIcon color={averageRating >= 1 ? "error" : "action"} />
+                                    <StarIcon color={averageRating >= 2 ? "error" : "action"} />
+                                    <StarIcon color={averageRating >= 3 ? "error" : "action"} />
+                                    <StarIcon color={averageRating >= 4 ? "error" : "action"} />
+                                    <StarIcon color={averageRating >= 5 ? "error" : "action"} />
+                                    <Typography sx={{ fontSize: '0.875rem', ml: 0.5, color: 'text.secondary' }}>
+                                        ({reviewCount})
+                                    </Typography>
                                 </Box>
                             </Box>
                             <IconButton onClick={() => handleFavoriteClick?.(item.id)} sx={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>

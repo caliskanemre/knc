@@ -23,10 +23,13 @@ import ShareIcon from '@mui/icons-material/Share';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../src/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
+import { getProductReviews, getAverageRating, getReviewCount } from '../../../../src/data/productReviews';
 
 function generateUUID() {
     try {
@@ -58,6 +61,9 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const [imageModalOpen, setImageModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [averageRating, setAverageRating] = useState(0);
+    const [reviewCount, setReviewCount] = useState(0);
 
     const router = useRouter();
     const { locale } = router; // Get the locale here
@@ -287,7 +293,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid product or quantity'), severity: 'warning' });
         const totalDiscounted = displayDiscounted * quantity;
         const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${orderNote ? ` (Not: ${orderNote})` : ''}`;
-        const msg = `🛍️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
+        const msg = `��️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
         const phoneNumber = '905348290866';
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
         if (typeof window !== 'undefined') window.open(url, '_blank');
@@ -330,6 +336,19 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         const url = selectedUrl || optimizedImages[0] || placeholderImg;
         return url.replace(/medium_/g, '');
     }, [product, selectedUrl, optimizedImages, placeholderImg]);
+
+    useEffect(() => {
+        if (!product?.id) return;
+
+        const productReviews = getProductReviews(String(product.id));
+        setReviews(productReviews);
+
+        const avgRating = getAverageRating(String(product.id));
+        setAverageRating(avgRating || 0);
+
+        const count = getReviewCount(String(product.id));
+        setReviewCount(count);
+    }, [product?.id]);
 
     if (!product) {
         return (
@@ -465,8 +484,74 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                             </IconButton>
                             <IconButton component="a" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl || '')}`} target="_blank" rel="noopener noreferrer" aria-label="share"><ShareIcon /></IconButton>
                         </Box>
+                        {/* Yorumlar Bölümü - Açıklamanın üzerinde */}
+                        {reviewCount > 0 && (
+                            <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Müşteri Yorumları')}</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <StarIcon
+                                                key={star}
+                                                sx={{
+                                                    color: star <= Math.round(averageRating) ? '#FFD700' : '#E0E0E0',
+                                                    fontSize: '1.2rem'
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                    <Typography variant="body1" fontWeight="bold" sx={{ ml: 1 }}>
+                                        {averageRating.toFixed(1)}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        ({reviewCount} {t('reviews', 'değerlendirme')})
+                                    </Typography>
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontStyle: 'italic' }}>
+                                    {t('Reviews from our Trendyol store', 'Trendyol mağazamızdan alıntıdır')}
+                                </Typography>
+                                <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
+                                    {reviews.map((review, index) => (
+                                        <Box
+                                            key={index}
+                                            sx={{
+                                                mb: 3,
+                                                pb: 2,
+                                                borderBottom: index < reviews.length - 1 ? '1px solid #f0f0f0' : 'none'
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {review.username}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <StarIcon
+                                                            key={star}
+                                                            sx={{
+                                                                color: star <= review.rating ? '#FFD700' : '#E0E0E0',
+                                                                fontSize: '0.9rem'
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </Box>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                {review.comment}
+                                            </Typography>
+                                            {review.date && (
+                                                <Typography variant="caption" color="text.disabled">
+                                                    {new Date(review.date).toLocaleDateString('tr-TR')}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+                        {/* Ürün Açıklaması - Yorumların altında */}
                         {localizedDescription && (
-                            <Box sx={{ mt: 2 }}>
+                            <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3 }}>
                                 <Typography variant="h6" sx={{ mb: 1 }}>{t('Description', 'Açıklama')}</Typography>
                                 <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>{localizedDescription}</Typography>
                             </Box>
