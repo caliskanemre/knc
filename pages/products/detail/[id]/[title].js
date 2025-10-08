@@ -507,9 +507,6 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                         ({reviewCount} {t('reviews', 'değerlendirme')})
                                     </Typography>
                                 </Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontStyle: 'italic' }}>
-                                    {t('Reviews from our Trendyol store', 'Trendyol mağazamızdan alıntıdır')}
-                                </Typography>
                                 <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
                                     {reviews.map((review, index) => (
                                         <Box
@@ -539,11 +536,23 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                 {review.comment}
                                             </Typography>
-                                            {review.date && (
-                                                <Typography variant="caption" color="text.disabled">
-                                                    {new Date(review.date).toLocaleDateString('tr-TR')}
-                                                </Typography>
-                                            )}
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                                {review.date && (
+                                                    <Typography variant="caption" color="text.disabled">
+                                                        {new Date(review.date).toLocaleDateString('tr-TR')}
+                                                    </Typography>
+                                                )}
+                                                {review.source && (
+                                                    <>
+                                                        {review.date && (
+                                                            <Typography variant="caption" color="text.disabled">•</Typography>
+                                                        )}
+                                                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                            {review.source}
+                                                        </Typography>
+                                                    </>
+                                                )}
+                                            </Box>
                                         </Box>
                                     ))}
                                 </Box>
