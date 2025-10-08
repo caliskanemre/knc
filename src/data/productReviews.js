@@ -11,7 +11,7 @@ export const productReviews = {
       username: "Merve İ.",
       rating: 5,
       comment: "Ürün dün elime ulaştı ve inanılmaz şekilde çok memnun kaldım , içime sinerek kullanacağım ve hediye ettiğim kişiler de çok memnun kaldı elinize emeğinize sağlık ☺️ teşekkür ederim",
-      date: "30-09-2025",
+      date: "2025-09-30",
       source: "Trendyol mağazamızdan alıntıdır"
     },
     {
