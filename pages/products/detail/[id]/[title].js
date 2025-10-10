@@ -77,7 +77,14 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
 
     const optimizedImages = useMemo(() => {
         if (!images.length) return [];
-        return images.map(url => url ? url.replace(/([^/]+)$/, `medium_$1`) : url);
+        // Önce resimleri, sonra videoları sırala
+        const sorted = [...images].sort((a, b) => {
+            const aIsVideo = isVideoUrl(a);
+            const bIsVideo = isVideoUrl(b);
+            if (aIsVideo === bIsVideo) return 0; // Aynı tipte sıralama değişmez
+            return aIsVideo ? 1 : -1; // Video ise sona at, resim ise öne al
+        });
+        return sorted.map(url => url ? url.replace(/([^/]+)$/, `medium_$1`) : url);
     }, [images]);
 
     useEffect(() => {
