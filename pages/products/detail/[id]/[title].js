@@ -334,8 +334,15 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const mainImageUrl = useMemo(() => {
         if (!product) return placeholderImg;
         const url = selectedUrl || optimizedImages[0] || placeholderImg;
+        // Video ise medium_ prefix kaldırma
+        if (isVideoUrl(url)) return url;
         return url.replace(/medium_/g, '');
     }, [product, selectedUrl, optimizedImages, placeholderImg]);
+
+    // Ana görselin video olup olmadığını kontrol et
+    const isMainImageVideo = useMemo(() => {
+        return isVideoUrl(mainImageUrl);
+    }, [mainImageUrl]);
 
     useEffect(() => {
         if (!product?.id) return;
@@ -390,25 +397,35 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                 )}
                 <link rel="preconnect" href="https://d2830psw11bu27.cloudfront.net" crossOrigin="" />
                 {/* Preload ana görsel */}
-                <link rel="preload" as="image" href={mainImageUrl} />
+                {!isMainImageVideo && <link rel="preload" as="image" href={mainImageUrl} />}
             </Head>
             <CssBaseline />
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                         <Card sx={{ position: 'relative', aspectRatio: '1 / 1', mb: 2, cursor: 'pointer', overflow: 'hidden' }} onClick={handleImageClick}>
-                            <Image
-                                src={mainImageUrl}
-                                alt={product.title || 'Product'}
-                                fill
-                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px"
-                                style={{ objectFit: 'cover' }}
-                                priority
-                                quality={90}
-                                unoptimized
-                                loading="eager"
-                                onLoad={() => setImageLoaded(true)}
-                            />
+                            {isMainImageVideo ? (
+                                <video
+                                    src={mainImageUrl}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    muted
+                                    autoPlay
+                                    loop
+                                />
+                            ) : (
+                                <Image
+                                    src={mainImageUrl}
+                                    alt={product.title || 'Product'}
+                                    fill
+                                    sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px"
+                                    style={{ objectFit: 'cover' }}
+                                    priority
+                                    quality={90}
+                                    unoptimized
+                                    loading="eager"
+                                    onLoad={() => setImageLoaded(true)}
+                                />
+                            )}
                             {!imageLoaded && (
                                 <Box sx={{
                                     position: 'absolute',
@@ -598,16 +615,35 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                 <DialogContent sx={{ p: 0 }}>
                     <Box sx={{ position: 'relative', width: '100%', pb: '100%', overflow: 'hidden' }}>
                         {optimizedImages.length > 0 && (
-                            <Image
-                                src={optimizedImages[currentImageIndex]}
-                                alt={product.title || 'Product'}
-                                fill
-                                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
-                                style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
-                                quality={85}
-                                placeholder="empty"
-                                loading="eager"
-                            />
+                            <>
+                                {isVideoUrl(optimizedImages[currentImageIndex]) ? (
+                                    <video
+                                        src={optimizedImages[currentImageIndex]}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'contain',
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0
+                                        }}
+                                        muted
+                                        autoPlay
+                                        loop
+                                    />
+                                ) : (
+                                    <Image
+                                        src={optimizedImages[currentImageIndex]}
+                                        alt={product.title || 'Product'}
+                                        fill
+                                        sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
+                                        style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
+                                        quality={85}
+                                        placeholder="empty"
+                                        loading="eager"
+                                    />
+                                )}
+                            </>
                         )}
                     </Box>
                     <IconButton onClick={handleModalClose} sx={{ position: 'absolute', top: 16, right: 16, color: 'white' }}>
