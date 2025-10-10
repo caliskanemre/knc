@@ -98,6 +98,11 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         if (!selectedUrl && optimizedImages[0]) setSelectedUrl(optimizedImages[0]);
     }, [optimizedImages, selectedUrl]);
 
+    // selectedUrl değiştiğinde imageLoaded'ı sıfırla
+    useEffect(() => {
+        setImageLoaded(false);
+    }, [selectedUrl]);
+
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
@@ -419,6 +424,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                     muted
                                     autoPlay
                                     loop
+                                    onLoadedData={() => setImageLoaded(true)}
                                 />
                             ) : (
                                 <Image
@@ -434,7 +440,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                     onLoad={() => setImageLoaded(true)}
                                 />
                             )}
-                            {!imageLoaded && (
+                            {!imageLoaded && !isMainImageVideo && (
                                 <Box sx={{
                                     position: 'absolute',
                                     top: 0,
@@ -509,7 +515,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                             </IconButton>
                             <IconButton component="a" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl || '')}`} target="_blank" rel="noopener noreferrer" aria-label="share"><ShareIcon /></IconButton>
                         </Box>
-                        {/* Yorumlar Bölümü - Açıklamanın üzerinde */}
+                        {/* Yorumlar B��lümü - Açıklamanın üzerinde */}
                         {reviewCount > 0 && (
                             <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3 }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Mü��teri Yorumları')}</Typography>
