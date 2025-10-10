@@ -79,7 +79,8 @@ const initializeApp = async () => {
     </React.StrictMode>
   );
 
-  if (container && container.hasChildNodes()) {
+  // SSR mi CSR mi kontrol et
+  if (container.hasChildNodes()) {
     hydrateRoot(container, app);
   } else {
     const root = ReactDOM.createRoot(container);

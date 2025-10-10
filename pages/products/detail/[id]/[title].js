@@ -73,6 +73,13 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
     const placeholderImg = '/ksLogo.jpeg';
 
+    // isVideoUrl fonksiyonunu en üstte tanımla
+    const isVideoUrl = (url) => {
+        if (!url) return false;
+        const clean = url.toLowerCase().split('#')[0].split('?')[0];
+        return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
+    };
+
     const images = useMemo(() => (product?.photos || []).map(p => p.photo).filter(Boolean), [product]);
 
     const optimizedImages = useMemo(() => {
@@ -125,12 +132,6 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     // The rest of your component logic remains exactly the same.
     // The 'isTRDisplay' variable will work correctly once the useEffect runs.
     const isTRDisplay = typeof displayIsTR === 'boolean' ? displayIsTR : (locale === 'tr');
-
-    const isVideoUrl = (url) => {
-        if (!url) return false;
-        const clean = url.toLowerCase().split('#')[0].split('?')[0];
-        return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
-    };
 
     const baseUIPrice = isTRDisplay ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
     const displayOriginal = Number(baseUIPrice) || 0;
@@ -511,7 +512,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         {/* Yorumlar Bölümü - Açıklamanın üzerinde */}
                         {reviewCount > 0 && (
                             <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3 }}>
-                                <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Müşteri Yorumları')}</Typography>
+                                <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Mü��teri Yorumları')}</Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         {[1, 2, 3, 4, 5].map((star) => (
