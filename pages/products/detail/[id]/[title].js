@@ -360,7 +360,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     useEffect(() => {
         if (!product?.id) return;
 
-        const productReviews = getProductReviews(String(product.id));
+        const productReviews = getProductReviews(String(product.id), locale);
         setReviews(productReviews);
 
         const avgRating = getAverageRating(String(product.id));
@@ -368,7 +368,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
 
         const count = getReviewCount(String(product.id));
         setReviewCount(count);
-    }, [product?.id]);
+    }, [product?.id, locale]);
 
     if (!product) {
         return (
@@ -518,7 +518,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         {/* Yorumlar B��lümü - Açıklamanın üzerinde */}
                         {reviewCount > 0 && (
                             <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3 }}>
-                                <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Mü��teri Yorumları')}</Typography>
+                                <Typography variant="h6" sx={{ mb: 2 }}>{t('Customer Reviews', 'Müşteri Yorumları')}</Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         {[1, 2, 3, 4, 5].map((star) => (

@@ -3,7 +3,7 @@
 
 export const productReviews = {
   // Örnek ürün ID'leri için yorumlar
-  // Format: productId: [{ username, rating, comment, date }]
+  // Format: productId: [{ username, rating, comment, date, source: { tr, en } }]
 
   // Örnek yorumlar - gerçek ürün ID'lerinize göre düzenleyin
   "27": [
@@ -12,21 +12,21 @@ export const productReviews = {
       rating: 5,
       comment: "Ürün dün elime ulaştı ve inanılmaz şekilde çok memnun kaldım , içime sinerek kullanacağım ve hediye ettiğim kişiler de çok memnun kaldı elinize emeğinize sağlık ☺️ teşekkür ederim",
       date: "2025-09-30",
-      source: "Trendyol mağazamızdan alıntıdır"
+      source: { tr: "Trendyol yorumu", en: "Trendyol review" }
     },
     {
       username: "Zeynep Y.",
       rating: 5,
       comment: "Hızlı kargo ve özenli paketleme. Ürün çok şık, herkese tavsiye ederim.",
       date: "2025-08-20",
-      source: "Etsy mağazamızdan alıntıdır"
+      source: { tr: "Etsy yorumu", en: "Etsy review" }
     },
     {
       username: "Merve D.",
       rating: 5,
       comment: "Kalitesi çok iyi, fiyatına göre muhteşem. Teşekkürler!",
       date: "2025-07-10",
-      source: "Trendyol mağazamızdan alıntıdır"
+      source: { tr: "Trendyol yorumu", en: "Trendyol review" }
     }
   ],
 
@@ -36,14 +36,14 @@ export const productReviews = {
       rating: 5,
       comment: "çok guzelll hiç yorum yok diye tereddüt etmiştim ama çok tatlı paketlemeside guzeldi kendi kinamda kına çıkışında kullanmak için aldım",
       date: "2025-09-25",
-      source: "Trendyol mağazamızdan alıntıdır"
+      source: { tr: "Trendyol yorumu", en: "Trendyol review" }
     },
     {
       username: "Elif T.",
       rating: 5,
       comment: "Kalitesi çok iyi, fiyatına göre muhteşem. Teşekkürler!",
       date: "2024-08-15",
-      source: "Trendyol mağazamızdan alıntıdır"
+      source: { tr: "Trendyol yorumu", en: "Trendyol review" }
     }
   ],
   "17": [
@@ -52,23 +52,23 @@ export const productReviews = {
       rating: 5,
       comment: "Amazing quality, came even before the date I was expecting it to. Amazing customer service as well!! I would totally recommend ordering your henna night decorations from here!",
       date: "2025-08-21",
-      source: "Etsy mağazamızdan alıntıdır"
+      source: { tr: "Etsy yorumu", en: "Etsy review" }
     },
   ],
     "36": [
     {
       username: "Tugce K.",
       rating: 4,
-      comment: "Really Beautiful , but it’s too much Expensive and when arrived Canada they charge me duties,taxes and FedEx fees",
+      comment: "Really Beautiful , but it's too much Expensive and when arrived Canada they charge me duties,taxes and FedEx fees",
       date: "2025-08-21",
-      source: "Etsy mağazamızdan alıntıdır"
+      source: { tr: "Etsy yorumu", en: "Etsy review" }
     },
     {
       username: "Aysha A.",
       rating: 5,
       comment: "amazing!! great quality and fast shipping!",
       date: "2025-06-30",
-      source: "Instagram mağazamızdan alıntıdır"
+      source: { tr: "Instagram yorumu", en: "Instagram review" }
     },
   ],
     // --- YENİ EKLENEN YORUMLAR ---
@@ -79,14 +79,14 @@ export const productReviews = {
             rating: 5,
             comment: "Bohem kına konseptim için aldım, tam aradığım gibi. Çok doğal ve şık duruyor. Teşekkürler!",
             date: "2025-09-15",
-            source: "Trendyol mağazamızdan alıntıdır"
+            source: { tr: "Trendyol yorumu", en: "Trendyol review" }
         },
         {
             username: "Laura M.",
             rating: 5,
             comment: "Perfect for my rustic themed henna party! The quality is great and it looks so unique. Shipped to Germany very fast.",
             date: "2025-08-28",
-            source: "Etsy mağazamızdan alıntıdır"
+            source: { tr: "Etsy yorumu", en: "Etsy review" }
         }
     ],
 
@@ -96,7 +96,7 @@ export const productReviews = {
             rating: 5,
             comment: "İşlemesi o kadar zarif ki... Kendi ismimi yazdırmadım ama bu 'Gelin' yazılı olan bile harika duruyor. Kumaşı da kaliteli.",
             date: "2025-09-22",
-            source: "Trendyol mağazamızdan alıntıdır"
+            source: { tr: "Trendyol yorumu", en: "Trendyol review" }
         }
     ],
 
@@ -106,14 +106,14 @@ export const productReviews = {
             rating: 5,
             comment: "This set has everything! I was worried about ordering from overseas but it arrived in the US safely and it's absolutely beautiful. The red is so vibrant.",
             date: "2025-09-05",
-            source: "Etsy mağazamızdan alıntıdır"
+            source: { tr: "Etsy yorumu", en: "Etsy review" }
         },
         {
             username: "Esra G.",
             rating: 5,
             comment: "Setin içindeki her parça birbiriyle uyumlu ve çok kaliteli. Tek tek uğraşmak istemeyenler için harika bir paket olmuş, elinize sağlık.",
             date: "2025-08-18",
-            source: "Trendyol mağazamızdan alıntıdır"
+            source: { tr: "Trendyol yorumu", en: "Trendyol review" }
         }
     ],
 
@@ -123,7 +123,7 @@ export const productReviews = {
             rating: 5,
             comment: "Nedimelerim için hediye olarak aldım, hepsi bayıldı. Çok zarif ve kibar bir hediye oldu. Fiyatı da çok uygun.",
             date: "2025-10-01",
-            source: "Trendyol mağazamızdan alıntıdır"
+            source: { tr: "Trendyol yorumu", en: "Trendyol review" }
         }
     ],
 
@@ -133,14 +133,14 @@ export const productReviews = {
             rating: 5,
             comment: "So beautiful and delicate! I wore this for my henna night and got so many compliments. It's much prettier in person.",
             date: "2025-09-11",
-            source: "Etsy mağazamızdan alıntıdır"
+            source: { tr: "Etsy yorumu", en: "Etsy review" }
         },
         {
             username: "Gizem A.",
             rating: 5,
             comment: "Fotoğraftakinden bile güzel. Ele tam oturuyor ve hiç rahatsız etmiyor. Kırmızı elbisemle harika durdu.",
             date: "2025-08-05",
-            source: "Instagram mağazamızdan alıntıdır"
+            source: { tr: "Instagram yorumu", en: "Instagram review" }
         }
     ],
 
@@ -150,12 +150,12 @@ export const productReviews = {
             rating: 5,
             comment: "Pulları çok güzel parlıyor, isim de istediğim gibi yazılmış. Kına gecemde fark yaratacak bir detay oldu.",
             date: "2025-07-25",
-            source: "Trendyol mağazamızdan alıntıdır"
+            source: { tr: "Trendyol yorumu", en: "Trendyol review" }
         }
     ]
 
   // Yeni ürünler için buraya yorum ekleyebilirsiniz
-  // "ürünID": [{ username: "İsim", rating: 5, comment: "Yorum", date: "YYYY-MM-DD", source: "Trendyol mağazamızdan alıntıdır" }]
+  // "ürünID": [{ username: "İsim", rating: 5, comment: "Yorum", date: "YYYY-MM-DD", source: { tr: "Trendyol yorumu", en: "Trendyol review" } }]
 };
 
 // Ürün için ortalama puan hesaplama
@@ -173,7 +173,14 @@ export const getReviewCount = (productId) => {
   return reviews ? reviews.length : 0;
 };
 
-// Ürün yorumlarını getir
-export const getProductReviews = (productId) => {
-  return productReviews[String(productId)] || [];
+// Ürün yorumlarını getir (dil desteği ile)
+export const getProductReviews = (productId, locale = 'tr') => {
+  const reviews = productReviews[String(productId)] || [];
+  const lang = locale.startsWith('en') ? 'en' : 'tr';
+
+  // source alanını dile göre çevir
+  return reviews.map(review => ({
+    ...review,
+    source: typeof review.source === 'object' ? review.source[lang] : review.source
+  }));
 };
