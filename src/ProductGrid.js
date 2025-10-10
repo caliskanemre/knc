@@ -26,6 +26,12 @@ const formatPrice = (amount, isTR) => {
     return `${num.toFixed(2)} ${symbol}`;
 };
 
+const isVideoUrl = (url) => {
+    if (!url) return false;
+    const clean = url.toLowerCase().split('#')[0].split('?')[0];
+    return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
+};
+
 export default function ProductGrid({ products, favorites, isLoggedIn, handleFavoriteClick, pageLocale = 'tr', defaultLocale = 'tr' }) {
     const isClient = typeof window !== 'undefined';
 
@@ -85,17 +91,29 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: 'none' }}>
                             <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
                                 <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', backgroundColor: '#f0f0f0' }}>
-                                    <Image
-                                        src={smallImageUrl}
-                                        alt={productTitle || 'Product'}
-                                        fill
-                                        sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
-                                        priority={idx < 8}
-                                        loading={idx < 8 ? "eager" : "lazy"}
-                                        style={{ objectFit: 'cover' }}
-                                        placeholder="blur"
-                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                                    />
+                                    {isVideoUrl(originalPhoto) ? (
+                                        // Video varsa, thumbnail olarak video elementini göster
+                                        <video
+                                            src={originalPhoto}
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                                        />
+                                    ) : (
+                                        <Image
+                                            src={smallImageUrl}
+                                            alt={productTitle || 'Product'}
+                                            fill
+                                            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
+                                            priority={idx < 8}
+                                            loading={idx < 8 ? "eager" : "lazy"}
+                                            style={{ objectFit: 'cover' }}
+                                            placeholder="blur"
+                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                        />
+                                    )}
                                 </Box>
                             </Link>
                             <Box sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '150px' }}>
