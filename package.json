@@ -61,6 +61,7 @@
     "build": "next build",
     "start": "next start",
     "heroku-postbuild": "next build && next-sitemap",
+    "generate-favicons": "node scripts/generate-favicons.js",
     "dev:spa": "react-scripts start",
     "build:spa": "react-scripts build",
     "start:spa": "serve -s build",

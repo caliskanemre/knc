@@ -8,6 +8,18 @@ export default class MyDocument extends Document {
     return (
       <Html lang={lang}>
         <Head>
+          {/* Favicon and Logo - Optimized */}
+          <link rel="icon" href="/favicon.ico" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+          <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+          <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#000000" />
+
+          {/* Open Graph / Social Media */}
+          <meta property="og:image" content="/android-chrome-512x512.png" />
+          <meta property="og:type" content="website" />
+
           {/* LCP OPTİMİZASYONU: Kritik görsellerin preload edilmesi */}
           <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade.webp" fetchPriority="high" />
           <link rel="preload" as="image" href="https://d2830psw11bu27.cloudfront.net/sade-mobile.webp" fetchPriority="high" media="(max-width: 599px)" />
