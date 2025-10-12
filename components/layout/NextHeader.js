@@ -107,7 +107,7 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
     { key: 'souvenir', label: t('Souvenir', 'Hediyelik'), icon: '/souvenir.jpg' },
   ];
 
-  // Masaüstü menü butonları için ortak stil
+  // Masaüstü men�� butonları için ortak stil
   const navBtnSx = {
     color: '#8B0000',
     textTransform: 'none',
@@ -272,17 +272,26 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
               <IconButton
                 sx={{
                   color: '#8B0000',
-                  '&:hover': { color: '#660000' },
-                  p: 0.5
+                  '&:hover': {
+                    color: '#660000',
+                    transform: 'scale(1.05)',
+                    transition: 'all 0.2s ease-in-out'
+                  },
+                  p: 1
                 }}
                 aria-label={t('Search', 'Ara')}
               >
                 <Image
                   src={locale === 'tr' ? '/urunAra.png' : '/onlySearch.png'}
                   alt={t('Search', 'Ara')}
-                  width={48}
-                  height={48}
-                  style={{ objectFit: 'contain' }}
+                  width={120}
+                  height={120}
+                  style={{
+                    objectFit: 'contain',
+                    maxWidth: '100%',
+                    height: 'auto'
+                  }}
+                  priority
                 />
               </IconButton>
             </Link>
@@ -353,7 +362,7 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
               <MenuItem onClick={() => { setAnchorElPolicies(null); go('/privacy-policy'); }}>{t('privacy_policy.title', 'Gizlilik Politikası')}</MenuItem>
               <MenuItem onClick={() => { setAnchorElPolicies(null); go('/shipping-policy'); }}>{t('shipping_policy.title', 'Kargo Politikası')}</MenuItem>
               <MenuItem onClick={() => { setAnchorElPolicies(null); go('/return-policy'); }}>{t('return_policy.title', 'İade Politikası')}</MenuItem>
-              <MenuItem onClick={() => { setAnchorElPolicies(null); go('/sales-agreement'); }}>{t('sales_agreement.title', 'Satış Sözleşmesi')}</MenuItem>
+              <MenuItem onClick={() => { setAnchorElPolicies(null); go('/sales-agreement'); }}>{t('sales_agreement.title', 'Satı�� Sözleşmesi')}</MenuItem>
             </Menu>
 
             <Link href="/contact-us" locale={locale} style={{ textDecoration: 'none' }}>
