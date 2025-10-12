@@ -31,6 +31,7 @@ import {
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
+import Image from 'next/image';
 import { useAuth } from '../../lib/auth/AuthProvider';
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
@@ -266,10 +267,23 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
               </svg>
             </IconButton>*/}
 
-            {/* Search */}
+            {/* Search - Dil bazlı ikon gösterimi */}
             <Link href="/search" locale={locale} style={{ textDecoration: 'none' }}>
-              <IconButton sx={{ color: '#8B0000', '&:hover': { color: '#660000' } }}>
-                <SearchIcon sx={{ fontSize: { xs: 32, md: 42, lg: 52 } }} />
+              <IconButton
+                sx={{
+                  color: '#8B0000',
+                  '&:hover': { color: '#660000' },
+                  p: 0.5
+                }}
+                aria-label={t('Search', 'Ara')}
+              >
+                <Image
+                  src={locale === 'tr' ? '/urunAra.png' : '/onlySearch.png'}
+                  alt={t('Search', 'Ara')}
+                  width={48}
+                  height={48}
+                  style={{ objectFit: 'contain' }}
+                />
               </IconButton>
             </Link>
 
