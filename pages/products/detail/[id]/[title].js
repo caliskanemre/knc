@@ -30,6 +30,9 @@ import { useAuth } from '../../../../lib/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { getProductReviews, getAverageRating, getReviewCount } from '../../../../lib/data/productReviews';
+import StructuredDataHead from '../../../../components/common/Shared/StructuredDataHead';
+import { getProductSchema, getBreadcrumbSchema } from '../../../../lib/seo/structuredData';
+import { getAltText, generateVideoAltText } from '../../../../lib/utils/altTextGenerator';
 
 function generateUUID() {
     try {
@@ -66,7 +69,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     const [reviewCount, setReviewCount] = useState(0);
 
     const router = useRouter();
-    const { locale } = router; // Get the locale here
+    const { locale } = router;
 
     const [displayIsTR, setDisplayIsTR] = useState(null)
 
@@ -275,7 +278,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         try {
             if (isLoggedIn && token) {
                 await toggleFavorite(product.id, isFav, 'product');
-                setSnackbar({ open: true, message: isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ❤️', severity: 'success' });
+                setSnackbar({ open: true, message: isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ��️', severity: 'success' });
             } else if (typeof window !== 'undefined') {
                 let localFavorites;
                 try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
@@ -306,7 +309,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid product or quantity'), severity: 'warning' });
         const totalDiscounted = displayDiscounted * quantity;
         const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${orderNote ? ` (Not: ${orderNote})` : ''}`;
-        const msg = `��️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n💰 Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
+        const msg = `��️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n�� Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
         const phoneNumber = '905348290866';
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
         if (typeof window !== 'undefined') window.open(url, '_blank');
@@ -428,11 +431,12 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                     autoPlay
                                     loop
                                     onLoadedData={() => setImageLoaded(true)}
+                                    aria-label={generateVideoAltText(product, locale)}
                                 />
                             ) : (
                                 <Image
                                     src={mainImageUrl}
-                                    alt={product.title || 'Product'}
+                                    alt={getAltText(product.photos?.[0], product, 0, locale)}
                                     fill
                                     sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px"
                                     style={{ objectFit: 'cover' }}
@@ -479,13 +483,17 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                             {optimizedImages.map((url, index) => (
                                 <Box key={url} sx={{ width: 72, height: 72, position: 'relative', border: selectedUrl === url ? '2px solid #8B0000' : '1px solid #eee', borderRadius: 1, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setSelectedUrl(url)}>
                                     {isVideoUrl(url) ? (
-                                        <video style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted>
+                                        <video
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            muted
+                                            aria-label={generateVideoAltText(product, locale)}
+                                        >
                                             <source src={url} />
                                         </video>
                                     ) : (
                                         <Image
                                             src={url || placeholderImg}
-                                            alt={product.title || 'thumb'}
+                                            alt={getAltText(product.photos?.[index], product, index, locale)}
                                             fill
                                             sizes="72px"
                                             style={{ objectFit: 'cover' }}
@@ -601,20 +609,30 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         )}
                     </Grid>
                 </Grid>
+                {/* Benzer Ürünler Bölümü */}
                 <Box sx={{ mt: 6 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>{t('Similar Products', 'Benzer Ürünler')}</Typography>
                     {similarProducts.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
                     ) : (
                         <Grid container spacing={2}>
-                            {similarProducts.map(p => {
+                            {similarProducts.map((p, pIndex) => {
                                 const img = p.photos?.[0]?.photo || placeholderImg;
                                 const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
+                                const similarAltText = getAltText(p.photos?.[0], p, 0, locale);
                                 return (
                                     <Grid item key={p.id} xs={6} sm={4} md={3}>
                                         <Card sx={{ p: 1, position: 'relative', aspectRatio: '1 / 1' }}>
                                             <Box component="a" href={href} sx={{ position: 'relative', display: 'block', height: '100%' }}>
-                                                <Image src={img} alt={p.title || 'product'} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: 'cover' }} quality={50} loading="lazy" />
+                                                <Image
+                                                    src={img}
+                                                    alt={similarAltText}
+                                                    fill
+                                                    sizes="(max-width: 400px) 100vw, 400px"
+                                                    style={{ objectFit: 'cover' }}
+                                                    quality={50}
+                                                    loading="lazy"
+                                                />
                                             </Box>
                                             <Typography variant="body2" noWrap sx={{ mt: 1 }}>{p.title}</Typography>
                                         </Card>
@@ -647,11 +665,12 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                                         muted
                                         autoPlay
                                         loop
+                                        aria-label={generateVideoAltText(product, locale)}
                                     />
                                 ) : (
                                     <Image
                                         src={optimizedImages[currentImageIndex]}
-                                        alt={product.title || 'Product'}
+                                        alt={getAltText(product.photos?.[currentImageIndex], product, currentImageIndex, locale)}
                                         fill
                                         sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px"
                                         style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
@@ -678,6 +697,14 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Structured Data for Product and Breadcrumbs */}
+            <StructuredDataHead
+                data={[
+                    product.structuredData?.product,
+                    product.structuredData?.breadcrumbs
+                ].filter(Boolean)}
+            />
         </>
     );
 }
@@ -872,7 +899,7 @@ export async function getStaticProps({ params, locale }) {
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${lang === 'tr' ? '' : 'en'}` },
             { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${lang === 'tr' ? '' : 'en/'}products` },
-            { '@type': 'ListItem', position: 3, name: product?.title || 'Ürün', item: canonical },
+            { '@type': 'ListItem', position: 3, name: product?.title || 'Ür��n', item: canonical },
         ],
     };
 

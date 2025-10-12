@@ -8,6 +8,7 @@ import StarIcon from '@mui/icons-material/Star';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAverageRating, getReviewCount } from '../../lib/data/productReviews';
+import { getAltText } from '../../lib/utils/altTextGenerator';
 
 // Yardımcı fonksiyonlar
 const getPrefixedImage = (url, prefix) => {
@@ -67,6 +68,9 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                 const originalPhoto = item.photos?.[0]?.photo || '/ksLogo.jpeg';
                 const smallImageUrl = getPrefixedImage(originalPhoto, 'small') || originalPhoto;
 
+                // Alt text oluştur - backend'den gelirse kullan, yoksa otomatik oluştur
+                const altText = getAltText(item.photos?.[0], item, 0, pageLocale);
+
                 let isAlreadyFavorited = false;
                 if (isLoggedIn) {
                     isAlreadyFavorited = !!favorites?.favoriteProducts?.some(product => product.id === item.id);
@@ -99,19 +103,18 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                                             loop
                                             muted
                                             playsInline
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            aria-label={altText}
                                         />
                                     ) : (
                                         <Image
                                             src={smallImageUrl}
-                                            alt={productTitle || 'Product'}
+                                            alt={altText}
                                             fill
-                                            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
-                                            priority={idx < 8}
-                                            loading={idx < 8 ? "eager" : "lazy"}
+                                            sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, 25vw"
                                             style={{ objectFit: 'cover' }}
-                                            placeholder="blur"
-                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                            loading={idx < 8 ? 'eager' : 'lazy'}
+                                            quality={75}
                                         />
                                     )}
                                 </Box>

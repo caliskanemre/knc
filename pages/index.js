@@ -5,6 +5,8 @@ import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ProductGrid from '../components/common/ProductGrid';
 import HeroSection from '../components/common/Shared/HeroSection';
+import StructuredDataHead from '../components/common/Shared/StructuredDataHead';
+import { getOrganizationSchema, getWebsiteSchema } from '../lib/seo/structuredData';
 
 // 🚀 GEREKLİ İMPORTLAR
 import { getSelectorsByUserAgent } from 'react-device-detect';
@@ -30,6 +32,7 @@ export default function HomePage({ products, seo, heroData, pageLocale = 'tr', d
                 <meta property="og:title" content={title || 'Kınasepeti - Kına ve Düğün Ürünleri'} />
                 <meta property="og:description" content={description || 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin.'} />
                 <meta property="og:type" content="website" />
+                <meta property="og:image" content="https://www.kinasepeti.com/android-chrome-512x512.png" />
 
                 {canonical && <link rel="canonical" href={canonical} />}
                 {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
@@ -44,6 +47,10 @@ export default function HomePage({ products, seo, heroData, pageLocale = 'tr', d
                     </>
                 )}
             </Head>
+
+            {/* Structured Data - Organization & Website Schema */}
+            <StructuredDataHead data={[getOrganizationSchema(), getWebsiteSchema()]} />
+
             <CssBaseline />
 
             {/* 🚀 DEĞİŞİKLİK: HeroSection'a sunucuda hazırlanan verileri prop olarak aktarıyoruz. */}
