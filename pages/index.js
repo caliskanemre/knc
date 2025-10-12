@@ -24,6 +24,13 @@ export default function HomePage({ products, seo, heroData, pageLocale = 'tr', d
             <Head>
                 <title>{title || 'Kınasepeti - Kına ve Düğün Ürünleri'}</title>
                 <meta name="description" content={description || 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin. Kişiselleştirilmiş setler, hediyelikler ve daha fazlası.'} />
+
+                {/* Open Graph meta tags for Google */}
+                <meta property="og:site_name" content="Kınasepeti" />
+                <meta property="og:title" content={title || 'Kınasepeti - Kına ve Düğün Ürünleri'} />
+                <meta property="og:description" content={description || 'Kınasepeti ile kına gecesi ve düğün ürünlerini keşfedin.'} />
+                <meta property="og:type" content="website" />
+
                 {canonical && <link rel="canonical" href={canonical} />}
                 {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
                 {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}

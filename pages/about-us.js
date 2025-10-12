@@ -12,6 +12,12 @@ export default function AboutUsPage() {
       <Head>
         <title>{t('aboutUsTitle') || 'Kınasepeti - Hakkımızda'}</title>
         <meta name="description" content={t('aboutUsIntro') || 'Kınasepeti hakkında: Kına gecesi ürünleri ve organizasyon çözümleri.'} />
+
+        {/* Open Graph meta tags */}
+        <meta property="og:site_name" content="Kınasepeti" />
+        <meta property="og:title" content={t('aboutUsTitle') || 'Kınasepeti - Hakkımızda'} />
+        <meta property="og:description" content={t('aboutUsIntro') || 'Kınasepeti hakkında: Kına gecesi ürünleri ve organizasyon çözümleri.'} />
+        <meta property="og:type" content="website" />
       </Head>
       <main>
         <Container sx={{ py: 6 }}>

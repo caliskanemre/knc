@@ -13,8 +13,8 @@ import { useLocation } from 'react-router-dom';
  *  - robots (default: index,follow)
  *  - structuredData (object | object[])
  */
-const SITE_NAME = 'Kina Sepeti';
-const DEFAULT_DESCRIPTION = 'Kına gecesi ürünleri, aksesuarlar ve ilham verici fikirler. Kına Sepeti ile özel gününüzü özelleştirin.';
+const SITE_NAME = 'Kınasepeti';
+const DEFAULT_DESCRIPTION = 'Kına gecesi ürünleri, aksesuarlar ve ilham verici fikirler. Kınasepeti ile özel gününüzü özelleştirin.';
 const DEFAULT_IMAGE = 'https://www.kinasepeti.com/ksLogo.jpeg';
 
 const SEO = ({

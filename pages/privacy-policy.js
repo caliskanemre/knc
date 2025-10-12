@@ -12,6 +12,13 @@ export default function PrivacyPolicyPage() {
       <Head>
         <title>{t('privacy_policy.title')} | Kınasepeti</title>
         <meta name="description" content={(t('privacy_policy.content') || '').slice(0, 160)} />
+
+        {/* Open Graph meta tags */}
+        <meta property="og:site_name" content="Kınasepeti" />
+        <meta property="og:title" content={`${t('privacy_policy.title')} | Kınasepeti`} />
+        <meta property="og:description" content={(t('privacy_policy.content') || '').slice(0, 160)} />
+        <meta property="og:type" content="website" />
+        <meta name="robots" content="noindex,follow" />
       </Head>
       <main>
         <Container sx={{ py: 6 }}>
@@ -53,4 +60,3 @@ export default function PrivacyPolicyPage() {
     </>
   );
 }
-

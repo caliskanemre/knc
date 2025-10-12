@@ -8,6 +8,10 @@ export default class MyDocument extends Document {
     return (
       <Html lang={lang}>
         <Head>
+          {/* Site Name for SEO */}
+          <meta property="og:site_name" content="Kınasepeti" />
+          <meta name="application-name" content="Kınasepeti" />
+
           {/* Favicon and Logo - Optimized */}
           <link rel="icon" href="/favicon.ico" />
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />

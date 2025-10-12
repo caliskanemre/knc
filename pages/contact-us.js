@@ -35,7 +35,13 @@ export default function ContactUsPage() {
     <>
       <Head>
         <title>{t('contact_us.title')} | Kınasepeti</title>
-        <meta name="description" content={t('contact_us.description') || ''} />
+        <meta name="description" content={t('contact_us.description') || 'Kınasepeti ile iletişime geçin. Sorularınız için bize ulaşın.'} />
+
+        {/* Open Graph meta tags */}
+        <meta property="og:site_name" content="Kınasepeti" />
+        <meta property="og:title" content={`${t('contact_us.title')} | Kınasepeti`} />
+        <meta property="og:description" content={t('contact_us.description') || 'Kınasepeti ile iletişime geçin.'} />
+        <meta property="og:type" content="website" />
       </Head>
       <main>
         <Container sx={{ py: 6 }}>
@@ -76,4 +82,3 @@ export default function ContactUsPage() {
     </>
   );
 }
-

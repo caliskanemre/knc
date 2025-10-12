@@ -393,6 +393,9 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                 {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
                 {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
                 {alternates?.xDefault && <link rel="alternate" hrefLang="x-default" href={alternates.xDefault} />}
+
+                {/* Open Graph meta tags */}
+                <meta property="og:site_name" content="Kınasepeti" />
                 <meta property="og:title" content={metaTitle || (product.title || 'Ürün')} />
                 {metaDescription && <meta property="og:description" content={metaDescription} />}
                 <meta property="og:type" content="product" />

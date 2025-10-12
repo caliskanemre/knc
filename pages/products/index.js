@@ -17,6 +17,13 @@ export default function ProductsPage({ products, seo }) {
       <Head>
         <title>{title || 'Kınasepeti - Ürünler'}</title>
         <meta name="description" content={description || 'Kınasepeti ürünlerine göz atın. Kına gecesi ve düğün için setler, hediyelikler ve aksesuarlar.'} />
+
+        {/* Open Graph meta tags */}
+        <meta property="og:site_name" content="Kınasepeti" />
+        <meta property="og:title" content={title || 'Kınasepeti - Ürünler'} />
+        <meta property="og:description" content={description || 'Kınasepeti ürünlerine göz atın. Kına gecesi ve düğün için setler, hediyelikler ve aksesuarlar.'} />
+        <meta property="og:type" content="website" />
+
         {canonical && <link rel="canonical" href={canonical} />}
         {alternates?.tr && <link rel="alternate" hrefLang="tr" href={alternates.tr} />}
         {alternates?.en && <link rel="alternate" hrefLang="en" href={alternates.en} />}
