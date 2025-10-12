@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { Container, CssBaseline, Typography, Card, CardContent, CardMedia, Grid, Box, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import { useAuth } from '../../../src/auth/AuthProvider';
+import { useAuth } from '../../../lib/auth/AuthProvider';
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 

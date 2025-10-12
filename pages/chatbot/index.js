@@ -1,6 +1,6 @@
 import React from 'react';
-import Chatbot from '../../src/chatbot/Chatbot';
-import i18n from '../../src/i18n';
+import Chatbot from '../../components/common/Chatbot/Chatbot';
+import i18n from '../../lib/i18n';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,4 +29,3 @@ export async function getServerSideProps(context) {
 
   return { props: {} };
 }
-

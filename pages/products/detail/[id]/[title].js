@@ -26,10 +26,10 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { jwtDecode } from 'jwt-decode';
-import { useAuth } from '../../../../src/auth/AuthProvider';
+import { useAuth } from '../../../../lib/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
-import { getProductReviews, getAverageRating, getReviewCount } from '../../../../src/data/productReviews';
+import { getProductReviews, getAverageRating, getReviewCount } from '../../../../lib/data/productReviews';
 
 function generateUUID() {
     try {

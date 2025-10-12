@@ -23,8 +23,8 @@ import {
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import EventSearchButtons from '../../src/search/EventSearchButtons';
-import { useAuth } from '../../src/auth/AuthProvider';
+import EventSearchButtons from '../../components/common/Search/EventSearchButtons';
+import { useAuth } from '../../lib/auth/AuthProvider';
 
 // Helper function to generate a prefixed image URL (e.g., "small_", "medium_", "large_")
 const getPrefixedImage = (url, prefix) => {

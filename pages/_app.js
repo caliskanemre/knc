@@ -6,16 +6,16 @@ import { CacheProvider } from '@emotion/react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useRouter } from 'next/router';
-import i18n from '../src/i18n';
-import createEmotionCache from '../src/mui/createEmotionCache';
-import theme from '../src/mui/theme';
-import '../src/index.css';
-import '../src/chatbot/Chatbot.css';
-import '../src/search/css/SearchPage.css';
-import NextHeader from '../src/components/NextHeader';
-import Footer from '../src/Footer';
-import Chatbot from '../src/chatbot/Chatbot';
-import {AuthProvider} from "../src/auth/AuthProvider";
+import i18n from '../lib/i18n';
+import createEmotionCache from '../lib/mui/createEmotionCache';
+import theme from '../lib/mui/theme';
+import '../styles/globals.css';
+import '../components/common/Chatbot/Chatbot.css';
+import '../components/common/Search/css/SearchPage.css';
+import NextHeader from '../components/layout/NextHeader';
+import Footer from '../components/layout/Footer';
+import Chatbot from '../components/common/Chatbot/Chatbot';
+import {AuthProvider} from "../lib/auth/AuthProvider";
 
 // Client-side cache shared for the whole session
 const clientSideEmotionCache = createEmotionCache();

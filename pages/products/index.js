@@ -3,7 +3,7 @@ import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import ProductGrid from '../../src/ProductGrid';
+import ProductGrid from '../../components/common/ProductGrid';
 
 export default function ProductsPage({ products, seo }) {
   const favorites = { favoriteProducts: [] };

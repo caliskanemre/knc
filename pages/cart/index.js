@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Container, CssBaseline, Typography, Card, CardContent, CardMedia, Box, CircularProgress, Button, Divider, CardActions, Snackbar, Alert } from '@mui/material';
 import axios from 'axios';
-import { useAuth } from '../../src/auth/AuthProvider';
+import { useAuth } from '../../lib/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 

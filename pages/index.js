@@ -3,13 +3,13 @@ import Head from 'next/head';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import ProductGrid from '../src/ProductGrid';
-import HeroSection from '../src/shared/HeroSection';
+import ProductGrid from '../components/common/ProductGrid';
+import HeroSection from '../components/common/Shared/HeroSection';
 
 // 🚀 GEREKLİ İMPORTLAR
 import { getSelectorsByUserAgent } from 'react-device-detect';
 // Projenizdeki i18next konfigürasyon dosyasının yolunu doğru belirttiğinizden emin olun
-import i18n from '../src/i18n';
+import i18n from '../lib/i18n';
 
 // 🚀 DEĞİŞİKLİK: HomePage bileşeni artık sunucudan gelen `heroData` prop'unu alıyor.
 export default function HomePage({ products, seo, heroData, pageLocale = 'tr', defaultLocale = 'tr', asPath = '/' }) {
