@@ -277,15 +277,15 @@ export default function NextHeader({ locale = 'tr', defaultLocale = 'tr', asPath
                     transform: 'scale(1.05)',
                     transition: 'all 0.2s ease-in-out'
                   },
-                  p: 1
+                  p: 0.5
                 }}
                 aria-label={t('Search', 'Ara')}
               >
                 <Image
                   src={locale === 'tr' ? '/urunAra.png' : '/onlySearch.png'}
                   alt={t('Search', 'Ara')}
-                  width={120}
-                  height={120}
+                  width={360}
+                  height={360}
                   style={{
                     objectFit: 'contain',
                     maxWidth: '100%',
