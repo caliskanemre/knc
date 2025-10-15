@@ -50,20 +50,6 @@ const nextConfig = {
     }
     return config;
   },
-  async redirects() {
-    return [
-      {
-        source: '/tr/',
-        destination: '/tr',
-        permanent: true,
-      },
-      {
-        source: '/en/',
-        destination: '/en',
-        permanent: true,
-      },
-    ];
-  },
   async headers() {
     return [
       {

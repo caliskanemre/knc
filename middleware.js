@@ -37,13 +37,22 @@ export async function middleware(request) {
         return NextResponse.next();
     }
 
+    // ÖNEMLI: Eğer URL tam olarak /tr/ veya /en/ ise (trailing slash ile), trailing slash'siz versiyona redirect et
+    const url = request.nextUrl.clone();
+    const fullPath = url.pathname;
+
+    if (fullPath === '/tr/' || fullPath === '/en/') {
+        url.pathname = fullPath.slice(0, -1); // Trailing slash'i kaldır
+        return NextResponse.redirect(url, 308); // 308 Permanent Redirect
+    }
+
     // Mevcut locale'i al (Next.js i18n routing'den)
     const currentLocale = locale || 'tr';
 
     // Cookie kontrolü
     const cookie = request.cookies.get('is_turkey_user');
 
-    // Root path kontrolü - hem cookie varsa hem yoksa
+    // Root path kontrolü
     if (pathname === '/' || pathname === '') {
         // Cookie yoksa geo-location ile tespit et
         if (!cookie) {
@@ -60,7 +69,6 @@ export async function middleware(request) {
 
             // Eğer tespit edilen locale ile mevcut locale farklıysa redirect yap
             if (targetLocale !== currentLocale) {
-                const url = request.nextUrl.clone();
                 url.locale = targetLocale;
                 const response = NextResponse.redirect(url);
                 response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
