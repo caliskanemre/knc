@@ -1,31 +1,16 @@
 import { NextResponse } from 'next/server';
 
-const SUPPORTED_LOCALES = ['tr', 'en'];
-
-function getPathLocale(pathname) {
-    const seg = pathname.split('/')[1];
-    return SUPPORTED_LOCALES.includes(seg) ? seg : null;
-}
-
-function stripLeadingLocale(pathname) {
-    const loc = getPathLocale(pathname);
-    if (!loc) return pathname;
-    const rest = pathname.slice(loc.length + 1); // remove '/{loc}'
-    return rest ? `/${rest}` : '/';
-}
-
 function getClientIp(request) {
     let ip = request.headers.get('x-forwarded-for');
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
     if (!ip || ip === 'unknown') ip = request.headers.get('x-real-ip');
-    if (!ip) ip = request.ip; // next runtime ip
+    if (!ip) ip = request.ip;
     return ip || '';
 }
 
 async function lookupCountry(ip) {
-    // Private / local IP ise lookup yapmaya gerek yok
     if (!ip || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('127.') || ip === '::1') {
-        return null; // geo yok, default TR'a düşeceğiz
+        return null;
     }
     try {
         const controller = new AbortController();
@@ -41,7 +26,7 @@ async function lookupCountry(ip) {
 }
 
 export async function middleware(request) {
-    const { pathname } = request.nextUrl;
+    const { pathname, locale } = request.nextUrl;
 
     // Statik ve internal dosyaları atla
     if (
@@ -52,43 +37,60 @@ export async function middleware(request) {
         return NextResponse.next();
     }
 
-    // Path üzerinde locale var mı kontrol et
-    const pathLocale = getPathLocale(pathname);
+    // Mevcut locale'i al (Next.js i18n routing'den)
+    const currentLocale = locale || 'tr';
 
-    // Kullanıcı manuel olarak bir locale seçmişse (URL'de /tr/ veya /en/ varsa)
-    if (pathLocale) {
-        // Manuel seçimi cookie'ye kaydet ve devam et
-        const response = NextResponse.next();
-        const isTR = pathLocale === 'tr';
-        response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
-        return response;
-    }
-
-    // Path'te locale yok - otomatik yönlendirme yap
+    // Cookie kontrolü
     const cookie = request.cookies.get('is_turkey_user');
 
-    let targetLocale = 'tr'; // Default olarak Türkçe
+    // Eğer cookie yoksa, geo-location ile tespit et
+    if (!cookie) {
+        // Sadece root path için otomatik yönlendirme yap
+        if (pathname === '/' || pathname === '') {
+            // Geo-location ile ülke tespit et
+            let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
+            if (!country) {
+                const ip = getClientIp(request);
+                country = await lookupCountry(ip);
+            }
 
-    if (cookie) {
-        // Cookie varsa onu kullan
-        targetLocale = cookie.value === '1' ? 'tr' : 'en';
-    } else {
-        // Cookie yoksa geo-location ile tespit et
-        let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
-        if (!country) {
-            const ip = getClientIp(request);
-            country = await lookupCountry(ip);
+            // Türkiye ise TR, değilse EN, tespit edilemezse default TR
+            const isTR = country === 'TR' || !country;
+            const targetLocale = isTR ? 'tr' : 'en';
+
+            // Eğer tespit edilen locale ile mevcut locale farklıysa redirect yap
+            if (targetLocale !== currentLocale) {
+                const url = request.nextUrl.clone();
+                url.locale = targetLocale;
+                const response = NextResponse.redirect(url);
+                response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
+                    path: '/',
+                    maxAge: 15552000,
+                    sameSite: 'lax'
+                });
+                return response;
+            }
+
+            // Cookie'yi set et ve devam et
+            const response = NextResponse.next();
+            response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
+                path: '/',
+                maxAge: 15552000,
+                sameSite: 'lax'
+            });
+            return response;
         }
-        // Türkiye ise TR, değilse EN, hiçbiri tespit edilemezse default TR
-        const isTR = country === 'TR' || !country;
-        targetLocale = isTR ? 'tr' : 'en';
     }
 
-    // Locale ekleyerek redirect yap
-    const url = request.nextUrl.clone();
-    url.pathname = `/${targetLocale}${pathname === '/' ? '' : pathname}`;
-    const response = NextResponse.redirect(url);
-    response.cookies.set('is_turkey_user', targetLocale === 'tr' ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
+    // Cookie'yi güncelle (yoksa set et)
+    const response = NextResponse.next();
+    const isTR = currentLocale === 'tr';
+    response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
+        path: '/',
+        maxAge: 15552000,
+        sameSite: 'lax'
+    });
+
     return response;
 }
 
