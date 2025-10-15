@@ -25,7 +25,7 @@ function getClientIp(request) {
 async function lookupCountry(ip) {
     // Private / local IP ise lookup yapmaya gerek yok
     if (!ip || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('127.') || ip === '::1') {
-        return null; // geo yok, default EN'a düşeceğiz
+        return null; // geo yok, default TR'a düşeceğiz
     }
     try {
         const controller = new AbortController();
@@ -52,49 +52,43 @@ export async function middleware(request) {
         return NextResponse.next();
     }
 
-    const cookie = request.cookies.get('is_turkey_user');
-    if (cookie) {
-        // Kullanıcı tercihi / ilk tespit yapılmış
-        return NextResponse.next();
-    }
-
-    // Path üzerinde locale var mı? (kullanıcı manuel seçmiş olabilir)
+    // Path üzerinde locale var mı kontrol et
     const pathLocale = getPathLocale(pathname);
 
-    // Ülke tespiti: Önce Vercel geo (Vercel deploy'unda çalışır), yoksa IP lookup, o da yoksa default EN
-    let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
-    if (!country) {
-        const ip = getClientIp(request);
-        country = await lookupCountry(ip); // başarısız olursa null döner
-    }
-
-    // Türkiye ise TR, değilse EN aç.
-    const isTR = country === 'TR';
-    const targetLocale = isTR ? 'tr' : 'en';
-
-    // Eğer path üzerinde locale yoksa ilk ziyarette otomatik ekle
-    if (!pathLocale) {
-        const url = request.nextUrl.clone();
-        const cleanPath = stripLeadingLocale(pathname); // güvenlik için
-        url.pathname = `/${targetLocale}${cleanPath === '/' ? '' : cleanPath}`;
-        const response = NextResponse.redirect(url);
+    // Kullanıcı manuel olarak bir locale seçmişse (URL'de /tr/ veya /en/ varsa)
+    if (pathLocale) {
+        // Manuel seçimi cookie'ye kaydet ve devam et
+        const response = NextResponse.next();
+        const isTR = pathLocale === 'tr';
         response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
         return response;
     }
 
-    // Path locale mevcut ama yanlış ve henüz cookie yoksa (ilk ziyaret) düzelt
-    if (pathLocale !== targetLocale) {
-        const url = request.nextUrl.clone();
-        const remainder = stripLeadingLocale(pathname); // mevcut locale'i at
-        url.pathname = `/${targetLocale}${remainder === '/' ? '' : remainder}`;
-        const response = NextResponse.redirect(url);
-        response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
-        return response;
+    // Path'te locale yok - otomatik yönlendirme yap
+    const cookie = request.cookies.get('is_turkey_user');
+
+    let targetLocale = 'tr'; // Default olarak Türkçe
+
+    if (cookie) {
+        // Cookie varsa onu kullan
+        targetLocale = cookie.value === '1' ? 'tr' : 'en';
+    } else {
+        // Cookie yoksa geo-location ile tespit et
+        let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
+        if (!country) {
+            const ip = getClientIp(request);
+            country = await lookupCountry(ip);
+        }
+        // Türkiye ise TR, değilse EN, hiçbiri tespit edilemezse default TR
+        const isTR = country === 'TR' || !country;
+        targetLocale = isTR ? 'tr' : 'en';
     }
 
-    // Locale zaten doğru: sadece cookie set et ve devam et
-    const response = NextResponse.next();
-    response.cookies.set('is_turkey_user', isTR ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
+    // Locale ekleyerek redirect yap
+    const url = request.nextUrl.clone();
+    url.pathname = `/${targetLocale}${pathname === '/' ? '' : pathname}`;
+    const response = NextResponse.redirect(url);
+    response.cookies.set('is_turkey_user', targetLocale === 'tr' ? '1' : '0', { path: '/', maxAge: 15552000, sameSite: 'lax' });
     return response;
 }
 
