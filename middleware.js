@@ -43,10 +43,10 @@ export async function middleware(request) {
     // Cookie kontrolü
     const cookie = request.cookies.get('is_turkey_user');
 
-    // Eğer cookie yoksa, geo-location ile tespit et
-    if (!cookie) {
-        // Sadece root path için otomatik yönlendirme yap
-        if (pathname === '/' || pathname === '') {
+    // Root path kontrolü - hem cookie varsa hem yoksa
+    if (pathname === '/' || pathname === '') {
+        // Cookie yoksa geo-location ile tespit et
+        if (!cookie) {
             // Geo-location ile ülke tespit et
             let country = request.geo?.country ? request.geo.country.toUpperCase() : null;
             if (!country) {
@@ -80,9 +80,19 @@ export async function middleware(request) {
             });
             return response;
         }
+
+        // Cookie varsa, mevcut locale ile devam et ve cookie'yi güncelle
+        const response = NextResponse.next();
+        const isTR = currentLocale === 'tr';
+        response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
+            path: '/',
+            maxAge: 15552000,
+            sameSite: 'lax'
+        });
+        return response;
     }
 
-    // Cookie'yi güncelle (yoksa set et)
+    // Diğer tüm sayfalar için cookie'yi güncelle
     const response = NextResponse.next();
     const isTR = currentLocale === 'tr';
     response.cookies.set('is_turkey_user', isTR ? '1' : '0', {
