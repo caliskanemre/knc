@@ -13,7 +13,7 @@ import { getAltText } from '../../lib/utils/altTextGenerator';
 // Yardımcı fonksiyonlar
 const getPrefixedImage = (url, prefix) => {
     if (!url) return url;
-    return url.replace(/([^/]+)$/, `${prefix}_$1`);
+    return url.replace(/([^/]+)$/i, `${prefix}_$1`);
 };
 
 const sanitizeTitle = (str) => (str || 'product')
@@ -33,7 +33,7 @@ const isVideoUrl = (url) => {
     return /(\.(mp4|webm|ogg|mov|m4v)$)/.test(clean);
 };
 
-export default function ProductGrid({ products, favorites, isLoggedIn, handleFavoriteClick, pageLocale = 'tr', defaultLocale = 'tr' }) {
+export default function ProductGrid({ products = [], favorites, isLoggedIn, handleFavoriteClick, pageLocale = 'tr', defaultLocale = 'tr' }) {
     const isClient = typeof window !== 'undefined';
 
     // Açılışta ürünlerden is_turkey_user bilgisi varsa kalıcılaştır (cookie + localStorage)
@@ -46,7 +46,6 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
             try { localStorage.setItem('is_turkey_user', JSON.stringify(isTR)); } catch(_) {}
             try { document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`; } catch(_) {}
         } else {
-            // ürün bilgisinde yoksa, dil üzerinden tahmin edip yazalım (yanlışsa backend düzeltir)
             const guessTR = typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('tr');
             try { localStorage.setItem('is_turkey_user', JSON.stringify(guessTR)); } catch(_) {}
             try { document.cookie = `is_turkey_user=${guessTR ? '1' : '0'}; path=/; max-age=15552000`; } catch(_) {}
@@ -56,7 +55,6 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
     return (
         <Grid container spacing={4}>
             {products.map((item, idx) => {
-                // is_turkey_user gelmezse locale'e göre fallback yap
                 const isTR = (item.is_turkey_user !== undefined && item.is_turkey_user !== null)
                     ? !!item.is_turkey_user
                     : (typeof pageLocale === 'string' && pageLocale.toLowerCase().startsWith('tr'));
@@ -68,53 +66,48 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                 const originalPhoto = item.photos?.[0]?.photo || '/ksLogo.jpeg';
                 const smallImageUrl = getPrefixedImage(originalPhoto, 'small') || originalPhoto;
 
-                // Alt text oluştur - backend'den gelirse kullan, yoksa otomatik oluştur
                 const altText = getAltText(item.photos?.[0], item, 0, pageLocale);
 
                 let isAlreadyFavorited = false;
-                if (isLoggedIn) {
-                    isAlreadyFavorited = !!favorites?.favoriteProducts?.some(product => product.id === item.id);
+                if (favorites?.favoriteProducts && Array.isArray(favorites.favoriteProducts)) {
+                    isAlreadyFavorited = favorites.favoriteProducts.includes(item.id);
                 } else if (isClient) {
                     try {
                         const raw = window.localStorage ? window.localStorage.getItem('favorites') : null;
                         const arr = raw ? JSON.parse(raw) : [];
-                        isAlreadyFavorited = arr.some(fav => fav.id === item.id);
+                        isAlreadyFavorited = Array.isArray(arr) && arr.some(fav => (fav.id || fav) === item.id);
                     } catch (_) { /* ignore */ }
                 }
 
                 const productTitle = sanitizeTitle(item.productName || item.title || item.name || 'Unknown');
-                // Next Link mevcut locale'i otomatik uygular; manuel prefix eklemeyelim
                 const href = `/products/detail/${item.id}/${encodeURIComponent(productTitle || 'product')}`;
 
-                // Yıldız puanını ve inceleme sayısını al
                 const averageRating = getAverageRating(item.id);
                 const reviewCount = getReviewCount(item.id);
 
                 return (
-                    <Grid item key={item.id} xs={6} sm={6} md={4} lg={3}>
+                    <Grid item key={item.id || idx} xs={6} sm={6} md={4} lg={3}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: 'none' }}>
                             <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
                                 <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', backgroundColor: '#f0f0f0' }}>
                                     {isVideoUrl(originalPhoto) ? (
-                                        // Video varsa, thumbnail olarak video elementini göster
                                         <video
                                             src={originalPhoto}
                                             autoPlay
                                             loop
                                             muted
                                             playsInline
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            aria-label={altText}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
                                         />
                                     ) : (
                                         <Image
                                             src={smallImageUrl}
                                             alt={altText}
                                             fill
-                                            sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, 25vw"
-                                            style={{ objectFit: 'cover' }}
+                                            priority={idx < 8}
                                             loading={idx < 8 ? 'eager' : 'lazy'}
-                                            quality={75}
+                                            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
+                                            style={{ objectFit: 'cover' }}
                                         />
                                     )}
                                 </Box>
@@ -132,16 +125,13 @@ export default function ProductGrid({ products, favorites, isLoggedIn, handleFav
                                     <Typography sx={{ fontWeight: 'bold' }}>{formatPrice(discountedPriceNum, isTR)}</Typography>
                                     <Typography sx={{ textDecoration: 'line-through', color: 'gray', ml: 1 }}>{formatPrice(originalPriceNum, isTR)}</Typography>
                                 </Box>
-                                {/* Yıldız puanlama ve inceleme sayısı */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                                    <StarIcon color={averageRating >= 1 ? "error" : "action"} />
-                                    <StarIcon color={averageRating >= 2 ? "error" : "action"} />
-                                    <StarIcon color={averageRating >= 3 ? "error" : "action"} />
-                                    <StarIcon color={averageRating >= 4 ? "error" : "action"} />
-                                    <StarIcon color={averageRating >= 5 ? "error" : "action"} />
-                                    <Typography sx={{ fontSize: '0.875rem', ml: 0.5, color: 'text.secondary' }}>
-                                        ({reviewCount})
-                                    </Typography>
+                                    <StarIcon color={averageRating >= 1 ? 'error' : 'action'} />
+                                    <StarIcon color={averageRating >= 2 ? 'error' : 'action'} />
+                                    <StarIcon color={averageRating >= 3 ? 'error' : 'action'} />
+                                    <StarIcon color={averageRating >= 4 ? 'error' : 'action'} />
+                                    <StarIcon color={averageRating >= 5 ? 'error' : 'action'} />
+                                    <Typography sx={{ fontSize: '0.875rem', ml: 0.5, color: 'text.secondary' }}>({reviewCount})</Typography>
                                 </Box>
                             </Box>
                             <IconButton onClick={() => handleFavoriteClick?.(item.id)} sx={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
