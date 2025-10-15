@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  trailingSlash: true,
   i18n: {
     locales: ['tr', 'en'],
     defaultLocale: 'tr',
@@ -50,6 +49,20 @@ const nextConfig = {
       };
     }
     return config;
+  },
+  async redirects() {
+    return [
+      {
+        source: '/tr/',
+        destination: '/tr',
+        permanent: true,
+      },
+      {
+        source: '/en/',
+        destination: '/en',
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [
