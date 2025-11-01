@@ -23,6 +23,10 @@ import { useTranslation } from 'react-i18next';
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL || process.env.REACT_APP_BASE_URL || 'http://localhost:8080';
 
+// Ücretsiz kargo eşik değerleri
+const FREE_SHIPPING_THRESHOLD_TRY = 500;
+const FREE_SHIPPING_THRESHOLD_EUR = 100;
+
 export default function PaymentPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -111,20 +115,20 @@ export default function PaymentPage() {
     const found = shippingCountries.find(c => c.code === countryCode);
     if (!found) return 0;
     if (currency === 'TRY' || currency === 'TL') {
-      if (countryCode === 'TR') return currentTotal >= 500 ? 0 : 99;
+      if (countryCode === 'TR') return currentTotal >= FREE_SHIPPING_THRESHOLD_TRY ? 0 : 99;
       return 0;
     }
     if (countryCode === 'TR') return 0;
-    return currentTotal >= 150 ? 0 : found.cost;
+    return currentTotal >= FREE_SHIPPING_THRESHOLD_EUR ? 0 : found.cost;
   };
 
   const getFreeShippingInfo = (totalPrice) => {
     if (currency === 'TRY' || currency === 'TL') {
-      const remaining = 500 - totalPrice;
-      return { threshold: 500, remaining: remaining > 0 ? remaining : 0, isFree: totalPrice >= 500 };
+      const remaining = FREE_SHIPPING_THRESHOLD_TRY - totalPrice;
+      return { threshold: FREE_SHIPPING_THRESHOLD_TRY, remaining: remaining > 0 ? remaining : 0, isFree: totalPrice >= FREE_SHIPPING_THRESHOLD_TRY };
     }
-    const remaining = 150 - totalPrice;
-    return { threshold: 150, remaining: remaining > 0 ? remaining : 0, isFree: totalPrice >= 150 };
+    const remaining = FREE_SHIPPING_THRESHOLD_EUR - totalPrice;
+    return { threshold: FREE_SHIPPING_THRESHOLD_EUR, remaining: remaining > 0 ? remaining : 0, isFree: totalPrice >= FREE_SHIPPING_THRESHOLD_EUR };
   };
 
   const totals = useMemo(() => {
@@ -341,7 +345,7 @@ export default function PaymentPage() {
                 {(() => {
                   const info = getFreeShippingInfo(totals.discounted);
                   if (info.isFree) return (<Box sx={{ mt: 2, p: 1.5, bgcolor: '#e8f5e8', borderRadius: 1, border: '1px solid #4caf50' }}><Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>🎉 {t('Free shipping applied!')}</Typography></Box>);
-                  if (info.remaining > 0) return (<Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}><Typography variant="body2" color="warning.main" sx={{ fontWeight: 'bold' }}>🚚 {formatPrice(info.remaining, currency)} {t('more for free shipping!')}</Typography><Typography variant="caption" color="text.secondary">{currency === 'TRY' || currency === 'TL' ? t('Free shipping on orders over 500 TL') : t('Free shipping on orders over 150 EUR')}</Typography></Box>);
+                  if (info.remaining > 0) return (<Box sx={{ mt: 2, p: 1.5, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}><Typography variant="body2" color="warning.main" sx={{ fontWeight: 'bold' }}>🚚 {formatPrice(info.remaining, currency)} {t('more for free shipping!')}</Typography><Typography variant="caption" color="text.secondary">{currency === 'TRY' || currency === 'TL' ? t(`Free shipping on orders over ${FREE_SHIPPING_THRESHOLD_TRY} TL`) : t(`Free shipping on orders over ${FREE_SHIPPING_THRESHOLD_EUR} EUR`)}</Typography></Box>);
                   return null;
                 })()}
                 <Button variant="contained" color="primary" fullWidth sx={{ mt: 2 }} onClick={handlePayment} disabled={cartItems.length === 0 || isLoading}>
