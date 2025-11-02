@@ -42,6 +42,11 @@ export async function getStaticProps({ params, locale }) {
     return { notFound: true };
   }
 
+  // Backend'den is_turkey_user gelmezse, locale'den belirle
+  if (product.is_turkey_user === undefined || product.is_turkey_user === null) {
+    product.is_turkey_user = (lang === 'tr');
+  }
+
   // Benzer ürünler
   let similarProducts = [];
   if (product.category) {
@@ -49,6 +54,14 @@ export async function getStaticProps({ params, locale }) {
       const simRes = await axios.get(`${baseURL}/products/${encodeURIComponent(product.category)}` , { params: { page:0, size:6, locale: lang }, headers });
       const list = simRes.data?.content || [];
       similarProducts = list.filter(p => p.id !== product.id).slice(0,6);
+
+      // Benzer ürünlere de is_turkey_user bilgisini ekle
+      similarProducts = similarProducts.map(p => {
+        if (p.is_turkey_user === undefined || p.is_turkey_user === null) {
+          return { ...p, is_turkey_user: (lang === 'tr') };
+        }
+        return p;
+      });
     } catch (e) {
       console.error('[ID-only detail] similar error', e.message);
     }

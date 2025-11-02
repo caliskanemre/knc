@@ -109,17 +109,27 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        // This effect now exclusively reads from client-side storage,
-        // which is populated by our middleware.
+        // 🚀 Öncelik 1: Backend'den gelen ürün bilgisindeki is_turkey_user
+        if (product && product.is_turkey_user !== undefined && product.is_turkey_user !== null) {
+            const isTR = !!product.is_turkey_user;
+            setDisplayIsTR(isTR);
+            // Cookie ve localStorage'a da yazalım ki tutarlı olsun
+            try {
+                localStorage.setItem('is_turkey_user', JSON.stringify(isTR));
+                document.cookie = `is_turkey_user=${isTR ? '1' : '0'}; path=/; max-age=15552000`;
+            } catch(_) {}
+            return;
+        }
+
+        // Öncelik 2: Middleware tarafından set edilen cookie
         try {
-            // Priority 1: Check cookie set by middleware
             const m = document.cookie.match(/(?:^|; )is_turkey_user=([^;]+)/);
             if (m) {
                 setDisplayIsTR(m[1] === '1');
                 return;
             }
 
-            // Priority 2: Check localStorage as a fallback
+            // Öncelik 3: localStorage fallback
             const raw = localStorage.getItem('is_turkey_user');
             if (raw !== null) {
                 const parsed = JSON.parse(raw);
@@ -130,16 +140,26 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
             }
         } catch (_) {}
 
-        // Final fallback: Guess from browser language if still undetermined
+        // Son çare: Tarayıcı dilinden tahmin
         if (displayIsTR === null && typeof navigator !== 'undefined') {
             const guess = navigator.language?.toLowerCase().startsWith('tr');
             setDisplayIsTR(!!guess);
         }
-    }, [displayIsTR]); // The dependency array is simplified
+    }, [displayIsTR, product]); // product'ı dependency'e ekledik
 
-    // The rest of your component logic remains exactly the same.
-    // The 'isTRDisplay' variable will work correctly once the useEffect runs.
-    const isTRDisplay = typeof displayIsTR === 'boolean' ? displayIsTR : (locale === 'tr');
+    // 🚀 is_turkey_user bilgisini belirleme - Backend'den gelen bilgi her zaman öncelikli
+    const isTRDisplay = useMemo(() => {
+        // Öncelik 1: Backend'den gelen product.is_turkey_user
+        if (product && product.is_turkey_user !== undefined && product.is_turkey_user !== null) {
+            return !!product.is_turkey_user;
+        }
+        // Öncelik 2: Client-side state
+        if (typeof displayIsTR === 'boolean') {
+            return displayIsTR;
+        }
+        // Öncelik 3: Locale'den tahmin
+        return locale === 'tr';
+    }, [product, displayIsTR, locale]);
 
     const baseUIPrice = isTRDisplay ? (product?.tl_price ?? product?.price) : (product?.eur_price ?? product?.price);
     const displayOriginal = Number(baseUIPrice) || 0;
@@ -795,6 +815,11 @@ export async function getStaticProps({ params, locale }) {
         return { notFound: true };
     }
 
+    // Backend'den is_turkey_user gelmezse, locale'den belirle
+    if (product.is_turkey_user === undefined || product.is_turkey_user === null) {
+        product.is_turkey_user = (lang === 'tr');
+    }
+
     // URL redirect logic also works in getStaticProps
     const actualTitle = product.title || product.name || '';
     const sanitizedActual = sanitizeTitle(actualTitle); // Using your unchanged function
@@ -813,6 +838,14 @@ export async function getStaticProps({ params, locale }) {
                 headers,
             });
             similarProducts = (similarRes.data?.content || []).filter(p => p.id !== product.id);
+
+            // Benzer ürünlere de is_turkey_user bilgisini ekle
+            similarProducts = similarProducts.map(p => {
+                if (p.is_turkey_user === undefined || p.is_turkey_user === null) {
+                    return { ...p, is_turkey_user: (lang === 'tr') };
+                }
+                return p;
+            });
         } catch (e) {
             console.error('ISR: Failed to fetch similar products:', e.message);
         }
