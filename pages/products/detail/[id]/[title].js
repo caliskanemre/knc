@@ -526,7 +526,9 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         </Box>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                        <Typography variant="h4" sx={{ mb: 1 }}>{product.title || product.name}</Typography>
+                        <Typography variant="h4" sx={{ mb: 1 }}>
+                            {(product.title || product.name || '').replace(/Kina/g, 'Kına').replace(/kina/g, 'kına')}
+                        </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{product.category}</Typography>
                         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>
                             <Typography sx={{ textDecoration: 'line-through', color: 'gray' }}>{displayOriginal.toFixed(2)} {currencySymbol}</Typography>
@@ -890,9 +892,26 @@ export async function getStaticProps({ params, locale }) {
     const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
 
+    let optimizedTitle = product.title || product.name || 'Ürün';
+    optimizedTitle = optimizedTitle.replace(/Kina/g, 'Kına').replace(/kina/g, 'kına');
+
+// 2. Halay Mendili fırsatını yakalayalım
+    if (optimizedTitle.toLowerCase().includes('halay mendili')) {
+        // "İsimli" ve "Fiyatları" kelimelerini başlığa yedirelim (Sığarsa)
+        if (!optimizedTitle.toLowerCase().includes('fiyat')) {
+            optimizedTitle = `${optimizedTitle} Fiyatları ve Modelleri`;
+        }
+    }
+
+// 3. Açıklamayı güçlendirelim
+    let optimizedDesc = metaDescription;
+    if (product.category && product.category.toLowerCase().includes('mendil')) {
+        optimizedDesc = `En uygun ${optimizedTitle} çeşitleri. Kişiye özel isimli modeller ve kapıda ödeme seçenekleri Kına Sepeti'nde. ${optimizedDesc}`;
+    }
+
     const seo = {
-        metaTitle: `${product.title || product.name || 'Ürün'} | Kına Sepeti`,
-        metaDescription,
+        metaTitle: `${optimizedTitle} | Kına Sepeti`, // Artık optimize edilmiş başlığı kullanıyoruz
+        metaDescription: optimizedDesc, // Optimize edilmiş açıklamayı kullanıyoruz
         canonical,
         alternates: {
             tr: `${origin}${pathTR}`,
@@ -905,7 +924,7 @@ export async function getStaticProps({ params, locale }) {
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: product?.title || product?.name,
+        name: optimizedTitle, // DEĞİŞTİ: Artık optimize edilmiş başlığı kullanıyoruz
         image: (product?.photos || []).map(p => p.photo).filter(Boolean),
         description: plainDesc || undefined,
         sku: product?.id ? String(product.id) : undefined,
@@ -932,7 +951,7 @@ export async function getStaticProps({ params, locale }) {
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${lang === 'tr' ? '' : 'en'}` },
             { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${lang === 'tr' ? '' : 'en/'}products` },
-            { '@type': 'ListItem', position: 3, name: product?.title || 'Ür��n', item: canonical },
+            { '@type': 'ListItem', position: 3, name: optimizedTitle, item: canonical }, // DEĞİŞTİ: Burası da optimize oldu
         ],
     };
 
