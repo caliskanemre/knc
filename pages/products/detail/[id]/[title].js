@@ -895,33 +895,36 @@ export async function getStaticProps({ params, locale }) {
     let optimizedTitle = product.title || product.name || 'Ürün';
     optimizedTitle = optimizedTitle.replace(/Kina/g, 'Kına').replace(/kina/g, 'kına');
 
+    // ... kodun geri kalanı aynı ...
+
     let optimizedDesc = metaDescription;
 
-    // STRATEJİ: Dil İngilizce ise Avrupa/Almanya vurgusu yap
+    // STRATEJİ: Dil İngilizce ise Avrupa (Almanya + Hollanda/Belçika) vurgusu yap
     if (lang === 'en') {
         // Başlığa Kargo vurgusu
         optimizedTitle = `${optimizedTitle} - Fast Shipping to Europe (Germany, France, NL)`;
 
-        // Açıklamaya Almanca ve İngilizce anahtar kelimeler
-        optimizedDesc = `We ship ${optimizedTitle} to Germany and all Europe. Perfect for Henna Night (Kina Gecesi). Henna Geschenke, Gastgeschenke & Party Supplies. ${optimizedDesc}`;
+        // GÜNCELLEME BURADA: Hollandaca "henna kaars" (mum) ve "handschoenen" (eldiven) ekledik.
+        // Google bu kelimeleri görünce Hollanda'daki sıralamanızı yükseltecek.
+        optimizedDesc = `We ship ${optimizedTitle} to Germany, Netherlands, Belgium and all Europe. Perfect for Henna Night (Kina Gecesi). Henna Geschenke, Henna Kaars & Handschoenen. ${optimizedDesc}`;
     }
     // STRATEJİ: Dil Türkçe ise Gurbetçi ve Mevcut Mendil vurgusu yap
     else {
-        // 2. Halay Mendili fırsatını yakalayalım
+        // ... burası aynı kalsın ...
         if (optimizedTitle.toLowerCase().includes('halay mendili')) {
-            // "İsimli" ve "Fiyatları" kelimelerini başlığa yedirelim (Sığarsa)
             if (!optimizedTitle.toLowerCase().includes('fiyat')) {
                 optimizedTitle = `${optimizedTitle} Fiyatları ve Modelleri`;
             }
         }
 
-        // 3. Açıklamayı güçlendirelim
         if (product.category && product.category.toLowerCase().includes('mendil')) {
             optimizedDesc = `En uygun ${optimizedTitle} çeşitleri. Kişiye özel isimli modeller ve kapıda ödeme seçenekleri Kına Sepeti'nde. ${optimizedDesc}`;
         }
-        // Gurbetçi kancası (Tüm TR sayfaları için ekleyelim)
-        optimizedDesc = `${optimizedDesc} Almanya, Fransa, Hollanda ve tüm Avrupa'ya sorunsuz express kargo imkanı.`;
+        // Gurbetçi kancası
+        optimizedDesc = `${optimizedDesc} Almanya, Fransa, Hollanda, Belçika ve tüm Avrupa'ya sorunsuz express kargo imkanı.`;
     }
+
+    // ... kodun devamı aynı ...
 
     const seo = {
         metaTitle: `${optimizedTitle} | Kına Sepeti`, // Artık optimize edilmiş başlığı kullanıyoruz
