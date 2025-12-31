@@ -298,7 +298,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         try {
             if (isLoggedIn && token) {
                 await toggleFavorite(product.id, isFav, 'product');
-                setSnackbar({ open: true, message: isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ��️', severity: 'success' });
+                setSnackbar({ open: true, message: isFav ? t('Removed from favorites') + ' ❌' : t('Added to favorites') + ' ️', severity: 'success' });
             } else if (typeof window !== 'undefined') {
                 let localFavorites;
                 try { localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { localFavorites = []; }
@@ -329,7 +329,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
         if (!product?.id || quantity <= 0) return setSnackbar({ open: true, message: t('Invalid product or quantity'), severity: 'warning' });
         const totalDiscounted = displayDiscounted * quantity;
         const summary = `• ${product.title} - ${quantity} adet - ${totalDiscounted.toFixed(2)} ${currencySymbol}${orderNote ? ` (Not: ${orderNote})` : ''}`;
-        const msg = `��️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n�� Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
+        const msg = `️ Yeni Siparis:\n\n📦 Urun:\n${summary}\n\n Toplam: ${totalDiscounted.toFixed(2)} ${currencySymbol}\n\n📅 Siparis Tarihi: ${new Date().toLocaleString('tr-TR')}`;
         const phoneNumber = '905348290866';
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`;
         if (typeof window !== 'undefined') window.open(url, '_blank');
@@ -895,18 +895,32 @@ export async function getStaticProps({ params, locale }) {
     let optimizedTitle = product.title || product.name || 'Ürün';
     optimizedTitle = optimizedTitle.replace(/Kina/g, 'Kına').replace(/kina/g, 'kına');
 
-// 2. Halay Mendili fırsatını yakalayalım
-    if (optimizedTitle.toLowerCase().includes('halay mendili')) {
-        // "İsimli" ve "Fiyatları" kelimelerini başlığa yedirelim (Sığarsa)
-        if (!optimizedTitle.toLowerCase().includes('fiyat')) {
-            optimizedTitle = `${optimizedTitle} Fiyatları ve Modelleri`;
-        }
-    }
-
-// 3. Açıklamayı güçlendirelim
     let optimizedDesc = metaDescription;
-    if (product.category && product.category.toLowerCase().includes('mendil')) {
-        optimizedDesc = `En uygun ${optimizedTitle} çeşitleri. Kişiye özel isimli modeller ve kapıda ödeme seçenekleri Kına Sepeti'nde. ${optimizedDesc}`;
+
+    // STRATEJİ: Dil İngilizce ise Avrupa/Almanya vurgusu yap
+    if (lang === 'en') {
+        // Başlığa Kargo vurgusu
+        optimizedTitle = `${optimizedTitle} - Fast Shipping to Europe (Germany, France, NL)`;
+
+        // Açıklamaya Almanca ve İngilizce anahtar kelimeler
+        optimizedDesc = `We ship ${optimizedTitle} to Germany and all Europe. Perfect for Henna Night (Kina Gecesi). Henna Geschenke, Gastgeschenke & Party Supplies. ${optimizedDesc}`;
+    }
+    // STRATEJİ: Dil Türkçe ise Gurbetçi ve Mevcut Mendil vurgusu yap
+    else {
+        // 2. Halay Mendili fırsatını yakalayalım
+        if (optimizedTitle.toLowerCase().includes('halay mendili')) {
+            // "İsimli" ve "Fiyatları" kelimelerini başlığa yedirelim (Sığarsa)
+            if (!optimizedTitle.toLowerCase().includes('fiyat')) {
+                optimizedTitle = `${optimizedTitle} Fiyatları ve Modelleri`;
+            }
+        }
+
+        // 3. Açıklamayı güçlendirelim
+        if (product.category && product.category.toLowerCase().includes('mendil')) {
+            optimizedDesc = `En uygun ${optimizedTitle} çeşitleri. Kişiye özel isimli modeller ve kapıda ödeme seçenekleri Kına Sepeti'nde. ${optimizedDesc}`;
+        }
+        // Gurbetçi kancası (Tüm TR sayfaları için ekleyelim)
+        optimizedDesc = `${optimizedDesc} Almanya, Fransa, Hollanda ve tüm Avrupa'ya sorunsuz express kargo imkanı.`;
     }
 
     const seo = {
