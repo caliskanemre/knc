@@ -724,7 +724,8 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
             <StructuredDataHead
                 data={[
                     product.structuredData?.product,
-                    product.structuredData?.breadcrumbs
+                    product.structuredData?.breadcrumbs,
+                    product.structuredData?.faq
                 ].filter(Boolean)}
             />
         </>
@@ -892,43 +893,63 @@ export async function getStaticProps({ params, locale }) {
     const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
 
-    let optimizedTitle = product.title || product.name || 'Ürün';
-    optimizedTitle = optimizedTitle.replace(/Kina/g, 'Kına').replace(/kina/g, 'kına');
-
-    // ... kodun geri kalanı aynı ...
-
     let optimizedDesc = metaDescription;
 
-    // STRATEJİ: Dil İngilizce ise Avrupa (Almanya + Hollanda/Belçika) vurgusu yap
+    // STRATEJİ: Dil İngilizce ise Avrupa (Almanya + Hollanda/Belçika) vurgusu
     if (lang === 'en') {
-        // Başlığa Kargo vurgusu
         optimizedTitle = `${optimizedTitle} - Fast Shipping to Europe (Germany, France, NL)`;
-
-        // GÜNCELLEME BURADA: Hollandaca "henna kaars" (mum) ve "handschoenen" (eldiven) ekledik.
-        // Google bu kelimeleri görünce Hollanda'daki sıralamanızı yükseltecek.
-        optimizedDesc = `We ship ${optimizedTitle} to Germany, Netherlands, Belgium and all Europe. Perfect for Henna Night (Kina Gecesi). Henna Geschenke, Henna Kaars & Handschoenen. ${optimizedDesc}`;
+        optimizedDesc = `Henna Geschenke, Henna Kaars & Handschoenen. We ship ${optimizedTitle} to Germany, Netherlands, Belgium and all Europe. Perfect for Henna Night (Kina Gecesi). ${optimizedDesc}`;
     }
-    // STRATEJİ: Dil Türkçe ise Gurbetçi ve Mevcut Mendil vurgusu yap
+    // STRATEJİ: Dil Türkçe ise
     else {
-        // ... burası aynı kalsın ...
         if (optimizedTitle.toLowerCase().includes('halay mendili')) {
             if (!optimizedTitle.toLowerCase().includes('fiyat')) {
                 optimizedTitle = `${optimizedTitle} Fiyatları ve Modelleri`;
             }
         }
 
-        if (product.category && product.category.toLowerCase().includes('mendil')) {
+        // Hediyelik Vurgusu
+        if (product.category && (product.category.toLowerCase().includes('hediye') || optimizedTitle.toLowerCase().includes('aynalı'))) {
+            optimizedDesc = `🔥 En çok tercih edilen ${optimizedTitle}. Kına geceniz için unutulmaz hediyelikler. Kapıda ödeme ve hızlı kargo. ${optimizedDesc}`;
+        }
+        else if (product.category && product.category.toLowerCase().includes('mendil')) {
             optimizedDesc = `En uygun ${optimizedTitle} çeşitleri. Kişiye özel isimli modeller ve kapıda ödeme seçenekleri Kına Sepeti'nde. ${optimizedDesc}`;
         }
-        // Gurbetçi kancası
         optimizedDesc = `${optimizedDesc} Almanya, Fransa, Hollanda, Belçika ve tüm Avrupa'ya sorunsuz express kargo imkanı.`;
     }
 
     // ... kodun devamı aynı ...
 
+    const faqSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+            {
+                '@type': 'Question',
+                name: lang === 'en' ? 'Do you ship to Germany and Europe?' : 'Almanya ve Avrupa\'ya kargo var mı?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: lang === 'en'
+                        ? 'Yes! We provide express shipping to Germany, France, Netherlands, Belgium and all European countries within 2-4 business days.'
+                        : 'Evet! Almanya, Fransa, Hollanda, Belçika ve tüm Avrupa ülkelerine 2-4 iş günü içinde Express Kargo ile teslimat yapıyoruz.'
+                }
+            },
+            {
+                '@type': 'Question',
+                name: lang === 'en' ? 'Is this product customizable?' : 'Ürün kişiselleştirilebilir mi?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: lang === 'en'
+                        ? 'Absolutely. Many of our products (like Halay Mendili) can be personalized with names. Please check product options.'
+                        : 'Kesinlikle. Halay mendili ve diğer birçok ürünümüzde isim yazma ve kişiselleştirme seçeneğimiz mevcuttur.'
+                }
+            }
+        ]
+    };
+
     const seo = {
-        metaTitle: `${optimizedTitle} | Kına Sepeti`, // Artık optimize edilmiş başlığı kullanıyoruz
-        metaDescription: optimizedDesc, // Optimize edilmiş açıklamayı kullanıyoruz
+        metaTitle: `${optimizedTitle} | Kına Sepeti`,
+        metaDescription: optimizedDesc,
         canonical,
         alternates: {
             tr: `${origin}${pathTR}`,
@@ -941,7 +962,7 @@ export async function getStaticProps({ params, locale }) {
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: optimizedTitle, // DEĞİŞTİ: Artık optimize edilmiş başlığı kullanıyoruz
+        name: optimizedTitle,
         image: (product?.photos || []).map(p => p.photo).filter(Boolean),
         description: plainDesc || undefined,
         sku: product?.id ? String(product.id) : undefined,
@@ -951,6 +972,8 @@ export async function getStaticProps({ params, locale }) {
             availability: 'https://schema.org/InStock',
             itemCondition: 'https://schema.org/NewCondition',
             url: canonical,
+            priceCurrency: schemaCurrency,
+            price: schemaUnitPrice.toFixed(2)
         },
     };
 
@@ -968,13 +991,14 @@ export async function getStaticProps({ params, locale }) {
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Kına Sepeti', item: `${origin}/${lang === 'tr' ? '' : 'en'}` },
             { '@type': 'ListItem', position: 2, name: product?.category || 'Ürünler', item: `${origin}/${lang === 'tr' ? '' : 'en/'}products` },
-            { '@type': 'ListItem', position: 3, name: optimizedTitle, item: canonical }, // DEĞİŞTİ: Burası da optimize oldu
+            { '@type': 'ListItem', position: 3, name: optimizedTitle, item: canonical },
         ],
     };
 
     return {
         props: {
-            product: { ...product, structuredData: { product: productSchema, breadcrumbs } },
+            // BURAYA DİKKAT: faqSchema'yı da listeye ekledik
+            product: { ...product, structuredData: { product: productSchema, breadcrumbs, faq: faqSchema } },
             seo,
             similarProducts,
         },
