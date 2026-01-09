@@ -24,14 +24,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../../../lib/auth/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { getProductReviews, getAverageRating, getReviewCount } from '../../../../lib/data/productReviews';
 import StructuredDataHead from '../../../../components/common/Shared/StructuredDataHead';
-import { getProductSchema, getBreadcrumbSchema } from '../../../../lib/seo/structuredData';
 import { getAltText, generateVideoAltText } from '../../../../lib/utils/altTextGenerator';
 
 function generateUUID() {
@@ -638,7 +636,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                         <Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress /></Box>
                     ) : (
                         <Grid container spacing={2}>
-                            {similarProducts.map((p, pIndex) => {
+                            {similarProducts.map((p) => {
                                 const img = p.photos?.[0]?.photo || placeholderImg;
                                 const href = `/products/detail/${p.id}/${encodeURIComponent(sanitizeTitle(p.title || 'product'))}`;
                                 const similarAltText = getAltText(p.photos?.[0], p, 0, locale);
@@ -893,6 +891,7 @@ export async function getStaticProps({ params, locale }) {
     const pathEN = `/en/products/detail/${id}/${encodeURIComponent(sanitizedActual)}`;
     const canonical = `${origin}${lang === 'tr' ? pathTR : pathEN}`;
 
+    let optimizedTitle = product.title || product.name || 'Ürün';
     let optimizedDesc = metaDescription;
 
     // STRATEJİ: Dil İngilizce ise Avrupa (Almanya + Hollanda/Belçika) vurgusu
@@ -918,7 +917,6 @@ export async function getStaticProps({ params, locale }) {
         optimizedDesc = `${optimizedDesc} Almanya, Fransa, Hollanda, Belçika ve tüm Avrupa'ya sorunsuz express kargo imkanı.`;
     }
 
-    // ... kodun devamı aynı ...
 
     const faqSchema = {
         '@context': 'https://schema.org',
@@ -959,6 +957,11 @@ export async function getStaticProps({ params, locale }) {
         ogImage: product.photos?.[0]?.photo || null,
     };
 
+    const schemaCurrency = lang === 'tr' ? 'TRY' : 'EUR';
+    const schemaUnitPrice = schemaCurrency === 'TRY'
+        ? (Number(product?.tl_price ?? product?.price) || 0)
+        : (Number(product?.eur_price ?? product?.price) || 0);
+
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -977,13 +980,6 @@ export async function getStaticProps({ params, locale }) {
         },
     };
 
-    const schemaCurrency = lang === 'tr' ? 'TRY' : 'EUR';
-    const schemaUnitPrice = schemaCurrency === 'TRY'
-        ? (Number(product?.tl_price ?? product?.price) || 0)
-        : (Number(product?.eur_price ?? product?.price) || 0);
-
-    productSchema.offers.priceCurrency = schemaCurrency;
-    productSchema.offers.price = schemaUnitPrice.toFixed(2);
 
     const breadcrumbs = {
         '@context': 'https://schema.org',
