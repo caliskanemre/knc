@@ -20,8 +20,8 @@ import {AuthProvider} from "../lib/auth/AuthProvider";
 // Client-side cache shared for the whole session
 const clientSideEmotionCache = createEmotionCache();
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-ERZ1D4VS7L';
-const GADS_ID = process.env.NEXT_PUBLIC_GADS_ID || 'AW-16834301094';
+const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-41P0XLVW05';
+const GADS_ID = process.env.NEXT_PUBLIC_GADS_ID || 'AW-854444729';
 
 export default function MyApp({ Component, pageProps, emotionCache = clientSideEmotionCache }) {
   const router = useRouter();

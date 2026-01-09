@@ -272,7 +272,7 @@ export default function ProductDetailPage({ product, seo, similarProducts }) {
                     const totalValueUI = displayOriginal * quantity;
                     const currencyCode = isTRDisplay ? 'TRY' : 'EUR';
                     try {
-                        window.gtag('event', 'conversion', { send_to: 'AW-16834301094/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
+                        window.gtag('event', 'conversion', { send_to: 'AW-854444729/UmqFCIDEyq0aEKaZnNs-', value: totalValueUI, currency: currencyCode });
                         window.gtag('event', 'add_to_cart', { currency: currencyCode, value: totalValueUI, items: [{ item_id: String(product.id), item_name: cartItem.title || 'Product', quantity, price: displayOriginal }] });
                     } catch {}
                     window.dispatchEvent(new Event('cartUpdated'));

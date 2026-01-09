@@ -62,7 +62,7 @@ export default function PaymentSuccessPage() {
       if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
         try {
           window.gtag('event', 'conversion', {
-            send_to: 'AW-16834301094',
+            send_to: 'AW-854444729',
             value: orderDetails.totalValue,
             currency: orderDetails.currency,
             transaction_id: orderDetails.orderId
